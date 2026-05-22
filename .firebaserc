@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "ecostaydb-d8f2f"
+    "default": "ecostaybd-eb86d",
+    "intance" : "ecostaybd-eb86d-instance",
+    "database" : "ecostaybd-eb86d-database",
+    "service" : "ecostaybd-eb86d-service"
   }
 }
