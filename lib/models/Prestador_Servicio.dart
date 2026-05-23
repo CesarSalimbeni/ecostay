@@ -9,6 +9,7 @@ class PrestadorServicio extends Usuario {
 
   PrestadorServicio({
     required super.id,
+    required super.rol,
     required super.nombre,
     required super.email,
     required super.password,

@@ -5,6 +5,7 @@ class Administrador extends Usuario {
 
   Administrador({
     required super.id,
+    required super.rol,
     required super.nombre,
     required super.email,
     required super.password,

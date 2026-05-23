@@ -8,6 +8,7 @@ class Viajero extends Usuario {
 
   Viajero({
     required super.id,
+    required super.rol,
     required super.nombre,
     required super.email,
     required super.password,
