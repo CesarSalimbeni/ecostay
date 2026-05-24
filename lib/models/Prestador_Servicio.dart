@@ -1,6 +1,7 @@
 import 'usuario.dart';
 
 class PrestadorServicio extends Usuario {
+  String rol = "prestador";
   String rif;
   String telefono;
   String direccion;
@@ -8,8 +9,8 @@ class PrestadorServicio extends Usuario {
   List<dynamic> estadisticas; // List<Estadistica>
 
   PrestadorServicio({
-    required super.id,
     required super.rol,
+    required super.id,
     required super.nombre,
     required super.email,
     required super.password,

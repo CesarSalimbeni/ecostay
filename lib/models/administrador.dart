@@ -1,6 +1,7 @@
 import 'usuario.dart';
 
 class Administrador extends Usuario {
+  String rol = "admin";
   int nivelAcceso;
 
   Administrador({

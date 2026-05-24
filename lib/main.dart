@@ -1,169 +1,130 @@
+import 'package:ecostay/models/gestion_Usuario.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // IMPORTANTE
-import 'package:cloud_firestore/cloud_firestore.dart'; // IMPORTANTE
 import 'firebase_options.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
+void main()async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Registro Firebase',
+      title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple), // Corregido
-        useMaterial3: true,
+        // This is the theme of your application.
+        //
+        // TRY THIS: Try running your application with "flutter run". You'll see
+        // the application has a purple toolbar. Then, without quitting the app,
+        // try changing the seedColor in the colorScheme below to Colors.green
+        // and then invoke "hot reload" (save your changes or press the "hot
+        // reload" button in a Flutter-supported IDE, or press "r" if you used
+        // the command line to start the app).
+        //
+        // Notice that the counter didn't reset back to zero; the application
+        // state is not lost during the reload. To reset the state, use hot
+        // restart instead.
+        //
+        // This works for code too, not just values: Most code changes can be
+        // tested with just a hot reload.
+        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const RegistroPage(), // Cambiado a nuestra nueva página de registro
+      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class RegistroPage extends StatefulWidget {
-  const RegistroPage({super.key});
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+  // This widget is the home page of your application. It is stateful, meaning
+  // that it has a State object (defined below) that contains fields that affect
+  // how it looks.
+
+  // This class is the configuration for the state. It holds the values (in this
+  // case the title) provided by the parent (in this case the App widget) and
+  // used by the build method of the State. Fields in a Widget subclass are
+  // always marked "final".
+
+  final String title;
 
   @override
-  State<RegistroPage> createState() => _RegistroPageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _RegistroPageState extends State<RegistroPage> {
-  // Controladores para capturar el texto de los inputs
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _nombresController = TextEditingController();
-  final _apellidosController = TextEditingController();
-  
-  // Rol por defecto asignado (Filtro único en String)
-  String _rolSeleccionado = 'cliente'; 
+class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
 
-  // Instancias de Firebase
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // FUNCIÓN PRINCIPAL DE REGISTRO UNIFICADO
-  Future<void> _registrarUsuario() async {
-    try {
-      // 1. Crear usuario en Firebase Authentication
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-
-      User? user = userCredential.user;
-
-      if (user != null) {
-        // 2. Guardar datos adicionales en la única colección 'usuarios' usando el UID
-        await _firestore.collection('usuarios').doc(user.uid).set({
-          'uid': user.uid,
-          'email': user.email,
-          'nombres': _nombresController.text.trim(),
-          'apellidos': _apellidosController.text.trim(),
-          'rol': _rolSeleccionado, // "admin" o "cliente"
-          'fechaRegistro': DateTime.now().toIso8601String(),
-        });
-
-        // Alerta de éxito
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('¡Usuario registrado con éxito en Auth y Firestore!')),
-          );
-        }
-      }
-    } catch (e) {
-      // Alerta de error
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
-      }
-    }
+  void _incrementCounter() {
+    setState(() {
+      // This call to setState tells the Flutter framework that something has
+      // changed in this State, which causes it to rerun the build method below
+      // so that the display can reflect the updated values. If we changed
+      // _counter without calling setState(), then the build method would not be
+      // called again, and so nothing would appear to happen.
+      _counter++;
+    });
+    ///prueba de gestion de usuarios:
+    //RegistrarUsuario registrarUsuario = RegistrarUsuario();
+    //registrarUsuario.registrarPrestador('cesar@example.com', 'password', 'Cesar', 'RIF123', '1234567890', 'Direccion 1', 'cuentaPayPal1');
   }
 
   @override
   Widget build(BuildContext context) {
+    // This method is rerun every time setState is called, for instance as done
+    // by the _incrementCounter method above.
+    //
+    // The Flutter framework has been optimized to make rerunning build methods
+    // fast, so that you can just rebuild anything that needs updating rather
+    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
+        // TRY THIS: Try changing the color here to a specific color (to
+        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
+        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Registro Único - Firebase'),
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Text(widget.title),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      body: Center(
+        // Center is a layout widget. It takes a single child and positions it
+        // in the middle of the parent.
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // Corregido
+          // Column is also a layout widget. It takes a list of children and
+          // arranges them vertically. By default, it sizes itself to fit its
+          // children horizontally, and tries to be as tall as its parent.
+          //
+          // Column has various properties to control how it sizes itself and
+          // how it positions its children. Here we use mainAxisAlignment to
+          // center the children vertically; the main axis here is the vertical
+          // axis because Columns are vertical (the cross axis would be
+          // horizontal).
+          //
+          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+          // action in the IDE, or press "p" in the console), to see the
+          // wireframe for each widget.
+          mainAxisAlignment: .center,
           children: [
-            TextField(
-              controller: _nombresController,
-              decoration: const InputDecoration(labelText: 'Nombres'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _apellidosController,
-              decoration: const InputDecoration(labelText: 'Apellidos'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Correo Electrónico'),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Contraseña'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 15),
-            
-            // Selector de Rol simple
-            Row(
-              children: [
-                const Text("Rol asignado: "),
-                DropdownButton<String>(
-                  value: _rolSeleccionado,
-                  items: <String>['cliente', 'admin'].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (nuevoRol) {
-                    setState(() {
-                      _rolSeleccionado = nuevoRol!;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
-            
-            ElevatedButton(
-              onPressed: _registrarUsuario,
-              style: ElevatedButton.styleFrom(minimumSize: const Size(200, 50)),
-              child: const Text('Registrar'),
+            const Text('You have pushed the button this many times:'),
+            Text(
+              '$_counter',
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
+      ),
     );
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _nombresController.dispose();
-    _apellidosController.dispose();
-    super.dispose();
   }
 }

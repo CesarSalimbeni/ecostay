@@ -1,21 +1,22 @@
 import 'usuario.dart';
 
 class Viajero extends Usuario {
+  String rol = "cliente";
   String telefono;
   String cedula;
-  String city; // ciudad
+  String ciudad; // ciudad
   List<dynamic> historialReservas; // List<Reserva>
 
   Viajero({
-    required super.id,
     required super.rol,
+    required super.id,
     required super.nombre,
     required super.email,
     required super.password,
     required super.fechaRegistro,
     required this.telefono,
     required this.cedula,
-    required this.city,
+    required this.ciudad,
     required this.historialReservas,
   });
 
