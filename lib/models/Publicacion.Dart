@@ -1,36 +1,31 @@
-#ifndef PUBLICACION_H
-#define PUBLICACION_H
-
-#include <string>
-#include "Calificacion.h"
+import 'calificacion.dart';
 
 class Publicacion {
-private:
-    std::string id;
-    std::string titulo;
-    std::string descripcion;
-    double precio;
-    std::string ubicacion;
-    bool disponibilidad;
-    Calificacion calificacion; // Relación 1 a 1 según tu diagrama
-    std::string politicaCancelacion;
+  final String id;
+  final String titulo;
+  final String descripcion;
+  final double precio;
+  final String ubicacion;
+  final bool disponibilidad;
+  final Calificacion calificacion;
+  final String politicaCancelacion;
 
-public:
-    Publicacion(std::string _id, std::string _titulo, std::string _descripcion, double _precio, 
-                std::string _ubicacion, bool _disponibilidad, const Calificacion& _calificacion, 
-                std::string _politicaCancelacion)
-        : id(_id), titulo(_titulo), descripcion(_descripcion), precio(_precio), 
-          ubicacion(_ubicacion), disponibilidad(_disponibilidad), calificacion(_calificacion), 
-          politicaCancelacion(_politicaCancelacion) {}
+  Publicacion({
+    required this.id,
+    required this.titulo,
+    required this.descripcion,
+    required this.precio,
+    required this.ubicacion,
+    required this.disponibilidad,
+    required this.calificacion,
+    required this.politicaCancelacion,
+  });
 
-    // Métodos del diagrama
-    void editarPublicacion() {
-        // TODO: Implementar lógica de edición
-    }
+  void editarPublicacion() {
+    // TODO: Agregar lógica para modificar los datos en memoria o base de datos
+  }
 
-    void eliminarPublicacion() {
-        // TODO: Implementar lógica de eliminación
-    }
-};
-
-#endif
+  void eliminarPublicacion() {
+    // TODO: Agregar lógica para dar de baja la publicación
+  }
+}
