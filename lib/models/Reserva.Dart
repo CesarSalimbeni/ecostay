@@ -1,31 +1,25 @@
-#ifndef RESERVA_H
-#define RESERVA_H
-
-#include <string>
-#include <chrono>
-#include "EstadoReserva.h"
+import 'estado_reserva.dart';
 
 class Reserva {
-private:
-    std::string id;
-    std::chrono::system_clock::time_point fechaInicio;
-    std::chrono::system_clock::time_point fechaFin;
-    EstadoReserva estado;
-    double total;
+  final String id;
+  final DateTime fechaInicio;
+  final DateTime fechaFin;
+  final EstadoReserva estado;
+  final double total;
 
-public:
-    Reserva(std::string _id, std::chrono::system_clock::time_point _fechaInicio, 
-            std::chrono::system_clock::time_point _fechaFin, EstadoReserva _estado, double _total)
-        : id(_id), fechaInicio(_fechaInicio), fechaFin(_fechaFin), estado(_estado), total(_total) {}
+  Reserva({
+    required this.id,
+    required this.fechaInicio,
+    required this.fechaFin,
+    required this.estado,
+    required this.total,
+  });
 
-    // Métodos del diagrama
-    void confirmar() {
-        // TODO: Implementar lógica de confirmación
-    }
+  void confirmar() {
+    // TODO: Cambiar estado a EstadoReserva.CONFIRMADA
+  }
 
-    void cancelar() {
-        // TODO: Implementar lógica de cancelación
-    }
-};
-
-#endif
+  void cancelar() {
+    // TODO: Cambiar estado a EstadoReserva.CANCELADA
+  }
+}
