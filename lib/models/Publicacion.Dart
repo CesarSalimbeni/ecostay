@@ -21,11 +21,13 @@ class Publicacion {
     required this.politicaCancelacion,
   });
 
-  void editarPublicacion() {
-    // TODO: Agregar lógica para modificar los datos en memoria o base de datos
+  void editarPublicacion(String titulo, String descripcion, double precio, String ubicacion, bool disponibilidad, String politicaCancelacion) {
+    GestionPublicacion gestion = GestionPublicacion();
+    gestion.editarPublicacion(id, titulo, calificacion.promedio, descripcion, precio, ubicacion, disponibilidad, politicaCancelacion);
   }
 
   void eliminarPublicacion() {
-    // TODO: Agregar lógica para dar de baja la publicación
+    GestionPublicacion gestion = GestionPublicacion();
+    gestion.eliminarPublicacion(id);
   }
 }

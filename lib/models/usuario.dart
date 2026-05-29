@@ -1,4 +1,4 @@
-import 'gestion_Usuario.dart';
+import 'package:ecostay/models/gestion_usuario.dart';
 
 abstract class Usuario {
   String rol; // "cliente", "host", "admin"
@@ -18,16 +18,21 @@ abstract class Usuario {
   });
 
   void iniciarSesion() {
-    IniciarSesion iniciarSesion = IniciarSesion();
-    iniciarSesion.iniciarSesion(email, password);
+    GestionUsuario gestion = GestionUsuario();
+    gestion.iniciarSesion(email, password);
   }
 
   void cerrarSesion() {
-    IniciarSesion iniciarSesion = IniciarSesion();
-    iniciarSesion.cerrarSesion();
+    GestionUsuario gestion = GestionUsuario();
+    gestion.cerrarSesion();
   }
 
-  void editarPerfil() {
-    print('Perfil de $nombre editado.');
+  void editarPerfil(String nombre, String email, String password) {
+    GestionUsuario gestion = GestionUsuario();
+    gestion.editarInformacion(id, {
+      'nombre': nombre,
+      'email': email,
+      'password': password,
+    });
   }
 }

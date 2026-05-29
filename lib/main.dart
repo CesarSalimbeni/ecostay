@@ -1,4 +1,4 @@
-import 'package:ecostay/models/gestion_Usuario.dart';
+import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -71,8 +71,8 @@ class _MyHomePageState extends State<MyHomePage> {
       _counter++;
     });
     ///prueba de gestion de usuarios:
-    //RegistrarUsuario registrarUsuario = RegistrarUsuario();
-    //registrarUsuario.registrarPrestador('cesar@example.com', 'password', 'Cesar', 'RIF123', '1234567890', 'Direccion 1', 'cuentaPayPal1');
+    GestionUsuario gestionUsuario = GestionUsuario();
+    gestionUsuario.registrarPrestador('prueba@example.com', 'password', 'Cesar', 'RIF123', '1234567890', 'Direccion 1', 'cuentaPayPal1');
   }
 
   @override

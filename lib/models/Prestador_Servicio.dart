@@ -1,3 +1,5 @@
+import 'package:ecostay/models/gestion_publicacion.dart';
+
 import 'usuario.dart';
 
 class PrestadorServicio extends Usuario {
@@ -23,7 +25,8 @@ class PrestadorServicio extends Usuario {
   });
 
   void crearPublicacion(dynamic datos) {
-    print('$nombre (Prestador) creó una nueva publicación.');
+    GestionPublicacion gestion = GestionPublicacion();
+    gestion.crearPublicacion(datos['titulo'], datos['calificacion'], datos['descripcion'], datos['precio'], datos['ubicacion'], id, datos['disponibilidad'], datos['politicaCancelacion']);
   }
 
   void gestionarCancelacion(dynamic reserva) {

@@ -1,3 +1,5 @@
+import 'package:ecostay/models/gestion_publicacion.dart';
+
 import 'usuario.dart';
 
 class Administrador extends Usuario {
@@ -22,8 +24,9 @@ class Administrador extends Usuario {
     print('Admin $nombre eliminó al usuario: ${user.nombre}');
   }
 
-  void eliminarComentario(dynamic comentario) {
-    print('Admin $nombre eliminó un comentario.');
+  void eliminarComentario(String publicacionId, String comentarioId) {
+    GestionPublicacion gestionPublicacion = GestionPublicacion();
+    gestionPublicacion.eliminarCalificacion(publicacionId, comentarioId);
   }
 
   void verEstadisticasGlobales() {

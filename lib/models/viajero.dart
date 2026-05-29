@@ -1,3 +1,5 @@
+import 'package:ecostay/models/gestion_publicacion.dart';
+
 import 'usuario.dart';
 
 class Viajero extends Usuario {
@@ -24,8 +26,9 @@ class Viajero extends Usuario {
     print('$nombre (Viajero) solicitó una reserva.');
   }
 
-  void calificarServicio(dynamic servicio, dynamic calif) {
-    print('$nombre (Viajero) calificó el servicio.');
+  void calificarServicio(String publicacionId, String reservacionId, String comentario, double puntaje) {
+    GestionPublicacion gestionPublicacion = GestionPublicacion();
+    gestionPublicacion.agregarCalificacion(publicacionId, id, reservacionId, comentario, puntaje);
   }
 
   dynamic descargarComprobante(dynamic reserva) {

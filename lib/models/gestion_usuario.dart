@@ -3,7 +3,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class RegistrarUsuario {
+class GestionUsuario {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -75,10 +75,6 @@ class RegistrarUsuario {
   Future<void> registrarCliente(String email, String password, String nombre, String rif, String telefono, String cedula, String ciudad) async {
     await _registrarUsuarioCompleto(email, password, nombre, 'cliente', 'rif', telefono, 'direccion', 'cuentaPayPal', cedula, ciudad, 0);
   }
-}
-
-class IniciarSesion {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> iniciarSesion(String email, String password) async {
     try {
@@ -100,10 +96,8 @@ class IniciarSesion {
       print('Error al cerrar sesión: $e');
     }
   }
-}
 
-class ObtenerInformacionUsuario {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
 
   Future<Map<String, dynamic>?> obtenerInformacion(String uid) async {
     try {
@@ -117,6 +111,18 @@ class ObtenerInformacionUsuario {
     } catch (e) {
       print('Error al obtener información del usuario: $e');
       return null;
+    }
+  }
+
+
+  //Esta función toma el ID del usuario (uid) y un mapa de nueva información (nuevaInformacion) que contiene los campos que se desean actualizar. 
+  //Luego, utiliza el método update() de Firestore para actualizar el documento correspondiente al usuario con la nueva información proporcionada.
+  Future<void> editarInformacion(String uid, Map<String, dynamic> nuevaInformacion) async {
+    try {
+      await _firestore.collection('users').doc(uid).update(nuevaInformacion);
+      print('Información del usuario actualizada exitosamente');
+    } catch (e) {
+      print('Error al actualizar información del usuario: $e');
     }
   }
 }
