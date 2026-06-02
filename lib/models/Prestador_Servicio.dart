@@ -11,7 +11,6 @@ class PrestadorServicio extends Usuario {
   List<dynamic> estadisticas; // List<Estadistica>
 
   PrestadorServicio({
-    required super.rol,
     required super.id,
     required super.nombre,
     required super.email,
@@ -22,14 +21,22 @@ class PrestadorServicio extends Usuario {
     required this.direccion,
     required this.cuentaPayPal,
     required this.estadisticas,
-  });
+  }) : super(rol: 'host');
 
-  void crearPublicacion(dynamic datos) {
+  void crearPublicacion(Map<String, dynamic> datos) {
     GestionPublicacion gestion = GestionPublicacion();
-    gestion.crearPublicacion(datos['titulo'], datos['calificacion'], datos['descripcion'], datos['precio'], datos['ubicacion'], id, datos['disponibilidad'], datos['politicaCancelacion']);
+    gestion.crearPublicacion(
+      titulo: datos['titulo'],
+      descripcion: datos['descripcion'],
+      precio: datos['precio'],
+      ubicacion: datos['ubicacion'],
+      autoruid: id,
+      disponibilidad: datos['disponibilidad'],
+      politicaCancelacion: datos['politicaCancelacion'],
+    );
   }
 
-  void gestionarCancelacion(dynamic reserva) {
+  void gestionarCancelacion(Map<String, dynamic> reserva) {
     print('$nombre (Prestador) gestionó una cancelación.');
   }
 
@@ -39,5 +46,17 @@ class PrestadorServicio extends Usuario {
 
   void verEstadisticasGlobales() {
     print('Mostrando estadísticas globales del Prestador.');
+  }
+  
+  Map<String, dynamic> toMap() {
+    return {
+      'nombre': nombre,
+      'email': email,
+      'rol': rol,
+      'rif': rif,
+      'telefono': telefono,
+      'direccion': direccion,
+      'cuentaPayPal': cuentaPayPal,
+    };
   }
 }

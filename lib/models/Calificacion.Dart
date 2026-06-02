@@ -1,6 +1,6 @@
 class Calificacion {
   final String id;
-  final int puntaje;
+  final double puntaje;
   final String comentario;
   final DateTime fecha;
 

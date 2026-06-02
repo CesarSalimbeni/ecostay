@@ -1,128 +1,114 @@
-///Nota: Cambiar los prints por otras formas de mostrar mensajes al usuario.
-///Nota 2: Mejorar la seguridad de Firestore.
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecostay/models/usuario.dart';
+import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/models/Prestador_Servicio.dart';
+import 'package:ecostay/models/administrador.dart';
 
 class GestionUsuario {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> _registrarUsuarioInicial(String email, String password, String nombre, String rol) async {
+  //Este método necesita un mapa de datos adicionales para poder registrar tanto clientes como hosts sin necesidad de crear métodos separados.
+  //Se debe usar el metodo toMap() de cada clase para generar el mapa de datos adicionales.
+  Future<void> registrarUsuario({
+    required String email,
+    required String password,
+    required String nombre,
+    required String rol,
+    Map<String, dynamic>? datosAdicionales,
+  }) async {
     try {
-      // Crear el usuario con Firebase Authentication
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Obtener el ID del usuario recién creado
       String uid = userCredential.user!.uid;
 
-      // Crear un nuevo documento en Firestore para almacenar información adicional del usuario
-      await _firestore.collection('users').doc(uid).set({
+      // Base del documento
+      Map<String, dynamic> perfilUsuario = {
         'nombre': nombre,
         'email': email,
         'rol': rol,
-        'fechaRegistro': DateTime.now(),
-      });
+        'fechaRegistro': FieldValue.serverTimestamp(), // Usa el tiempo del servidor, es más seguro
+      };
 
-      print('Usuario registrado exitosamente');
+      // Si hay datos específicos (rif, paypal, etc.), los agregamos dinámicamente
+      if (datosAdicionales != null) {
+        perfilUsuario.addAll(datosAdicionales);
+      }
+
+      await _firestore.collection('users').doc(uid).set(perfilUsuario);
     } catch (e) {
-      print('Error al registrar usuario: $e');
+      // Nota 1: Aquí deberías lanzar una excepción personalizada para que la UI la maneje
+      throw Exception('Error al registrar: $e');
     }
   }
 
-  Future<void> _registrarUsuarioCompleto(String email, String password, String nombre, String rol, String rif, String telefono, String direccion, String cuentaPayPal, String cedula, String ciudad, int nivel) async {
-    try {
-      // Crear el usuario con Firebase Authentication
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+  // Ejemplo de cómo llamar al registro desde la UI:
+  // _gestion.registrarUsuario(email: ..., password: ..., nombre: ..., rol: 'host', datosAdicionales: {'rif': rif, 'cuentaPayPal': paypal});
 
-      // Obtener el ID del usuario recién creado
-      String uid = userCredential.user!.uid;
-
-      // Crear un nuevo documento en Firestore para almacenar información adicional del usuario
-      await _firestore.collection('users').doc(uid).set({
-        'nombre': nombre,
-        'email': email,
-        'rol': rol,
-        'fechaRegistro': DateTime.now(),
-        'rif': rif,
-        'telefono': telefono,
-        'direccion': direccion,
-        'cuentaPayPal': cuentaPayPal,
-        'cedula': cedula,
-        'ciudad': ciudad,
-        'nivel de acceso': nivel, ///Solo para administradores.
-      });
-
-      print('Usuario registrado exitosamente');
-    } catch (e) {
-      print('Error al registrar usuario: $e');
-    }
-  }
-
-  ///Funciones específicas para registrar Prestadores y Clientes, utilizando la función general registrarUsuarioCompleto.
-  ///Los campos específicos para cada tipo de usuario se rellenan con valores predeterminados o vacíos según corresponda.
-  ///Los administradores se pondrá directamente desde Firestore, ya que no se registran a través de la app. Por si se preguntan.
-
-  Future<void> registrarPrestador(String email, String password, String nombre, String rif, String telefono, String direccion, String cuentaPayPal) async {
-    await _registrarUsuarioCompleto(email, password, nombre, 'host', rif, telefono, direccion, cuentaPayPal, 'cedula', 'ciudad', 0);
-  }
-
-  Future<void> registrarCliente(String email, String password, String nombre, String rif, String telefono, String cedula, String ciudad) async {
-    await _registrarUsuarioCompleto(email, password, nombre, 'cliente', 'rif', telefono, 'direccion', 'cuentaPayPal', cedula, ciudad, 0);
-  }
-
-  Future<void> iniciarSesion(String email, String password) async {
+  Future<Usuario> iniciarSesion(String email, String password) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      print('Usuario inició sesión exitosamente');
+      // Retornamos directamente el usuario completo cargado de Firestore
+      return await obtenerInformacion(userCredential.user!.uid);
     } catch (e) {
-      print('Error al iniciar sesión: $e');
+      throw Exception('Error de autenticación: $e');
     }
   }
 
-  Future<void> cerrarSesion() async {
-    try {
-      await _auth.signOut();
-      print('Usuario cerró sesión exitosamente');
-    } catch (e) {
-      print('Error al cerrar sesión: $e');
+  Future<void> cerrarSesion() async => await _auth.signOut();
+
+  Future<Usuario> obtenerInformacion(String uid) async {
+    DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+    
+    if (!doc.exists) throw Exception('Usuario no encontrado');
+    
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    String rol = data['rol'];
+    DateTime fecha = (data['fechaRegistro'] as Timestamp).toDate();
+
+    switch (rol) {
+      case 'cliente':
+        return Viajero(
+          id: uid, nombre: data['nombre'], email: data['email'],
+          password: '', fechaRegistro: fecha, telefono: data['telefono'] ?? '',
+          cedula: data['cedula'] ?? '', ciudad: data['ciudad'] ?? '', historialReservas: [],
+        );
+      case 'host':
+        return PrestadorServicio(
+          id: uid, nombre: data['nombre'], email: data['email'],
+          password: '', fechaRegistro: fecha, rif: data['rif'] ?? '',
+          telefono: data['telefono'] ?? '', direccion: data['direccion'] ?? '',
+          cuentaPayPal: data['cuentaPayPal'] ?? '', estadisticas: [],
+        );
+      case 'admin':
+        return Administrador(
+          id: uid, nombre: data['nombre'], email: data['email'],
+          password: '', fechaRegistro: fecha, nivelAcceso: data['nivelAcceso'] ?? 0,
+        );
+      default:
+        throw Exception('Rol desconocido');
     }
   }
 
-
-
-  Future<Map<String, dynamic>?> obtenerInformacion(String uid) async {
-    try {
-      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
-      if (doc.exists) {
-        return doc.data() as Map<String, dynamic>;
-      } else {
-        print('No se encontró el usuario');
-        return null;
-      }
-    } catch (e) {
-      print('Error al obtener información del usuario: $e');
-      return null;
-    }
-  }
-
-
-  //Esta función toma el ID del usuario (uid) y un mapa de nueva información (nuevaInformacion) que contiene los campos que se desean actualizar. 
-  //Luego, utiliza el método update() de Firestore para actualizar el documento correspondiente al usuario con la nueva información proporcionada.
   Future<void> editarInformacion(String uid, Map<String, dynamic> nuevaInformacion) async {
+    // Evitamos explícitamente que intenten guardar contraseñas en Firestore
+    nuevaInformacion.remove('password'); 
+    await _firestore.collection('users').doc(uid).update(nuevaInformacion);
+  }
+
+  Future<void> eliminarCuenta(String uid) async {
     try {
-      await _firestore.collection('users').doc(uid).update(nuevaInformacion);
-      print('Información del usuario actualizada exitosamente');
+      await _firestore.collection('users').doc(uid).delete();
+      await _auth.currentUser!.delete();
     } catch (e) {
-      print('Error al actualizar información del usuario: $e');
+      throw Exception('Error al eliminar cuenta: $e');
     }
   }
 }

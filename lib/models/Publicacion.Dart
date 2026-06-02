@@ -7,7 +7,8 @@ class Publicacion {
   final double precio;
   final String ubicacion;
   final bool disponibilidad;
-  final Calificacion calificacion;
+  final double calificacionPromedio;
+  final List<Calificacion> calificaciones;
   final String politicaCancelacion;
 
   Publicacion({
@@ -17,17 +18,8 @@ class Publicacion {
     required this.precio,
     required this.ubicacion,
     required this.disponibilidad,
-    required this.calificacion,
+    required this.calificacionPromedio,
+    required this.calificaciones,
     required this.politicaCancelacion,
   });
-
-  void editarPublicacion(String titulo, String descripcion, double precio, String ubicacion, bool disponibilidad, String politicaCancelacion) {
-    GestionPublicacion gestion = GestionPublicacion();
-    gestion.editarPublicacion(id, titulo, calificacion.promedio, descripcion, precio, ubicacion, disponibilidad, politicaCancelacion);
-  }
-
-  void eliminarPublicacion() {
-    GestionPublicacion gestion = GestionPublicacion();
-    gestion.eliminarPublicacion(id);
-  }
 }

@@ -8,13 +8,12 @@ class Administrador extends Usuario {
 
   Administrador({
     required super.id,
-    required super.rol,
     required super.nombre,
     required super.email,
     required super.password,
     required super.fechaRegistro,
     required this.nivelAcceso,
-  });
+  }) : super(rol: 'administrador');
 
   void suspenderUsuario(Usuario user) {
     print('Admin $nombre suspendió al usuario: ${user.nombre}');
@@ -25,8 +24,7 @@ class Administrador extends Usuario {
   }
 
   void eliminarComentario(String publicacionId, String comentarioId) {
-    GestionPublicacion gestionPublicacion = GestionPublicacion();
-    gestionPublicacion.eliminarCalificacion(publicacionId, comentarioId);
+    print('Admin $nombre eliminó el comentario $comentarioId de la publicación $publicacionId.');
   }
 
   void verEstadisticasGlobales() {
