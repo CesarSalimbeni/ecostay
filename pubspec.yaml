@@ -63,7 +63,7 @@ flutter:
   fonts:
     - family: Idiqlat
       fonts:
-        - asset: assets/fonts/Idiqlat-Regular.ttf
+        - asset: assets/fonts/Idiqlat-ExtraLight.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

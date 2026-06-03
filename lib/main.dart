@@ -1,5 +1,4 @@
-import 'package:ecostay/registro.dart';
-import 'package:ecostay/vista_perfil.dart';
+import 'package:ecostay/pag_inicio.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -12,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: PantallaRegistro()
+      home: PantallaInicio()
     );
   }
 }

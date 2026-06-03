@@ -1,65 +1,134 @@
+import 'package:ecostay/estilo.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
 
 class PantallaRegistro extends StatelessWidget {
   const PantallaRegistro({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final titleFontSize = min(size.width * 0.12, size.height * 0.14).clamp(32.0, 128.0) as double;
-    final buttonFontSize = min(size.width * 0.07, size.height * 0.08).clamp(18.0, 48.0) as double;
-    final imageWidth = min(size.width * 0.5, 300.0);
-
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/fondo.jpg'),
-            fit: BoxFit.cover,
-          ),),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 5),
-          child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(backgroundImage: AssetImage('assets/images/logo.jpg'), radius: 40,),
-                      SizedBox(width: 10,),
-                      Text('Ecostay', style: TextStyle(fontFamily: 'Idiqlat', color: Color(0xFFFFFFFF), 
-                      fontSize: 30),)
-                    ],
+      backgroundColor: ColorPalette.bg,
+      body: Center(
+        child: Container( width: 775, height: 775,
+          decoration: BoxDecoration(color: Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(30)),
+          child: Column(
+            children: [ 
+              SizedBox(height: 15,),
+              Row(mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Crea tu cuenta de Ecostay', style: TextStyle(fontFamily: 'Idiqlat', color: Colors.black, 
+                  fontSize: 30),),
+                SizedBox(width: 10,),
+                CircleAvatar(backgroundImage: AssetImage('assets/images/logo.jpg'), radius: 40,)
+              ],),
+              SizedBox(height: 20,),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                child: Row(
+                  children: [
+                    Expanded(child: OutlinedButton(onPressed: () {}, style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.all(20.0),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0),), 
+                      alignment: AlignmentDirectional.centerStart
+                    ),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.air, color: Color(0xFF216A44), size: 40),
+                        Text('Soy Viajero', style: TextStyle(color: Colors.black, fontFamily: 'Idiqlat'),),
+                        Text('Quiero descubrir destinos.', style: TextStyle(color: Color(0xFF8E8E93)),)
+                      ],
+                    ))),
+                    SizedBox(width: 30,),
+                    Expanded(child: OutlinedButton(onPressed: () {}, style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.all(20.0),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0),), 
+                      alignment: AlignmentDirectional.centerStart
+                    ),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.home_outlined, color: Color(0xFF216A44), size: 40),
+                        Text('Soy Anfitrión', style: TextStyle(color: Colors.black, fontFamily: 'Idiqlat'),),
+                        Text('Ofrezco servicios turísticos', style: TextStyle(color: Color(0xFF8E8E93)),)
+                      ],
+                    ))),
+                  ],
+                ),
+              ),
+
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text("Nombre"),
+                      TextField(decoration: InputDecoration(labelText: "Nombre", border: OutlineInputBorder()),)
+                    ],),
                   ),
-                  Row(
-                    children: [
-                      TextButton(onPressed: () {}, child: Text('Iniciar Sesión', 
-                        style: TextStyle(fontFamily: 'Idiqlat', color: Color(0xFFFFFFFF)),)),
-                      TextButton(onPressed: () {},
-                       child: Container(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
-                        decoration: BoxDecoration(
-                        color: const Color(0xFFC1DB70),
-                        borderRadius: BorderRadius.circular(30.0),),
-                        child: Text('Registrarse', style: TextStyle(fontFamily: 'Idiqlat',
-                        color: Color(0xFF19573A)),),
-                    ))
-                    ],
+                  SizedBox(width: 30,),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text("Teléfono"),
+                      TextField(decoration: InputDecoration(labelText: "Teléfono", border: OutlineInputBorder()),)
+                    ],),
                   )
-                ],
+                ],),
               ),
-              SizedBox(height: 40,),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
-                decoration: BoxDecoration(
-                color: const Color(0xFFC1DB70),
-                borderRadius: BorderRadius.circular(30.0),),
-                child: Text('Turismo Sostenible', style: TextStyle(fontFamily: 'Idiqlat',
-                color: Color(0xFF19573A)),),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                child: Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text("Correo electrónico"),
+                  TextField(decoration: InputDecoration(labelText: "tu@correo.com", border: OutlineInputBorder()),)
+                  ],)),
               ),
-              Text('Descubre Venezuela \nlow cost, \nsin intermediarios.', textAlign: TextAlign.left,
-              style: TextStyle(fontFamily: 'Idiqlat', color: Color(0xFFFFFFFF), fontSize: 50),),
-              Text('Posadas, campings y rutas auténticas a precios reales. Reserva directo \ncon prestadores locales y viaja con tranquilidad.', 
-              textAlign: TextAlign.left, style: TextStyle(color: Color(0xFFFFFFFF), fontSize: 15),)
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text("Dirección Fiscal"),
+                      TextField(decoration: InputDecoration(labelText: "Calle Real, Estado, País", border: OutlineInputBorder()),)
+                    ],),
+                  ),
+                  SizedBox(width: 30,),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text("Contraseña"),
+                      TextField(decoration: InputDecoration(labelText: "Contraseña", border: OutlineInputBorder()),)
+                    ],),
+                  )
+                ],),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text("Rif"),
+                      TextField(decoration: InputDecoration(labelText: "J-555555-5", border: OutlineInputBorder()),)
+                    ],),
+                  ),
+                  SizedBox(width: 30,),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text("Cuenta PayPal"),
+                      TextField(decoration: InputDecoration(labelText: "tu.cuenta@@paypal.com", border: OutlineInputBorder()),)
+                    ],),
+                  )
+                ],),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                child: FilledButton(onPressed: () {},
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF216A44),
+                  foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8),),
+                  minimumSize: const Size(double.infinity, 50),),child: const Text("Crear Cuenta",
+                    style: TextStyle(fontSize: 16, fontFamily: 'Idiqlat'),),),
+              )
             ],
           ),
         ),
