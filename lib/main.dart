@@ -1,6 +1,7 @@
 import 'package:ecostay/pag_inicio.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/registro.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -14,14 +15,17 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String? error;
+  const MyApp({super.key, this.error});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'EcoStay',
       theme: ThemeData(primarySwatch: Colors.green),
-      // This ensures the app starts on YOUR screen!
+      
+      // CAMBIAMOS ESTA LÍNEA: 
+      // En vez de PantallaInicio(), cargamos PantallaRegistro()
       home: PantallaInicio(), 
     );
   }
