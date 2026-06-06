@@ -4,9 +4,9 @@ class Publicacion {
   final String id;
   final String titulo;
   final String descripcion;
-  final double precio;
+  final double precio; // Precio por noche o por servicio
   final String ubicacion;
-  final bool disponibilidad;
+  final bool disponibilidad; //Transporte disponible o no.
   final double calificacionPromedio;
   final List<Calificacion> calificaciones;
   final String politicaCancelacion;

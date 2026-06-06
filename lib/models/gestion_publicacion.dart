@@ -2,20 +2,23 @@
 //Además de funciones para agregar y obtener calificaciones de las publicaciones, utilizando una subcolección.
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecostay/models/usuario.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/services.dart';
 import 'calificacion.dart';
 import 'publicacion.dart';
 
 class GestionPublicacion {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  //Esta función sirve para crear una nueva publicación en Firestore, con los datos proporcionados por el usuario.
   Future<void> crearPublicacion({
-    required String titulo, 
-    required String descripcion, 
-    required double precio, 
-    required String ubicacion, 
-    required String autoruid, 
-    required bool disponibilidad, 
+    required String titulo,
+    required String descripcion,
+    required double precio,
+    required String ubicacion,
+    required String autoruid,
+    required bool disponibilidad,
     required String politicaCancelacion
   }) async {
     try {
@@ -26,6 +29,7 @@ class GestionPublicacion {
         'ubicacion': ubicacion,
         'providerId': autoruid,
         'disponibilidad': disponibilidad,
+        'calificacionPromedio': 0.0,
         'politicaCancelacion': politicaCancelacion,
         'fechaCreacion': FieldValue.serverTimestamp(),
       });
@@ -34,6 +38,7 @@ class GestionPublicacion {
     }
   }
 
+  //Esta función sirve para editar una publicación existente en Firestore, utilizando el ID de la publicación y los datos actualizados.
   Future<void> editarPublicacion(String publicacionId, Map<String, dynamic> datosActualizados) async {
     try {
       await _firestore.collection('publications').doc(publicacionId).update(datosActualizados);
@@ -42,14 +47,22 @@ class GestionPublicacion {
     }
   }
 
+  //Esta función sirve para eliminar una publicación existente en Firestore, utilizando el ID de la publicación.
   Future<void> eliminarPublicacion(String publicacionId) async {
     try {
       await _firestore.collection('publications').doc(publicacionId).delete();
+      GestionImagenPublicacion gestionImagen = GestionImagenPublicacion();
+      await gestionImagen.eliminarImagen(publicacionId);
     } catch (e) {
       throw Exception('Error al eliminar publicación: $e');
     }
   }
 
+  //Esta función sirve para obtener una publicación específica de Firestore, utilizando el ID de la publicación.
+  //Si se quiere obtener la imagen de la publicación, se puede usar la función obtenerImagenUrl de la 
+  //clase GestionImagenPublicacion, pasando el mismo ID de la publicación.
+  //Por cuestiones de optimización, esta función no trae las calificaciones de la publicación, solo los datos principales.
+  //Para obtener las calificaciones, se debe usar la función obtenerCalificaciones de la clase GestionCalificacion.
   Future<Publicacion?> obtenerPublicacionPorId(String publicacionId) async {
     try {
       DocumentSnapshot doc = await _firestore.collection('publications').doc(publicacionId).get();
@@ -63,10 +76,22 @@ class GestionPublicacion {
         precio: (data['precio'] as num).toDouble(),
         ubicacion: data['ubicacion'] ?? '',
         disponibilidad: data['disponibilidad'] ?? false,
-        calificacionPromedio: data['calificacionPromedio'] ?? 0.0,
+        calificacionPromedio: (data['calificacionPromedio'] as num).toDouble(),
         calificaciones: [],
         politicaCancelacion: data['politicaCancelacion'] ?? '',
       );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<String?> obtenerProveedor(String publicacionId) async {
+    try {
+      DocumentSnapshot doc = await _firestore.collection('publications').doc(publicacionId).get();
+      if (!doc.exists) return null;
+      
+      String providerId = doc['providerId'];
+      return providerId;
     } catch (e) {
       return null;
     }
@@ -76,6 +101,7 @@ class GestionPublicacion {
 class GestionCalificacion {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  //Esta función sirve para agregar una nueva calificación a una publicación existente en Firestore.
   Future<void> agregarCalificacion(String publicacionId, String viajeroId, String reservacionId, String comentario, double puntaje) async {
     try {
       await _firestore.collection('publications').doc(publicacionId).collection('ratings').add({
@@ -91,6 +117,7 @@ class GestionCalificacion {
     }
   }
 
+  //Esta función sirve para obtener todas las calificaciones de una publicación específica en Firestore.
   Future<List<Calificacion>> obtenerCalificaciones(String publicacionId) async {
     try {
       QuerySnapshot snapshot = await _firestore.collection('publications').doc(publicacionId).collection('ratings').get();
@@ -109,6 +136,7 @@ class GestionCalificacion {
     }
   }
 
+  //Esta función sirve para eliminar una calificación existente en Firestore, utilizando el ID de la publicación y el ID de la calificación.
   Future<void> eliminarCalificacion(String publicacionId, String calificacionId) async {
     try {
       await _firestore.collection('publications').doc(publicacionId).collection('ratings').doc(calificacionId).delete();
@@ -119,6 +147,10 @@ class GestionCalificacion {
     }
   }
 
+  //Esta función sirve para calcular y actualizar la calificación promedio de una publicación específica en 
+  //Firestore, utilizando el ID de la publicación.
+  //(Quizás para el futuro se podría optimizar esta función para que solo actualice el promedio en lugar 
+  //de recalcularlo cada vez, pero por ahora así funciona bien)
   Future<void> calcularCalificacionPromedio(String publicacionId) async {
     try {
       QuerySnapshot snapshot = await _firestore.collection('publications').doc(publicacionId).collection('ratings').get();
@@ -126,7 +158,7 @@ class GestionCalificacion {
         await _firestore.collection('publications').doc(publicacionId).update({'calificacionPromedio': 0.0});
         return;
       }
-      double totalPuntaje = snapshot.docs.fold(0.0, (sum, doc) => sum + (doc['puntaje'] as double));
+      double totalPuntaje = snapshot.docs.fold(0.0, (sum, doc) => sum + ((doc['puntaje'] as double)as num).toDouble());
       double promedio = totalPuntaje / snapshot.docs.length;
       await _firestore.collection('publications').doc(publicacionId).update({'calificacionPromedio': promedio});
     } catch (e) {
@@ -143,6 +175,8 @@ class GestionImagenPublicacion {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  //Esta función sirve para subir una imagen a Firebase Storage y asociarla a una publicación 
+  //específica en Firestore, utilizando el ID de la publicación y el archivo de la imagen.
   Future<String?> subirImagen(String publicacionId, File imagen) async {
     try {
       String filePath = 'publicaciones/$publicacionId/${DateTime.now().millisecondsSinceEpoch}.jpg';//Ruta única para cada imagen, usando el ID de la publicación y un timestamp.
@@ -158,6 +192,8 @@ class GestionImagenPublicacion {
     }
   }
 
+  //Esta función sirve para eliminar la imagen asociada a una publicación específica en Firestore, 
+  //utilizando el ID de la publicación.
   Future<void> eliminarImagen(String publicacionId) async {
     try {
       DocumentSnapshot doc = await _firestore.collection('publications').doc(publicacionId).get();
@@ -174,6 +210,8 @@ class GestionImagenPublicacion {
     }
   }
 
+  //Esta función sirve para obtener el URL de la imagen asociada a una publicación específica en Firestore, 
+  //utilizando el ID de la publicación.
   Future<String?> obtenerImagenUrl(String publicacionId) async {
     try {
       DocumentSnapshot doc = await _firestore.collection('publications').doc(publicacionId).get();

@@ -1,4 +1,8 @@
-import 'package:ecostay/models/gestion_publicacion.dart';
+import 'package:ecostay/models/Estadoreserva.Dart';
+
+import 'gestion_publicacion.dart';
+import 'Reserva.Dart';
+import 'gestion_reservacion.dart';
 
 import 'usuario.dart';
 
@@ -21,8 +25,16 @@ class Viajero extends Usuario {
     required this.historialReservas,
   }): super(rol: 'cliente');
 
-  void solicitarReserva(dynamic publicacion) {
-    print('$nombre (Viajero) solicitó una reserva.');
+  void solicitarReserva(DateTime fechaInicio, DateTime fechaFin, double total, String publicacionId) {
+    Reserva nuevaReserva = Reserva(
+      id: '', // Se asignará al guardar en Firestore
+      fechaInicio: fechaInicio,
+      fechaFin: fechaFin,
+      estado: EstadoReserva.PENDIENTE,
+      total: total,
+    );
+    GestionReservacion().crearReserva(nuevaReserva, id, publicacionId);
+    
   }
 
   void calificarServicio(String publicacionId, String reservacionId, String comentario, double puntaje) {

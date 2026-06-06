@@ -1,4 +1,5 @@
 import 'estado_reserva.dart';
+import 'gestion_reservacion.dart';
 
 class Reserva {
   final String id;
@@ -16,10 +17,10 @@ class Reserva {
   });
 
   void confirmar() {
-    // TODO: Cambiar estado a EstadoReserva.CONFIRMADA
+    GestionReservacion().confirmarReserva(id);
   }
 
   void cancelar() {
-    // TODO: Cambiar estado a EstadoReserva.CANCELADA
+    GestionReservacion().cancelarReserva(id);
   }
 }
