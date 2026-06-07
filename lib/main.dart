@@ -1,3 +1,6 @@
+import 'package:ecostay/models/mis_reservas_viaj.dart';
+import 'package:ecostay/models/reservas_anf.dart';
+import 'package:ecostay/models/reservas_viaj.dart';
 import 'package:ecostay/pag_inicio.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/viajero.dart';

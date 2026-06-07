@@ -1,8 +1,10 @@
 import 'package:ecostay/estilo.dart';
+import 'package:ecostay/models/viajero.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/usuario.dart';
+import 'package:ecostay/models/Prestador_Servicio.dart';
 //import 'package:ecostay/pantallas/pantalla_siguiente.dart'; // Tu próxima pantalla
 
 enum UserRole { viajero, anfitrion }
@@ -75,21 +77,54 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         datosAdicionales: extras,
       );
 
-      // FirebaseAuth hace login automático tras registrar, por lo que currentUser ya no es null
       String uid = FirebaseAuth.instance.currentUser!.uid;
-      var usuarioCreado = await _gestionUsuario.obtenerInformacion(uid);
 
-      // COMENTADO TEMPORALMENTE HASTA CREAR LA PANTALLA
-      /*
-      // Cambio de pantalla
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            // Reemplaza PantallaSiguiente con el nombre real de tu clase
-            builder: (context) => PantallaSiguiente(usuario: usuarioCreado),
-          ),
+      Usuario usuarioCreado;
+
+      if (isViajero) {
+        usuarioCreado = Viajero(
+          id: uid, 
+          nombre: _nombreCtrl.text.trim(),
+          email: _correoCtrl.text.trim(),
+          password: _passCtrl.text.trim(),
+          fechaRegistro: DateTime.now(),
+          telefono: _telefonoCtrl.text.trim(),
+          cedula: _cedulaCtrl.text.trim(),
+          ciudad: _direccionCtrl.text.trim(),
+          historialReservas: [],
         );
+      } else {
+        usuarioCreado = PrestadorServicio(
+          id: uid, 
+          nombre: _nombreCtrl.text.trim(),
+          email: _correoCtrl.text.trim(),      
+          password: _passCtrl.text.trim(),
+          fechaRegistro: DateTime.now(),
+          rif: _rifCtrl.text.trim(),
+          telefono: _telefonoCtrl.text.trim(),
+          direccion: _direccionCtrl.text.trim(),
+          cuentaPayPal: _paypalCtrl.text.trim(),
+          estadisticas: [],
+        );
+      }
+      
+      // COMENTADO TEMPORALMENTE HASTA CREAR LAS PANTALLAS
+      /*
+      // Cambio de pantalla dependiendo del rol
+      if (mounted) {
+        if (usuarioCreado is Viajero) {
+        Navigator.pushReplacement(context, MaterialPageRoute(
+              // Reemplaza "PantallaInicioViajero" con el nombre real de tu clase
+              builder: (context) => PantallaInicioViajero(viajero: usuarioCreado),
+            ),
+          );
+        } else if (usuarioCreado is PrestadorServicio) {
+          Navigator.pushReplacement(context, MaterialPageRoute(
+              // Reemplaza "PantallaDashboardPrestador" con el nombre real de tu clase
+              builder: (context) => PantallaDashboardPrestador(prestador: usuarioCreado),
+            ),
+          );
+        }
       }
       */
 
@@ -101,7 +136,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
       }
 
     } catch (e) {
-      // Manejo de errores básico (puedes usar un SnackBar para mostrarlo al usuario)
+      // Manejo de errores básicos
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
