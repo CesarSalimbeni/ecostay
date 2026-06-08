@@ -13,7 +13,7 @@ class GestionReservacion {
       await _firestore.collection('reservations').add({
         'fechaInicio': reserva.fechaInicio,
         'fechaFin': reserva.fechaFin,
-        'estado': reserva.estado.toString(),
+        'estado': reserva.estado.name, 
         'total': reserva.total,
         'viajeroId': viajeroId,
         'publicacionId': publicacionId,
@@ -27,7 +27,7 @@ class GestionReservacion {
   Future<void> confirmarReserva(String reservaId) async {
     try {
       await _firestore.collection('reservations').doc(reservaId).update({
-        'estado': EstadoReserva.CONFIRMADA.toString(),
+        'estado': EstadoReserva.CONFIRMADA.name,
       });
     } catch (e) {
       print('Error al confirmar la reserva: $e');
@@ -38,7 +38,7 @@ class GestionReservacion {
   Future<void> cancelarReserva(String reservaId) async {
     try {
       await _firestore.collection('reservations').doc(reservaId).update({
-        'estado': EstadoReserva.CANCELADA.toString(),
+        'estado': EstadoReserva.CANCELADA.name,
       });
     } catch (e) {
       print('Error al cancelar la reserva: $e');
@@ -49,7 +49,7 @@ class GestionReservacion {
   Future<void> completarReserva(String reservaId) async {
     try {
       await _firestore.collection('reservations').doc(reservaId).update({
-        'estado': EstadoReserva.COMPLETADA.toString(),
+        'estado': EstadoReserva.COMPLETADA.name,
       });
     } catch (e) {
       print('Error al completar la reserva: $e');
@@ -70,7 +70,7 @@ class GestionReservacion {
             fechaInicio: (data['fechaInicio'] as Timestamp).toDate(),
             fechaFin: (data['fechaFin'] as Timestamp).toDate(),
             estado: EstadoReserva.values.firstWhere(
-              (e) => e.toString() == data['estado'],
+              (e) => e.name == data['estado'],
               orElse: () => EstadoReserva.PENDIENTE,
             ),
             total: (data['total'] as num).toDouble(),
@@ -101,7 +101,7 @@ class GestionReservacion {
           fechaInicio: (data['fechaInicio'] as Timestamp).toDate(),
           fechaFin: (data['fechaFin'] as Timestamp).toDate(),
           estado: EstadoReserva.values.firstWhere(
-            (e) => e.toString() == data['estado'],
+            (e) => e.name == data['estado'],
             orElse: () => EstadoReserva.PENDIENTE, // Un valor por defecto seguro
           ),
           total: (data['total'] as num).toDouble(), 
@@ -109,6 +109,36 @@ class GestionReservacion {
       }).toList();
     } catch (e) {
       print('Error al obtener las reservas del viajero: $e');
+      return [];
+    }
+  }
+
+  //Esta funcion busca una reserva a través de la idPublicacion y devuelve una lista de reservas asociadas a esa publicación.
+  //Si se quiere buscar por prestador se puede hacer una consulta a través de la idPrestador y luego obtener las 
+  //publicaciones asociadas a ese prestador para finalmente obtener las reservas asociadas a esas publicaciones.
+  Future<List<Reserva>> obtenerReservasPorPublicacion(String publicacionId) async {
+    try {
+      QuerySnapshot query = await _firestore
+          .collection('reservations')
+          .where('publicacionId', isEqualTo: publicacionId)
+          .get();
+
+      return query.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+
+        return Reserva(
+          id: doc.id,
+          fechaInicio: (data['fechaInicio'] as Timestamp).toDate(),
+          fechaFin: (data['fechaFin'] as Timestamp).toDate(),
+          estado: EstadoReserva.values.firstWhere(
+            (e) => e.name == data['estado'],
+            orElse: () => EstadoReserva.PENDIENTE, // Un valor por defecto seguro
+          ),
+          total: (data['total'] as num).toDouble(), 
+        );
+      }).toList();
+    } catch (e) {
+      print('Error al obtener las reservas de la publicación: $e');
       return [];
     }
   }

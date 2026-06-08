@@ -71,8 +71,6 @@ class GestionPublicacion {
       if (!doc.exists) return null;
       
       Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-      
-      List<Calificacion> listaCalificaciones = await GestionCalificacion().obtenerCalificaciones(publicacionId);
 
       return Publicacion(
         id: doc.id,
@@ -82,9 +80,8 @@ class GestionPublicacion {
         ubicacion: data['ubicacion'] ?? '',
         disponibilidad: data['disponibilidad'] ?? false,
         calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
-        calificaciones: listaCalificaciones,
+        calificaciones: [], // Para optimización, no traemos las calificaciones en esta consulta masiva
         politicaCancelacion: data['politicaCancelacion'] ?? '',
-        nombreAnfitrion: data['nombreAnfitrion'] ?? 'Anfitrión Desconocido', 
       );
     } catch (e) {
       return null;
@@ -100,6 +97,29 @@ class GestionPublicacion {
       return providerId;
     } catch (e) {
       return null;
+    }
+  }
+
+  //Esta función busca las publicaciones de un proveedor específico, utilizando el ID del proveedor, y devuelve una lista de publicaciones asociadas a ese proveedor.
+  Future<List<Publicacion>> obtenerPublicacionesPorProveedor(String providerId) async {
+    try {
+      QuerySnapshot query = await _firestore.collection('publications').where('providerId', isEqualTo: providerId).get();
+      return query.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        return Publicacion(
+          id: doc.id,
+          titulo: data['titulo'] ?? '',
+          descripcion: data['descripcion'] ?? '',
+          precio: (data['precio'] as num).toDouble(),
+          ubicacion: data['ubicacion'] ?? '',
+          disponibilidad: data['disponibilidad'] ?? false,
+          calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
+          calificaciones: [], // Para optimización, no traemos las calificaciones en esta consulta masiva
+          politicaCancelacion: data['politicaCancelacion'] ?? '',
+        );
+      }).toList();
+    } catch (e) {
+      return [];
     }
   }
 }
@@ -149,7 +169,6 @@ class GestionCalificacion {
           puntaje: (data['puntaje'] as num).toDouble(),
           comentario: data['comentario'] ?? '',
           fecha: fechaDoc, 
-          nombreUsuario: data['nombreUsuario'] ?? 'Usuario anónimo',
         );
       }).toList();
     } catch (e) {
