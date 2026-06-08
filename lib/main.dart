@@ -1,4 +1,5 @@
 import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
+import 'package:ecostay/pantallas/publicaciones_anf.dart';
 import 'package:ecostay/pantallas/reservas_anf.dart';
 import 'package:ecostay/pantallas/reservas_viaj.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';

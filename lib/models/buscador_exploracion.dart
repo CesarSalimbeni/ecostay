@@ -40,6 +40,7 @@ class BuscadorExploracion {
           calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
           calificaciones: [],
           politicaCancelacion: data['politicaCancelacion'] ?? '',
+          nombreAnfitrion: data['nombreAnfitrion'] ?? '',
         );
       }).toList();
 
