@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecostay/models/usuario.dart';
 import 'package:ecostay/models/viajero.dart';
-import 'package:ecostay/models/Prestador_Servicio.dart';
+import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/models/administrador.dart';
 
 class GestionUsuario {

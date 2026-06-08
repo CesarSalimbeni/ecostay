@@ -1,5 +1,4 @@
 import 'package:ecostay/models/gestion_publicacion.dart';
-
 import 'usuario.dart';
 
 class Viajero extends Usuario {
@@ -27,7 +26,14 @@ class Viajero extends Usuario {
 
   void calificarServicio(String publicacionId, String reservacionId, String comentario, double puntaje) {
     GestionCalificacion gestionCalificacion = GestionCalificacion();
-    gestionCalificacion.agregarCalificacion(publicacionId, id, reservacionId, comentario, puntaje);
+    gestionCalificacion.agregarCalificacion(
+      publicacionId: publicacionId,
+      viajeroId: id,
+      reservacionId: reservacionId,
+      comentario: comentario,
+      puntaje: puntaje,
+      nombreUsuario: nombre,
+    );
   }
 
   dynamic descargarComprobante(dynamic reserva) {

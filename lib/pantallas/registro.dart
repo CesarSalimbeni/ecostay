@@ -1,10 +1,10 @@
-import 'package:ecostay/estilo.dart';
+import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/usuario.dart';
-import 'package:ecostay/models/Prestador_Servicio.dart';
+import 'package:ecostay/models/prestador_servicio.dart';
 //import 'package:ecostay/pantallas/pantalla_siguiente.dart'; // Tu próxima pantalla
 
 enum UserRole { viajero, anfitrion }

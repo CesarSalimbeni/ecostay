@@ -1,5 +1,5 @@
 abstract class Usuario {
-  String rol; // "cliente", "host", "admin"
+  String rol; // "cliente", "prestador", "admin"
   String id;
   String nombre;
   String email;

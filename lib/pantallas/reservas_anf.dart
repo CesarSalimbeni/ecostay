@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:ecostay/estilo.dart';
+import 'package:ecostay/pantallas/estilo.dart';
 
 enum FiltroReserva { todas, pendientes, confirmadas }
 

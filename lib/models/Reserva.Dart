@@ -1,4 +1,4 @@
-import 'estado_reserva.dart';
+import 'package:ecostay/models/Estadoreserva.Dart';
 
 class Reserva {
   final String id;

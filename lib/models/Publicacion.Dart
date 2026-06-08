@@ -10,6 +10,7 @@ class Publicacion {
   final double calificacionPromedio;
   final List<Calificacion> calificaciones;
   final String politicaCancelacion;
+  final String nombreAnfitrion;
 
   Publicacion({
     required this.id,
@@ -21,5 +22,6 @@ class Publicacion {
     required this.calificacionPromedio,
     required this.calificaciones,
     required this.politicaCancelacion,
+    required this.nombreAnfitrion,
   });
 }

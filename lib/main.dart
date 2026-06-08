@@ -1,10 +1,10 @@
-import 'package:ecostay/models/mis_reservas_viaj.dart';
-import 'package:ecostay/models/reservas_anf.dart';
-import 'package:ecostay/models/reservas_viaj.dart';
-import 'package:ecostay/pag_inicio.dart';
+import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
+import 'package:ecostay/pantallas/reservas_anf.dart';
+import 'package:ecostay/pantallas/reservas_viaj.dart';
+import 'package:ecostay/pantallas/pag_inicio.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/viajero.dart';
-import 'package:ecostay/registro.dart';
+import 'package:ecostay/pantallas/registro.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';

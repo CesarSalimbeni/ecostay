@@ -1,5 +1,5 @@
-import 'package:ecostay/iniciar_sesion.dart';
-import 'package:ecostay/registro.dart';
+import 'package:ecostay/pantallas/iniciar_sesion.dart';
+import 'package:ecostay/pantallas/registro.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 

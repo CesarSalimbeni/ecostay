@@ -1,5 +1,7 @@
-import 'package:ecostay/estilo.dart';
-import 'package:ecostay/registro.dart';
+import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/pantallas/estilo.dart';
+import 'package:ecostay/pantallas/pagextraviaj.dart';
+import 'package:ecostay/pantallas/registro.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/gestion_usuario.dart'; 
 
@@ -41,15 +43,24 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
         _passwordController.text.trim(),
       );
 
-      // 5. AQUÍ REDIRECCIONAS SEGÚN EL ROL
-      // Dependiendo de cómo lo programó tu compañero, el rol podría ser 'viajero'/'hotel' o 'traveller'/'hotel'
-      if (usuarioLogueado.rol == 'viajero') {
-        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => PantallaViajero()));
-      } else if (usuarioLogueado.rol == 'hotel') {
-        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => PantallaHotel()));
+      if (usuarioLogueado.rol == 'cliente') {
+        Navigator.pushReplacement(context, 
+          MaterialPageRoute(builder: (context) => PantallaTempviaj(viajero: usuarioLogueado as Viajero),),
+        );
+        
+      } else if (usuarioLogueado.rol == 'prestador') {
+        
+        // Cuando tengas tu pantalla de hotel lista, harás el cast correspondiente:
+        // Navigator.pushReplacement(
+        //   context, 
+        //   MaterialPageRoute(
+        //     builder: (context) => PantallaHotel(prestador: usuarioLogueado as PrestadorServicio),
+        //   ),
+        // );
+        
       }
-
-    } catch (e) {
+      
+      } catch (e) {
       // Error de login (contraseña mal, usuario no existe, etc.)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),

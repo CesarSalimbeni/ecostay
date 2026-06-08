@@ -1,4 +1,4 @@
-import 'package:ecostay/estilo.dart';
+import 'package:ecostay/pantallas/estilo.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 

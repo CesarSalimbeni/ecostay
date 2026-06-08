@@ -33,6 +33,7 @@ class PrestadorServicio extends Usuario {
       autoruid: id,
       disponibilidad: datos['disponibilidad'],
       politicaCancelacion: datos['politicaCancelacion'],
+      nombreAnfitrion: nombre,
     );
   }
 

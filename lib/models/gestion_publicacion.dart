@@ -16,7 +16,8 @@ class GestionPublicacion {
     required String ubicacion, 
     required String autoruid, 
     required bool disponibilidad, 
-    required String politicaCancelacion
+    required String politicaCancelacion,
+    required String nombreAnfitrion 
   }) async {
     try {
       await _firestore.collection('publications').add({
@@ -27,6 +28,7 @@ class GestionPublicacion {
         'providerId': autoruid,
         'disponibilidad': disponibilidad,
         'politicaCancelacion': politicaCancelacion,
+        'nombreAnfitrion': nombreAnfitrion,
         'fechaCreacion': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -56,6 +58,9 @@ class GestionPublicacion {
       if (!doc.exists) return null;
       
       Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      
+      List<Calificacion> listaCalificaciones = await GestionCalificacion().obtenerCalificaciones(publicacionId);
+
       return Publicacion(
         id: doc.id,
         titulo: data['titulo'] ?? '',
@@ -63,9 +68,10 @@ class GestionPublicacion {
         precio: (data['precio'] as num).toDouble(),
         ubicacion: data['ubicacion'] ?? '',
         disponibilidad: data['disponibilidad'] ?? false,
-        calificacionPromedio: data['calificacionPromedio'] ?? 0.0,
-        calificaciones: [],
+        calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
+        calificaciones: listaCalificaciones,
         politicaCancelacion: data['politicaCancelacion'] ?? '',
+        nombreAnfitrion: data['nombreAnfitrion'] ?? 'Anfitrión Desconocido', 
       );
     } catch (e) {
       return null;
@@ -76,13 +82,22 @@ class GestionPublicacion {
 class GestionCalificacion {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> agregarCalificacion(String publicacionId, String viajeroId, String reservacionId, String comentario, double puntaje) async {
+  // Actualizado para recibir y guardar el "nombreUsuario" en la base de datos
+  Future<void> agregarCalificacion({
+    required String publicacionId, 
+    required String viajeroId, 
+    required String reservacionId, 
+    required String comentario, 
+    required double puntaje,
+    required String nombreUsuario // <-- Obligatorio al registrar la reseña
+  }) async {
     try {
       await _firestore.collection('publications').doc(publicacionId).collection('ratings').add({
         'viajeroId': viajeroId,
         'reservacionId': reservacionId,
         'comentario': comentario,
         'puntaje': puntaje,
+        'nombreUsuario': nombreUsuario, // <-- Se guarda en Firestore
         'fecha': FieldValue.serverTimestamp(),
       });
       await calcularCalificacionPromedio(publicacionId);
@@ -96,12 +111,20 @@ class GestionCalificacion {
       QuerySnapshot snapshot = await _firestore.collection('publications').doc(publicacionId).collection('ratings').get();
       return snapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        
+        // Manejo ultra seguro de fechas nulas de Firebase server timestamps
+        DateTime fechaDoc = DateTime.now();
+        if (data['fecha'] != null && data['fecha'] is Timestamp) {
+          fechaDoc = (data['fecha'] as Timestamp).toDate();
+        }
+
+        // ¡AQUÍ SE CORRIGE EL ERROR! Le pasamos todos los argumentos requeridos
         return Calificacion(
           id: doc.id,
-          puntaje: data['puntaje'],
+          puntaje: (data['puntaje'] as num).toDouble(),
           comentario: data['comentario'] ?? '',
-          // Conversión crucial de Timestamp a DateTime
-          fecha: (data['fecha'] as Timestamp).toDate(), 
+          fecha: fechaDoc, 
+          nombreUsuario: data['nombreUsuario'] ?? 'Usuario anónimo', // <-- Resuelto
         );
       }).toList();
     } catch (e) {
@@ -126,7 +149,10 @@ class GestionCalificacion {
         await _firestore.collection('publications').doc(publicacionId).update({'calificacionPromedio': 0.0});
         return;
       }
-      double totalPuntaje = snapshot.docs.fold(0.0, (sum, doc) => sum + (doc['puntaje'] as double));
+      double totalPuntaje = snapshot.docs.fold(0.0, (sum, doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return sum + ((data['puntaje'] ?? 0.0) as num).toDouble();
+      });
       double promedio = totalPuntaje / snapshot.docs.length;
       await _firestore.collection('publications').doc(publicacionId).update({'calificacionPromedio': promedio});
     } catch (e) {
@@ -136,19 +162,16 @@ class GestionCalificacion {
 }
 
 //Por cuestiones de modulacion, se hará esta clase por separado.
-//Este va a manejar la gestión de las imágenes de las publicaciones, como subir, eliminar 
-//y obtener URLs de las imágenes asociadas a cada publicación. Se usará Firebase Storage para esto.
-//Solo habrá una imagen por publicación, por lo que se guardará el URL de la imagen en el documento de la publicación en Firestore.
 class GestionImagenPublicacion { 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   Future<String?> subirImagen(String publicacionId, File imagen) async {
     try {
-      String filePath = 'publicaciones/$publicacionId/${DateTime.now().millisecondsSinceEpoch}.jpg';//Ruta única para cada imagen, usando el ID de la publicación y un timestamp.
-      UploadTask uploadTask = _storage.ref().child(filePath).putFile(imagen);//Sube la imagen a Firebase Storage.
-      TaskSnapshot snapshot = await uploadTask;//Espera a que la subida termine y obtiene el snapshot.
-      String downloadUrl = await snapshot.ref.getDownloadURL();//Obtiene el URL de descarga de la imagen subida.
+      String filePath = 'publicaciones/$publicacionId/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      UploadTask uploadTask = _storage.ref().child(filePath).putFile(imagen);
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
       await _firestore.collection('publications').doc(publicacionId).update({'imagenUrl': downloadUrl});
       print('Imagen subida exitosamente');
       return downloadUrl;
@@ -161,11 +184,14 @@ class GestionImagenPublicacion {
   Future<void> eliminarImagen(String publicacionId) async {
     try {
       DocumentSnapshot doc = await _firestore.collection('publications').doc(publicacionId).get();
-      if (doc.exists && doc['imagenUrl'] != null) {
-        String imageUrl = doc['imagenUrl'];
-        await _storage.refFromURL(imageUrl).delete();
-        await _firestore.collection('publications').doc(publicacionId).update({'imagenUrl': FieldValue.delete()});
-        print('Imagen eliminada exitosamente');
+      if (doc.exists) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        if (data['imagenUrl'] != null) {
+          String imageUrl = data['imagenUrl'];
+          await _storage.refFromURL(imageUrl).delete();
+          await _firestore.collection('publications').doc(publicacionId).update({'imagenUrl': FieldValue.delete()});
+          print('Imagen eliminada exitosamente');
+        }
       } else {
         print('No se encontró imagen para eliminar');
       }
@@ -177,12 +203,14 @@ class GestionImagenPublicacion {
   Future<String?> obtenerImagenUrl(String publicacionId) async {
     try {
       DocumentSnapshot doc = await _firestore.collection('publications').doc(publicacionId).get();
-      if (doc.exists && doc['imagenUrl'] != null) {
-        return doc['imagenUrl'];
-      } else {
-        print('No se encontró imagen para esta publicación');
-        return null;
+      if (doc.exists) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        if (data['imagenUrl'] != null) {
+          return data['imagenUrl'];
+        }
       }
+      print('No se encontró imagen para esta publicación');
+      return null;
     } catch (e) {
       print('Error al obtener URL de imagen: $e');
       return null;
