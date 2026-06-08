@@ -1,7 +1,7 @@
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
 import 'package:ecostay/pantallas/registro.dart';
-import 'package:ecostay/pantallas/reservas_viaj.dart';
+import 'package:ecostay/pantallas/reserva_viaj.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/gestion_usuario.dart'; 
 

@@ -1,14 +1,20 @@
+import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
+import 'package:ecostay/models/gestion_reservacion.dart';
+import 'package:ecostay/models/reserva.dart';
 
 import 'usuario.dart';
 
 class PrestadorServicio extends Usuario {
-  String rol = "prestador";
+  String rol = "host";
   String rif;
   String telefono;
   String direccion;
   String cuentaPayPal;
-  List<dynamic> estadisticas; // List<Estadistica>
+  List<dynamic> estadisticas;
+
+  List<Publicacion> publicaciones = [];
+  List<Reserva> reservas = [];
 
   PrestadorServicio({
     required super.id,
@@ -22,6 +28,25 @@ class PrestadorServicio extends Usuario {
     required this.cuentaPayPal,
     required this.estadisticas,
   }) : super(rol: 'host');
+
+  Future<void> cargarMisDatos() async {
+    try {
+      GestionPublicacion gestionPub = GestionPublicacion();
+      publicaciones = await gestionPub.obtenerPublicacionesPorProveedor(id);
+
+      GestionReservacion gestionRes = GestionReservacion();
+      List<Reserva> listaTemporalReservas = [];
+
+      for (Publicacion pub in publicaciones) {
+        List<Reserva> reservasDePub = await gestionRes.obtenerReservasPorPublicacion(pub.id);
+        listaTemporalReservas.addAll(reservasDePub);
+      }
+
+      reservas = listaTemporalReservas;
+    } catch (e) {
+      throw Exception('Error al cargar datos del prestador: $e');
+    }
+  }
 
   void crearPublicacion(Map<String, dynamic> datos) {
     GestionPublicacion gestion = GestionPublicacion();

@@ -77,18 +77,20 @@ class PantallaMisReservas extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
                 children: [
-                  TextButton.icon(
-                    onPressed: () {}, 
+                  TextButton.icon(onPressed: () {
+                    //se pone el codigo para regresar al dashboard o home
+                  }, 
                     icon: const Icon(Icons.search, color: Color(0xFF216A44), size: 28),
                     label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                   ),
-                  TextButton.icon(
-                    onPressed: () {}, 
+                  TextButton.icon(onPressed: null, 
                     icon: const Icon(Icons.send_outlined, color: Color(0xFF216A44), size: 28),
-                    label: const Text('Reservas', style: TextStyle(color: Color(0xFF216A44), fontSize: 25, fontWeight: FontWeight.w900)),
+                    label: const Text('Reservas', style: TextStyle(color: Color(0xFF216A44), fontSize: 25, 
+                    fontWeight: FontWeight.w900)),
                   ),
-                  TextButton.icon(
-                    onPressed: () {}, 
+                  TextButton.icon(onPressed: () {
+                    //aqui se pone el codigo para redireccionar al perfil
+                  }, 
                     icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
                     label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                   ),

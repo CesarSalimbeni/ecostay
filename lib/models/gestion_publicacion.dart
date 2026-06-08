@@ -82,6 +82,7 @@ class GestionPublicacion {
         calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
         calificaciones: [], // Para optimización, no traemos las calificaciones en esta consulta masiva
         politicaCancelacion: data['politicaCancelacion'] ?? '',
+        nombreAnfitrion: data['nombreAnfitrion'] ?? '', // <-- Missing Parameter Added Here
       );
     } catch (e) {
       return null;
@@ -116,6 +117,7 @@ class GestionPublicacion {
           calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
           calificaciones: [], // Para optimización, no traemos las calificaciones en esta consulta masiva
           politicaCancelacion: data['politicaCancelacion'] ?? '',
+          nombreAnfitrion: data['nombreAnfitrion'] ?? '', // <-- Missing Parameter Added Here
         );
       }).toList();
     } catch (e) {
@@ -169,6 +171,7 @@ class GestionCalificacion {
           puntaje: (data['puntaje'] as num).toDouble(),
           comentario: data['comentario'] ?? '',
           fecha: fechaDoc, 
+          nombreUsuario: data['nombreUsuario'] ?? '', // <-- Missing Parameter Added Here
         );
       }).toList();
     } catch (e) {
