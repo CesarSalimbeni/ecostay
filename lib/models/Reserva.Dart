@@ -1,4 +1,4 @@
-import 'estado_reserva.dart';
+import 'estadoreserva.dart';
 import 'gestion_reservacion.dart';
 
 class Reserva {
