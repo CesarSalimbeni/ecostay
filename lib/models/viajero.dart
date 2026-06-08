@@ -1,6 +1,6 @@
-import 'package:ecostay/models/Estadoreserva.Dart';
+import 'package:ecostay/models/estadoreserva.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
-import 'Reserva.Dart';
+import 'reserva.dart';
 import 'gestion_reservacion.dart';
 import 'usuario.dart';
 

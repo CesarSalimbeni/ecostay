@@ -1,5 +1,5 @@
-import 'Reserva.Dart';
-import 'Estadoreserva.Dart';
+import 'reserva.dart';
+import 'estadoreserva.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Esta clase se encarga de gestionar las reservas realizadas por los usuarios.
@@ -57,20 +57,26 @@ class GestionReservacion {
   }
 
   // Obtiene la información de una reserva específica.
-  //Incluye las ids del viajero y la publicación para facilitar su uso posterior.
+  // Incluye las ids del viajero y la publicación para facilitar su uso posterior.
   Future<(Reserva, String, String)> obtenerInformacion(String reservaId) async {
-    try { DocumentSnapshot doc = await _firestore.collection('reservations').doc(reservaId).get();
+    try {
+      DocumentSnapshot doc = await _firestore.collection('reservations').doc(reservaId).get();
       if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        
         return (
           Reserva(
             id: doc.id,
-            fechaInicio: (doc['fechaInicio'] as Timestamp).toDate(),
-            fechaFin: (doc['fechaFin'] as Timestamp).toDate(),
-            estado: EstadoReserva.values.firstWhere((e) => e.toString() == doc['estado']),
-            total: doc['total'],
+            fechaInicio: (data['fechaInicio'] as Timestamp).toDate(),
+            fechaFin: (data['fechaFin'] as Timestamp).toDate(),
+            estado: EstadoReserva.values.firstWhere(
+              (e) => e.toString() == data['estado'],
+              orElse: () => EstadoReserva.PENDIENTE,
+            ),
+            total: (data['total'] as num).toDouble(),
           ),
-          doc['viajeroId'] as String,
-          doc['publicacionId'] as String
+          data['viajeroId'] as String,
+          data['publicacionId'] as String
         );
       }
     } catch (e) {
@@ -78,5 +84,32 @@ class GestionReservacion {
     }
     throw Exception('Reserva no encontrada');
   }
-}
 
+  // Esta funcion busca una reserva a través de la idViajero y devuelve una lista de reservas asociadas a ese viajero.
+  Future<List<Reserva>> obtenerReservasPorViajero(String viajeroId) async {
+    try {
+      QuerySnapshot query = await _firestore
+          .collection('reservations')
+          .where('viajeroId', isEqualTo: viajeroId)
+          .get();
+
+      return query.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+
+        return Reserva(
+          id: doc.id,
+          fechaInicio: (data['fechaInicio'] as Timestamp).toDate(),
+          fechaFin: (data['fechaFin'] as Timestamp).toDate(),
+          estado: EstadoReserva.values.firstWhere(
+            (e) => e.toString() == data['estado'],
+            orElse: () => EstadoReserva.PENDIENTE, // Un valor por defecto seguro
+          ),
+          total: (data['total'] as num).toDouble(), 
+        );
+      }).toList();
+    } catch (e) {
+      print('Error al obtener las reservas del viajero: $e');
+      return [];
+    }
+  }
+}

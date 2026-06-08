@@ -1,4 +1,4 @@
-import 'package:ecostay/models/Estadoreserva.Dart';
+import 'package:ecostay/models/estadoreserva.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/models/reserva.dart'; 
 import 'package:ecostay/pantallas/estilo.dart';

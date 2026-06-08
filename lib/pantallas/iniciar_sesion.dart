@@ -48,7 +48,7 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
           MaterialPageRoute(builder: (context) => PantallaTempviaj(viajero: usuarioLogueado as Viajero),),
         );
         
-      } else if (usuarioLogueado.rol == 'prestador') {
+      } else if (usuarioLogueado.rol == 'prestador' || usuarioLogueado.rol == 'host') {
         
         // Cuando tengas tu pantalla de hotel lista, harás el cast correspondiente:
         // Navigator.pushReplacement(
