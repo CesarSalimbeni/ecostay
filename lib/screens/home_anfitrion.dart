@@ -1,338 +1,325 @@
 import 'package:flutter/material.dart';
-import 'perfil_anfitrion_screen.dart';
+import 'perfil_anfitrion_screen.dart'; // Importación para poder navegar al perfil
 
-class HomeAnfitrionScreen extends StatelessWidget {
-  const HomeAnfitrionScreen({super.key});
+class HomeAnfitrion extends StatefulWidget {
+  const HomeAnfitrion({super.key});
 
   @override
+  State<HomeAnfitrion> createState() => _HomeAnfitrionState();
+}
+
+class _HomeAnfitrionState extends State<HomeAnfitrion> {
+  @override
   Widget build(BuildContext context) {
+    // 1. Scaffold: Provee la base de Material Design para evitar recuadros rojos
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 18, 32, 47),
-      body: ListView(
-        children: [
-          Column(
-            children: [
-              Container(
-                width: 1612,
-                height: 895,
-                child: Stack(
-                  children: [
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      child: Container(
-                        width: 1612,
-                        height: 895,
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              left: 0,
-                              top: 0,
-                              child: Container(
-                                width: 1586,
-                                height: 892,
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      left: 0,
-                                      top: 0,
-                                      child: Container(
-                                        width: 1586,
-                                        height: 892,
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFFF5F7F2),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 0,
-                                      top: 0,
-                                      child: Container(
-                                        width: 1586,
-                                        height: 137,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 1452,
-                                      top: 19,
-                                      child: Container(
-                                        width: 100,
-                                        height: 100,
-                                        decoration: const ShapeDecoration(
-                                          color: Color(0xFF216A44),
-                                          shape: OvalBorder(),
-                                        ),
-                                      ),
-                                    ),
-                                    const Positioned(
-                                      left: 1286,
-                                      top: 40,
-                                      child: SizedBox(
-                                        width: 166,
-                                        height: 29,
-                                        child: Text(
-                                          'Miguel Angle',
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 20,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
-                                            height: 1.40,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const Positioned(
-                                      left: 1289,
-                                      top: 69,
-                                      child: Text(
-                                        'Anfitrión',
-                                        style: TextStyle(
-                                          color: Color(0xFF8E8E93),
-                                          fontSize: 20,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.40,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 322,
-                                      top: 35,
-                                      child: Container(
-                                        width: 941,
-                                        height: 79,
-                                        decoration: ShapeDecoration(
-                                          color: const Color(0xFFF4F7F2),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              50,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const Positioned(
-                                      left: 401,
-                                      top: 55,
-                                      child: Text(
-                                        'Buscar...',
-                                        style: TextStyle(
-                                          color: Color(0xFF526F75),
-                                          fontSize: 32,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.40,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 0,
-                                      top: 137,
-                                      child: Container(
-                                        width: 1586,
-                                        decoration: const ShapeDecoration(
-                                          shape: RoundedRectangleBorder(
-                                            side: BorderSide(
-                                              width: 1,
-                                              strokeAlign:
-                                                  BorderSide.strokeAlignCenter,
-                                              color: Color(0xFF8E8E93),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 92,
-                                      top: 0,
-                                      child: Container(
-                                        width: 139,
-                                        height: 137,
-                                        decoration: const BoxDecoration(
-                                          image: DecorationImage(
-                                            image: NetworkImage(
-                                              "https://placehold.co/139x137",
-                                            ),
-                                            fit: BoxFit.fill,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    // --- DASHBOARD ---
-                                    const Positioned(
-                                      left: 171,
-                                      top: 137,
-                                      child: SizedBox(
-                                        width: 278,
-                                        height: 87,
-                                        child: Stack(
-                                          children: [
-                                            Positioned(
-                                              left: 72.33,
-                                              top: 27,
-                                              child: SizedBox(
-                                                width: 192.11,
-                                                height: 30,
-                                                child: Text(
-                                                  'Dashboard',
-                                                  style: TextStyle(
-                                                    color: Color(0xFFF5F7F2),
-                                                    fontSize: 36,
-                                                    fontFamily: 'Inter',
-                                                    fontWeight: FontWeight.w400,
-                                                    height: 1.40,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    // --- PUBLICACIONES ---
-                                    const Positioned(
-                                      left: 465,
-                                      top: 137,
-                                      child: SizedBox(
-                                        width: 350,
-                                        height: 87,
-                                        child: Stack(
-                                          children: [
-                                            Positioned(
-                                              left: 91.06,
-                                              top: 27,
-                                              child: SizedBox(
-                                                width: 241.87,
-                                                height: 30,
-                                                child: Text(
-                                                  'Publicaciones',
-                                                  style: TextStyle(
-                                                    color: Color(0xFF216A44),
-                                                    fontSize: 36,
-                                                    fontFamily: 'Inter',
-                                                    fontWeight: FontWeight.w400,
-                                                    height: 1.40,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    // --- BOTÓN DE PERFIL (¡AQUÍ ESTÁ LA LÓGICA!) ---
-                                    Positioned(
-                                      left: 1093,
-                                      top: 137,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          // Esto nos lleva a la pantalla de edición
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const PerfilAnfitrionScreen(),
-                                            ),
-                                          );
-                                        },
-                                        // Le puse un color transparente de fondo para que el área táctil sea más grande y fácil de presionar
-                                        child: Container(
-                                          width: 170,
-                                          height: 87,
-                                          color: Colors.transparent,
-                                          child: const Stack(
-                                            children: [
-                                              Positioned(
-                                                left: 44.23,
-                                                top: 27,
-                                                child: SizedBox(
-                                                  width: 117.48,
-                                                  height: 30,
-                                                  child: Text(
-                                                    'Perfil',
-                                                    style: TextStyle(
-                                                      color: Color(0xFF216A44),
-                                                      fontSize: 36,
-                                                      fontFamily: 'Inter',
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      height: 1.40,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    // --- RESERVAS ---
-                                    const Positioned(
-                                      left: 831,
-                                      top: 137,
-                                      child: SizedBox(
-                                        width: 246,
-                                        height: 87,
-                                        child: Stack(
-                                          children: [
-                                            Positioned(
-                                              left: 64,
-                                              top: 27,
-                                              child: SizedBox(
-                                                width: 170,
-                                                height: 30,
-                                                child: Text(
-                                                  'Reservas',
-                                                  style: TextStyle(
-                                                    color: Color(0xFF216A44),
-                                                    fontSize: 36,
-                                                    fontFamily: 'Inter',
-                                                    fontWeight: FontWeight.w400,
-                                                    height: 1.40,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+      // 2. SingleChildScrollView doble: Evita las franjas amarillas/negras si la pantalla es pequeña
+      body: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Container(
+            width: 1440,
+            height: 1024,
+            clipBehavior: Clip.antiAlias,
+            decoration: const BoxDecoration(color: Color(0xFFF5F7F2)),
+            child: Stack(
+              children: [
+                // ==========================================
+                // BARRA SUPERIOR
+                // ==========================================
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  child: Container(
+                    width: 1440,
+                    height: 116,
+                    decoration: const BoxDecoration(color: Colors.white),
+                  ),
+                ),
+                Positioned(
+                  left: 174,
+                  top: 36,
+                  child: Container(
+                    width: 443,
+                    height: 44,
+                    decoration: ShapeDecoration(
+                      color: const Color(0xFFF5F7F2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    const Positioned(
-                      left: 254,
-                      top: 166,
-                      child: SizedBox(
-                        width: 241.87,
-                        height: 30,
-                        child: Text(
-                          'Dashboard',
+                  ),
+                ),
+                Positioned(
+                  left: 233,
+                  top: 48,
+                  child: const SizedBox(
+                    width: 354,
+                    height: 22,
+                    child: Text(
+                      'Buscar reservas, fechas...',
+                      style: TextStyle(
+                        color: Color(0xFF8E8E93),
+                        fontSize: 16,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ÍCONO DE PERFIL (ARRIBA A LA DERECHA) - CLICKEABLE
+                Positioned(
+                  left: 1216,
+                  top: 34,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PerfilAnfitrionScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 48,
+                      decoration: const ShapeDecoration(
+                        color: Color(0xFF216A44),
+                        shape: OvalBorder(),
+                      ),
+                      child: const Icon(Icons.person, color: Colors.white),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 1017,
+                  top: 47,
+                  child: const SizedBox(
+                    width: 178,
+                    height: 22,
+                    child: Text(
+                      'Miguel Ángel',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ==========================================
+                // MENÚ DE NAVEGACIÓN
+                // ==========================================
+                Positioned(
+                  left: 397,
+                  top: 140,
+                  child: SizedBox(
+                    width: 250,
+                    height: 80,
+                    child: Row(
+                      children: const [
+                        Icon(
+                          Icons.dashboard,
+                          color: Color(0xFF216A44),
+                          size: 32,
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'Panel',
+                          style: TextStyle(
+                            color: Color(0xFF216A44),
+                            fontSize: 36,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 704,
+                  top: 140,
+                  child: SizedBox(
+                    width: 280,
+                    height: 80,
+                    child: Row(
+                      children: const [
+                        Icon(
+                          Icons.home_work,
+                          color: Color(0xFF216A44),
+                          size: 32,
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'Propiedades',
                           style: TextStyle(
                             color: Color(0xFF216A44),
                             fontSize: 36,
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w400,
-                            height: 1.40,
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // BOTÓN "PERFIL" DEL MENÚ - CLICKEABLE HACIA EL PERFIL DEL ANFITRIÓN
+                Positioned(
+                  left: 1022,
+                  top: 140,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PerfilAnfitrionScreen(),
+                        ),
+                      );
+                    },
+                    child: SizedBox(
+                      width: 246,
+                      height: 80,
+                      child: Row(
+                        children: const [
+                          Icon(
+                            Icons.account_circle,
+                            color: Color(0xFF216A44),
+                            size: 32,
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Perfil',
+                            style: TextStyle(
+                              color: Color(0xFF216A44),
+                              fontSize: 36,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ==========================================
+                // CONTENIDO CENTRAL (DASHBOARD DEL ANFITRIÓN)
+                // ==========================================
+                Positioned(
+                  left: 174,
+                  top: 250,
+                  child: const Text(
+                    'Panel de Administración',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 40,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 174,
+                  top: 320,
+                  child: Container(
+                    width: 1092,
+                    height: 250,
+                    decoration: ShapeDecoration(
+                      color: const Color(0xFF216A44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Tienes 3 nuevas solicitudes de reserva hoy',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+
+                // ==========================================
+                // SECCIÓN INFERIOR
+                // ==========================================
+                Positioned(
+                  left: 174,
+                  top: 610,
+                  child: Container(
+                    width: 1092,
+                    height: 300,
+                    decoration: ShapeDecoration(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text(
+                              'Resumen de actividad',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 24,
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              '• Ingresos del mes: \$1,250',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              '• Calificación promedio: 4.8 ⭐',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              '• Mensajes sin leer: 2',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Icon(
+                          Icons.analytics,
+                          size: 120,
+                          color: Color(0xFF216A44),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

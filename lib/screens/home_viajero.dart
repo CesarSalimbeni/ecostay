@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'perfil_viajero_screen.dart'; // <-- IMPORTACIÓN NECESARIA PARA NAVEGAR
 
 class HomeViajero extends StatefulWidget {
   const HomeViajero({super.key});
@@ -22,7 +23,9 @@ class _HomeViajeroState extends State<HomeViajero> {
             decoration: const BoxDecoration(color: Color(0xFFF5F7F2)),
             child: Stack(
               children: [
+                // ==========================================
                 // BARRA SUPERIOR
+                // ==========================================
                 Positioned(
                   left: 0,
                   top: 0,
@@ -63,20 +66,30 @@ class _HomeViajeroState extends State<HomeViajero> {
                     ),
                   ),
                 ),
+                // ÍCONO DE PERFIL (ARRIBA A LA DERECHA) - AHORA ES CLICKEABLE
                 Positioned(
                   left: 1216,
                   top: 34,
-                  child: Container(
-                    width: 50,
-                    height: 48,
-                    decoration: const ShapeDecoration(
-                      color: Color(0xFF216A44),
-                      shape: OvalBorder(),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PerfilViajeroScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 48,
+                      decoration: const ShapeDecoration(
+                        color: Color(0xFF216A44),
+                        shape: OvalBorder(),
+                      ),
+                      child: const Icon(Icons.person, color: Colors.white),
                     ),
-                    child: const Icon(Icons.person, color: Colors.white),
                   ),
                 ),
-                // LÍNEA 89 CORREGIDA AQUÍ (Se cambió Alignment.centerRight por TextAlign.right)
                 Positioned(
                   left: 1017,
                   top: 47,
@@ -96,7 +109,9 @@ class _HomeViajeroState extends State<HomeViajero> {
                   ),
                 ),
 
+                // ==========================================
                 // MENÚ DE NAVEGACIÓN
+                // ==========================================
                 Positioned(
                   left: 397,
                   top: 140,
@@ -147,35 +162,48 @@ class _HomeViajeroState extends State<HomeViajero> {
                     ),
                   ),
                 ),
+                // BOTÓN "PERFIL" - AHORA ES CLICKEABLE Y TE LLEVA A LA PANTALLA DE PERFIL
                 Positioned(
                   left: 1022,
                   top: 140,
-                  child: SizedBox(
-                    width: 246,
-                    height: 80,
-                    child: Row(
-                      children: const [
-                        Icon(
-                          Icons.account_circle,
-                          color: Color(0xFF216A44),
-                          size: 32,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PerfilViajeroScreen(),
                         ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Perfil',
-                          style: TextStyle(
+                      );
+                    },
+                    child: SizedBox(
+                      width: 246,
+                      height: 80,
+                      child: Row(
+                        children: const [
+                          Icon(
+                            Icons.account_circle,
                             color: Color(0xFF216A44),
-                            fontSize: 36,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
+                            size: 32,
                           ),
-                        ),
-                      ],
+                          SizedBox(width: 12),
+                          Text(
+                            'Perfil',
+                            style: TextStyle(
+                              color: Color(0xFF216A44),
+                              fontSize: 36,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
 
+                // ==========================================
                 // CONTENIDO CENTRAL
+                // ==========================================
                 Positioned(
                   left: 174,
                   top: 250,
@@ -215,7 +243,9 @@ class _HomeViajeroState extends State<HomeViajero> {
                   ),
                 ),
 
+                // ==========================================
                 // SECCIÓN INFERIOR
+                // ==========================================
                 Positioned(
                   left: 174,
                   top: 610,
