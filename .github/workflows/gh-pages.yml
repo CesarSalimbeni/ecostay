@@ -3,7 +3,7 @@ name: Deploy Flutter Web to GitHub Pages
 on:
   push:
     branches:
-      - main # O el nombre de tu rama principal (ej. master)
+      - master # O el nombre de tu rama principal (ej. master)
 
 # Permisos necesarios para escribir en GitHub Pages
 permissions:
