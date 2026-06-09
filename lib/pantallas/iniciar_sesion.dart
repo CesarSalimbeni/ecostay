@@ -1,5 +1,7 @@
+import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
+import 'package:ecostay/pantallas/pagextracliente.dart';
 import 'package:ecostay/pantallas/pagextraviaj.dart';
 import 'package:ecostay/pantallas/registro.dart';
 import 'package:flutter/material.dart';
@@ -48,15 +50,11 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
           MaterialPageRoute(builder: (context) => PantallaTempviaj(viajero: usuarioLogueado as Viajero),),
         );
         
-      } else if (usuarioLogueado.rol == 'prestador' || usuarioLogueado.rol == 'host') {
-        
-        // Cuando tengas tu pantalla de hotel lista, harás el cast correspondiente:
-        // Navigator.pushReplacement(
-        //   context, 
-        //   MaterialPageRoute(
-        //     builder: (context) => PantallaHotel(prestador: usuarioLogueado as PrestadorServicio),
-        //   ),
-        // );
+      } else if (usuarioLogueado.rol == 'host') {
+         Navigator.pushReplacement(context, MaterialPageRoute(
+          builder: (context) => PantallaTempcliente(prestador: usuarioLogueado as PrestadorServicio),
+          ),
+        );
         
       }
       
