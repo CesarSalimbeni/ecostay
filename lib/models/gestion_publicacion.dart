@@ -1,10 +1,7 @@
 //Este file contendra las funciones para la gestion de publicaciones, como crear, editar y eliminar.
 //Además de funciones para agregar y obtener calificaciones de las publicaciones, utilizando una subcolección.
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ecostay/models/usuario.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'calificacion.dart';
 import 'publicacion.dart';
