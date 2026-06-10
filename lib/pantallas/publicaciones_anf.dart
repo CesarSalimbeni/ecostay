@@ -3,8 +3,11 @@ import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/reservas_anf.dart';
 import 'package:ecostay/models/gestion_publicacion.dart'; 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class PantallaPublicaciones extends StatelessWidget {
   final PrestadorServicio prestador;
@@ -22,11 +25,25 @@ class PantallaPublicaciones extends StatelessWidget {
       text: esEdicion ? publicacionAEditar.precio.toString() : '');
     final TextEditingController descripcionController = TextEditingController(
       text: esEdicion ? publicacionAEditar.descripcion : '');
+    final TextEditingController policancelacionController = TextEditingController(
+      text: esEdicion ? publicacionAEditar.politicaCancelacion : '');
+    bool transporteDisponible = esEdicion ? publicacionAEditar.disponibilidadtransporte : false;
+    XFile? imagenSeleccionada;
+    final ImagePicker picker = ImagePicker();
 
     showDialog(
       context: context,barrierDismissible: false, 
       builder: (BuildContext context) {
-        return AlertDialog(
+        return StatefulBuilder(builder: (context, setState) {
+          Future<void> seleccionarImagen() async {
+            final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+            if (image != null) {
+              setState(() {
+                imagenSeleccionada = image;
+              });
+            }
+          }
+          return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(esEdicion ? 'Editar Publicación' : 'Crear Nueva Publicación',
             style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF216A44)),
@@ -38,30 +55,61 @@ class PantallaPublicaciones extends StatelessWidget {
                   Text(esEdicion 
                     ? 'Modifica los datos de tu publicación.' : 'Ingresa los datos de tu nueva posada o servicio.'),
                   const SizedBox(height: 20),
+                  GestureDetector(onTap: seleccionarImagen,
+                    child: Container(height: 150, width: double.infinity,
+                      decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF216A44), width: 1, style: BorderStyle.solid),
+                      ),
+                      child: imagenSeleccionada != null
+                          ? ClipRRect(borderRadius: BorderRadius.circular(10),
+                              child: kIsWeb
+                                  ? Image.network(imagenSeleccionada!.path, fit: BoxFit.cover)
+                                  : Image.file(File(imagenSeleccionada!.path), fit: BoxFit.cover),
+                            )
+                          : const Column(mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo_outlined, size: 40, color: Color(0xFF216A44)),
+                                SizedBox(height: 8),
+                                Text('Toca para subir una foto', style: TextStyle(color: Color(0xFF216A44))),
+                              ],
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
                   TextField(controller: tituloController,
                     decoration: InputDecoration(labelText: 'Título de la Publicación',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
-                      ),
-                    ),
+                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
                   ),
                   const SizedBox(height: 15),
                   TextField(controller: descripcionController,maxLines: 3,
                     decoration: InputDecoration(labelText: 'Descripción',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
-                      ),
-                    ),
+                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
                   ),
                   const SizedBox(height: 15),
                   TextField(controller: ubicacionController,
                     decoration: InputDecoration(labelText: 'Ubicación (Ej. Los Roques)',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
-                      ),
+                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(controller: policancelacionController,
+                    decoration: InputDecoration(labelText: 'Política de cancelación',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
+                  ),
+                  const SizedBox(height: 15),
+                  SwitchListTile(title: const Text('¿Ofrece transporte?'), activeThumbColor: const Color(0xFF216A44),
+                    value: transporteDisponible,onChanged: (bool value) {
+                      setState(() {transporteDisponible = value;});
+                    },
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(color: Colors.grey.shade300)
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -70,9 +118,7 @@ class PantallaPublicaciones extends StatelessWidget {
                       prefixIcon: const Icon(Icons.attach_money, color: Color(0xFF216A44)),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
-                      ),
-                    ),
+                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
                   ),
                 ],
               ),
@@ -96,6 +142,7 @@ class PantallaPublicaciones extends StatelessWidget {
 
                 try {
                   GestionPublicacion gestionPub = GestionPublicacion();
+                  GestionImagenPublicacion gestionImg = GestionImagenPublicacion();
                   
                   if (esEdicion) {
                     await gestionPub.editarPublicacion(
@@ -104,19 +151,27 @@ class PantallaPublicaciones extends StatelessWidget {
                         'descripcion': descripcionController.text,
                         'precio': double.parse(precioController.text),
                         'ubicacion': ubicacionController.text,
+                        'politicaCancelacion': policancelacionController.text,
+                        'transporte': transporteDisponible,
                       }
                     );
+                    if (imagenSeleccionada != null) {
+                      await gestionImg.subirImagen(publicacionAEditar.id, imagenSeleccionada!);
+                    }
                   } else {
-                    await gestionPub.crearPublicacion(
+                    String nuevoId = await gestionPub.crearPublicacion(
                       titulo: tituloController.text,
                       descripcion: descripcionController.text,
                       precio: double.parse(precioController.text),
                       ubicacion: ubicacionController.text,
                       autoruid: prestador.id, 
-                      disponibilidad: true,
-                      politicaCancelacion: 'Flexible', 
+                      disponibilidadtransporte: transporteDisponible,
+                      politicaCancelacion: policancelacionController.text,
                       nombreAnfitrion: prestador.nombre, 
                     );
+                    if (imagenSeleccionada != null) {
+                      await gestionImg.subirImagen(nuevoId, imagenSeleccionada!);
+                    }
                   }
                   
                   if (!context.mounted) return;
@@ -145,7 +200,7 @@ class PantallaPublicaciones extends StatelessWidget {
               ),
             ),
           ],
-        );
+        );});
       },
     );
   }
@@ -300,8 +355,9 @@ class PantallaPublicaciones extends StatelessWidget {
                                     subtitulo: pub.ubicacion,
                                     precio: pub.precio,
                                     puntuacion: pub.calificacionPromedio,
-                                    imagenUrl: 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=600&auto=format&fit=crop', 
-                                    // Pasamos las funciones a los botones de la tarjeta
+                                    imagenUrl: (pub.imagenUrl != null && pub.imagenUrl!.isNotEmpty) 
+                                        ? pub.imagenUrl! 
+                                        : 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=600&auto=format&fit=crop', 
                                     onEdit: () => _mostrarDialogoPublicacion(context, publicacionAEditar: pub),
                                     onDelete: () => _eliminarPublicacion(context, pub.id),
                                   );
@@ -314,7 +370,6 @@ class PantallaPublicaciones extends StatelessWidget {
                       child: Padding(padding: const EdgeInsets.only(right: 40.0),
                         child: SizedBox(width: 65, height: 65,
                           child: FloatingActionButton(backgroundColor: const Color(0xFF1E6144), 
-                            // Aquí se llama sin pasar publicación para Crear Nueva
                             onPressed: () => _mostrarDialogoPublicacion(context),
                             shape: const CircleBorder(), 
                             child: const Icon(Icons.note_add_outlined, color: Colors.white, size: 30),
@@ -332,7 +387,7 @@ class PantallaPublicaciones extends StatelessWidget {
     );
   }
 
-  // Se añadieron onEdit y onDelete como parámetros requeridos
+
   Widget _buildPublicacionCard({
     required String titulo,
     required String subtitulo,

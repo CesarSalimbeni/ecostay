@@ -290,7 +290,7 @@ class PantallaReserva extends StatelessWidget {
                                           
                                           // BOTÓN PAGAR (Llama al diálogo de reserva con el método recuperado)
                                           FilledButton(
-                                            onPressed: publicacion.disponibilidad ? () => _mostrarDialogoReserva(context) : null, 
+                                            onPressed: publicacion.disponibilidadtransporte ? () => _mostrarDialogoReserva(context) : null, 
                                             style: FilledButton.styleFrom(
                                               backgroundColor: const Color(0xFF216A44), 
                                               foregroundColor: const Color(0xFFFFFFFF),

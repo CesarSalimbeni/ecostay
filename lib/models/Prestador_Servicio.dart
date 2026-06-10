@@ -56,7 +56,7 @@ class PrestadorServicio extends Usuario {
       precio: datos['precio'],
       ubicacion: datos['ubicacion'],
       autoruid: id,
-      disponibilidad: datos['disponibilidad'],
+      disponibilidadtransporte: datos['disponibilidad'],
       politicaCancelacion: datos['politicaCancelacion'],
       nombreAnfitrion: nombre,
     );

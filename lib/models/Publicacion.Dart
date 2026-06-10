@@ -6,11 +6,12 @@ class Publicacion {
   final String descripcion;
   final double precio; // Precio por noche o por servicio
   final String ubicacion;
-  final bool disponibilidad; //Transporte disponible o no.
+  final bool disponibilidadtransporte; //Transporte disponible o no.
   final double calificacionPromedio;
   final List<Calificacion> calificaciones;
   final String politicaCancelacion;
   final String nombreAnfitrion;
+  final String? imagenUrl;
 
   Publicacion({
     required this.id,
@@ -18,10 +19,11 @@ class Publicacion {
     required this.descripcion,
     required this.precio,
     required this.ubicacion,
-    required this.disponibilidad,
+    required this.disponibilidadtransporte,
     required this.calificacionPromedio,
     required this.calificaciones,
     required this.politicaCancelacion,
     required this.nombreAnfitrion,
+    this.imagenUrl,
   });
 }

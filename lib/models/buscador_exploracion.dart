@@ -36,7 +36,7 @@ class BuscadorExploracion {
           descripcion: data['descripcion'] ?? '',
           precio: (data['precio'] as num?)?.toDouble() ?? 0.0, 
           ubicacion: data['ubicacion'] ?? '',
-          disponibilidad: data['disponibilidad'] ?? false,
+          disponibilidadtransporte: data['transporte'] ?? false,
           calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
           calificaciones: [],
           politicaCancelacion: data['politicaCancelacion'] ?? '',

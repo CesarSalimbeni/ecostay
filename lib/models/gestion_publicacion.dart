@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecostay/models/usuario.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'calificacion.dart';
 import 'publicacion.dart';
 
@@ -12,29 +13,30 @@ class GestionPublicacion {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   //Esta función sirve para crear una nueva publicación en Firestore, con los datos proporcionados por el usuario.
-  Future<void> crearPublicacion({
+  Future<String> crearPublicacion({
     required String titulo, 
     required String descripcion, 
     required double precio, 
     required String ubicacion, 
     required String autoruid, 
-    required bool disponibilidad, 
+    required bool disponibilidadtransporte, 
     required String politicaCancelacion,
     required String nombreAnfitrion 
   }) async {
     try {
-      await _firestore.collection('publications').add({
+      DocumentReference docRef = await _firestore.collection('publications').add({
         'titulo': titulo,
         'descripcion': descripcion,
         'precio': precio,
         'ubicacion': ubicacion,
         'providerId': autoruid,
-        'disponibilidad': disponibilidad,
+        'transporte': disponibilidadtransporte,
         'calificacionPromedio': 0.0,
         'politicaCancelacion': politicaCancelacion,
         'nombreAnfitrion': nombreAnfitrion,
         'fechaCreacion': FieldValue.serverTimestamp(),
       });
+      return docRef.id;
     } catch (e) {
       throw Exception('Error al crear publicación: $e');
     }
@@ -78,11 +80,11 @@ class GestionPublicacion {
         descripcion: data['descripcion'] ?? '',
         precio: (data['precio'] as num).toDouble(),
         ubicacion: data['ubicacion'] ?? '',
-        disponibilidad: data['disponibilidad'] ?? false,
+        disponibilidadtransporte: data['transporte'] ?? false,
         calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
         calificaciones: [], // Para optimización, no traemos las calificaciones en esta consulta masiva
         politicaCancelacion: data['politicaCancelacion'] ?? '',
-        nombreAnfitrion: data['nombreAnfitrion'] ?? '', // <-- Missing Parameter Added Here
+        nombreAnfitrion: data['nombreAnfitrion'] ?? '',
       );
     } catch (e) {
       return null;
@@ -113,11 +115,12 @@ class GestionPublicacion {
           descripcion: data['descripcion'] ?? '',
           precio: (data['precio'] as num).toDouble(),
           ubicacion: data['ubicacion'] ?? '',
-          disponibilidad: data['disponibilidad'] ?? false,
+          disponibilidadtransporte: data['transporte'] ?? false,
           calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
           calificaciones: [], // Para optimización, no traemos las calificaciones en esta consulta masiva
           politicaCancelacion: data['politicaCancelacion'] ?? '',
-          nombreAnfitrion: data['nombreAnfitrion'] ?? '', // <-- Missing Parameter Added Here
+          nombreAnfitrion: data['nombreAnfitrion'] ?? '',
+          imagenUrl: data['imagenUrl'],
         );
       }).toList();
     } catch (e) {
@@ -218,10 +221,13 @@ class GestionImagenPublicacion {
 
   //Esta función sirve para subir una imagen a Firebase Storage y asociarla a una publicación 
   //específica en Firestore, utilizando el ID de la publicación y el archivo de la imagen.
-  Future<String?> subirImagen(String publicacionId, File imagen) async {
+  Future<String?> subirImagen(String publicacionId, XFile imagen) async { // <-- Cambiado a XFile
     try {
       String filePath = 'publicaciones/$publicacionId/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      UploadTask uploadTask = _storage.ref().child(filePath).putFile(imagen);
+      final bytes = await imagen.readAsBytes(); 
+      
+      UploadTask uploadTask = _storage.ref().child(filePath).putData(bytes); 
+      
       TaskSnapshot snapshot = await uploadTask;
       String downloadUrl = await snapshot.ref.getDownloadURL();
       await _firestore.collection('publications').doc(publicacionId).update({'imagenUrl': downloadUrl});
