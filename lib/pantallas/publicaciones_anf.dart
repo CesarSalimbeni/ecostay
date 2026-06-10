@@ -2,7 +2,9 @@ import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/reservas_anf.dart';
-import 'package:ecostay/models/gestion_publicacion.dart'; 
+import 'package:ecostay/models/gestion_publicacion.dart';
+import 'package:ecostay/screens/home_anfitrion.dart';
+import 'package:ecostay/screens/perfil_anfitrion_screen.dart'; 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
@@ -274,9 +276,11 @@ class PantallaPublicaciones extends StatelessWidget {
             style: const TextStyle(fontSize: 20),
             ),
           ),
-          const CircleAvatar(
-            backgroundColor: Color(0xFF216A44),
-            child: Icon(Icons.person, color: Colors.white),
+          Padding(padding: const EdgeInsets.only(right: 10.0),
+            child: const CircleAvatar(
+              backgroundColor: Color(0xFF216A44),
+              child: Icon(Icons.person, color: Colors.white),
+            ),
           )
         ],
       ),
@@ -302,9 +306,10 @@ class PantallaPublicaciones extends StatelessWidget {
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
                   children: [
                     TextButton.icon(
-                      onPressed: () {
-
-                      }, 
+                      onPressed: () {Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => HomeAnfitrion(prestador: prestador)),
+                      );
+                    },  
                       icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
                       label: const Text('Dashboard', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                     ),
@@ -325,9 +330,10 @@ class PantallaPublicaciones extends StatelessWidget {
                       label: const Text('Reservas', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                     ),
                     TextButton.icon(
-                      onPressed: () {
-
-                      }, 
+                      onPressed: () {Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => PerfilAnfitrion(prestador: prestador)),
+                      );
+                    }, 
                       icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
                       label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                     ),

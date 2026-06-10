@@ -24,323 +24,175 @@ class Frame6 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 1586,
-          height: 895,
+        Container(width: 1586, height: 895,
           child: Stack(
             children: [
-              Positioned(
-                left: 0,
-                top: 0,
-                child: Container(
-                  width: 1586,
-                  height: 895,
+              Positioned(left: 0, top: 0,
+                child: Container(width: 1586, height: 895,
                   child: Stack(
                     children: [
-                      Positioned(
-                        left: 166,
-                        top: 175,
-                        child: Container(
-                          width: 246,
-                          height: 87,
+                      Positioned(left: 166, top: 175,
+                        child: Container(width: 246, height: 87,
                           child: Stack(
                             children: [
-                              Positioned(
-                                left: 0,
-                                top: 0,
-                                child: Container(
-                                  width: 246,
-                                  height: 87,
-                                  decoration: ShapeDecoration(
-                                    color: const Color(0xFFF5F7F2),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50),
+                              Positioned(left: 0, top: 0,
+                                child: Container(width: 246, height: 87,
+                                  decoration: ShapeDecoration(color: const Color(0xFFF5F7F2),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50),
                                     ),
                                   ),
                                 ),
                               ),
-                              Positioned(
-                                left: 64,
-                                top: 27,
-                                child: SizedBox(
-                                  width: 170,
-                                  height: 30,
-                                  child: Text(
-                                    'Dashboard',
-                                    style: TextStyle(
-                                      color: const Color(0xFF216A44),
-                                      fontSize: 24,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w400,
-                                      height: 1.40,
+                              Positioned(left: 64, top: 27,
+                                child: SizedBox(width: 170, height: 30,
+                                  child: Text('Dashboard', style: TextStyle(color: const Color(0xFF216A44),
+                                    fontSize: 24, fontFamily: 'Inter', fontWeight: FontWeight.w900, height: 1.40,
                                     ),
                                   ),
                                 ),
                               ),
-                              Positioned(
-                                left: 17.81,
-                                top: 31,
-                                child: Container(
-                                  width: 31.17,
-                                  height: 26,
-                                  clipBehavior: Clip.antiAlias,
-                                  decoration: BoxDecoration(),
-                                  child: Stack(),
+                              Positioned(left: 17.81, top: 31,
+                                child: Container(width: 31.17, height: 26,
+                                  clipBehavior: Clip.antiAlias, decoration: BoxDecoration(), child: Stack(),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 89,
-                        top: 175,
-                        child: Container(
-                          width: 246,
-                          height: 87,
+                      Positioned(left: 89, top: 175,
+                        child: Container(width: 246, height: 87,
                           child: Stack(
                             children: [
-                              Positioned(
-                                left: 0,
-                                top: 0,
-                                child: Container(
-                                  width: 246,
-                                  height: 87,
-                                  decoration: ShapeDecoration(
-                                    color: const Color(0xFFF5F7F2),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50),
+                              Positioned(left: 0, top: 0,
+                                child: Container(width: 246, height: 87,
+                                  decoration: ShapeDecoration(color: const Color(0xFFF5F7F2),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50),
                                     ),
                                   ),
                                 ),
                               ),
-                              Positioned(
-                                left: 64,
-                                top: 27,
-                                child: SizedBox(
-                                  width: 170,
-                                  height: 30,
-                                  child: Text(
-                                    'Dashboard',
-                                    style: TextStyle(
-                                      color: const Color(0xFF216A44),
-                                      fontSize: 24,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w400,
-                                      height: 1.40,
+                              Positioned(left: 64, top: 27,
+                                child: SizedBox(width: 170, height: 30,
+                                  child: Text('Dashboard',
+                                    style: TextStyle(color: const Color(0xFF216A44), fontSize: 24,
+                                      fontFamily: 'Inter', fontWeight: FontWeight.w400, height: 1.40,
                                     ),
                                   ),
                                 ),
                               ),
-                              Positioned(
-                                left: 17.81,
-                                top: 31,
-                                child: Container(
-                                  width: 31.17,
-                                  height: 26,
-                                  clipBehavior: Clip.antiAlias,
-                                  decoration: BoxDecoration(),
-                                  child: Stack(),
+                              Positioned(left: 17.81, top: 31,
+                                child: Container(width: 31.17, height: 26,
+                                  clipBehavior: Clip.antiAlias, decoration: BoxDecoration(), child: Stack(),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 0,
-                        top: 3,
-                        child: Container(
-                          width: 1586,
-                          height: 892,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F7F2),
+                      Positioned(left: 0, top: 3,
+                        child: Container(width: 1586, height: 892,
+                          decoration: BoxDecoration(color: const Color(0xFFF5F7F2),
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 0,
-                        top: 3,
-                        child: Container(
-                          width: 1586,
-                          height: 137,
+                      Positioned(left: 0, top: 3,
+                        child: Container(width: 1586, height: 137,
                           decoration: BoxDecoration(color: Colors.white),
                         ),
                       ),
-                      Positioned(
-                        left: 1452,
-                        top: 22,
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: ShapeDecoration(
-                            color: const Color(0xFF216A44),
-                            shape: OvalBorder(),
+                      Positioned(left: 1452, top: 22,
+                        child: Container(width: 100, height: 100,
+                          decoration: ShapeDecoration(color: const Color(0xFF216A44), shape: OvalBorder(),
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 1286,
-                        top: 43,
-                        child: SizedBox(
-                          width: 166,
-                          height: 29,
-                          child: Text(
-                            'Admin1',
-                            style: TextStyle(
-                              color: Colors.black /* Grays-Black */,
-                              fontSize: 20,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              height: 1.40,
+                      Positioned(left: 1286, top: 43,
+                        child: SizedBox(width: 166,height: 29,
+                          child: Text('Admin1',
+                            style: TextStyle(color: Colors.black, fontSize: 20, fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400, height: 1.40,
                             ),
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 1286,
-                        top: 72,
-                        child: Text(
-                          'Administrador',
-                          style: TextStyle(
-                            color: const Color(0xFF8E8E93) /* Grays-Gray */,
-                            fontSize: 20,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
-                            height: 1.40,
+                      Positioned(left: 1286, top: 72,
+                        child: Text('Administrador',
+                          style: TextStyle(color: const Color(0xFF8E8E93), fontSize: 20, fontFamily: 'Inter',
+                            fontWeight: FontWeight.w400, height: 1.40,
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 322,
-                        top: 38,
-                        child: Container(
-                          width: 941,
-                          height: 79,
-                          decoration: ShapeDecoration(
-                            color: const Color(0xFFF4F7F2),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
+                      Positioned(left: 322, top: 38,
+                        child: Container(width: 941, height: 79,
+                          decoration: ShapeDecoration(color: const Color(0xFFF4F7F2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50),
                             ),
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 358,
-                        top: 65,
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
-                          child: Stack(),
+                      Positioned(left: 358, top: 65,
+                        child: Container(width: 32, height: 32,
+                          clipBehavior: Clip.antiAlias, decoration: BoxDecoration(), child: Stack(),
                         ),
                       ),
-                      Positioned(
-                        left: 401,
-                        top: 58,
-                        child: Text(
-                          'Buscar...',
-                          style: TextStyle(
-                            color: const Color(0xFF526F75),
-                            fontSize: 32,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
-                            height: 1.40,
+                      Positioned(left: 401, top: 58,
+                        child: Text('Buscar...', style: TextStyle(color: const Color(0xFF526F75), fontSize: 32,
+                          fontFamily: 'Inter', fontWeight: FontWeight.w400, height: 1.40,
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 0,
-                        top: 140,
-                        child: Container(
-                          width: 1586,
+                      Positioned(left: 0, top: 140,
+                        child: Container(width: 1586,
                           decoration: ShapeDecoration(
                             shape: RoundedRectangleBorder(
-                              side: BorderSide(
-                                width: 1,
-                                strokeAlign: BorderSide.strokeAlignCenter,
-                                color: const Color(0xFF8E8E93) /* Grays-Gray */,
+                              side: BorderSide(width: 1, strokeAlign: BorderSide.strokeAlignCenter,
+                                color: const Color(0xFF8E8E93),
                               ),
                             ),
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 92,
-                        top: 0,
-                        child: Container(
-                          width: 138,
-                          height: 137,
+                      Positioned(left: 92, top: 0,
+                        child: Container(width: 138, height: 137,
                           decoration: BoxDecoration(
                             image: DecorationImage(
-                              image: NetworkImage(
-                                "https://placehold.co/138x137",
-                              ),
+                              image: NetworkImage("https://placehold.co/138x137"),
                               fit: BoxFit.fill,
                             ),
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 155,
-                        top: 140,
-                        child: Container(
-                          width: 294,
-                          height: 120,
+                      Positioned(left: 155, top: 140,
+                        child: Container(width: 294, height: 120,
                           child: Stack(
                             children: [
-                              Positioned(
-                                left: 76.49,
-                                top: 37.24,
-                                child: SizedBox(
-                                  width: 203.17,
-                                  height: 41.38,
-                                  child: Text(
-                                    'Dashboard',
-                                    style: TextStyle(
-                                      color: const Color(0xFF216A44),
-                                      fontSize: 36,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w400,
-                                      height: 1.40,
+                              Positioned(left: 76.49, top: 37.24,
+                                child: SizedBox(width: 203.17, height: 41.38,
+                                  child: Text('Dashboard',
+                                    style: TextStyle(color: const Color(0xFF216A44), fontSize: 36, 
+                                      fontFamily: 'Inter', fontWeight: FontWeight.w400, height: 1.40,
                                     ),
                                   ),
                                 ),
                               ),
-                              Positioned(
-                                left: 21.29,
-                                top: 42.76,
-                                child: Container(
-                                  width: 37.25,
-                                  height: 35.86,
-                                  clipBehavior: Clip.antiAlias,
-                                  decoration: BoxDecoration(),
-                                  child: Stack(),
+                              Positioned(left: 21.29, top: 42.76,
+                                child: Container(width: 37.25, height: 35.86,
+                                  clipBehavior: Clip.antiAlias, decoration: BoxDecoration(), child: Stack(),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 503,
-                        top: 140,
-                        child: Container(
-                          width: 246,
-                          height: 120,
+                      Positioned(left: 503, top: 140,
+                        child: Container(width: 246, height: 120,
                           child: Stack(
                             children: [
-                              Positioned(
-                                left: 64,
-                                top: 37.24,
-                                child: SizedBox(
-                                  width: 170,
-                                  height: 41.38,
-                                  child: Text(
-                                    'Usuarios',
-                                    style: TextStyle(
-                                      color: const Color(0xFF216A44),
+                              Positioned(left: 64, top: 37.24,
+                                child: SizedBox(width: 170, height: 41.38,
+                                  child: Text('Usuarios',
+                                    style: TextStyle(color: const Color(0xFF216A44),
                                       fontSize: 36,
                                       fontFamily: 'Inter',
                                       fontWeight: FontWeight.w400,

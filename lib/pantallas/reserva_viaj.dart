@@ -49,19 +49,31 @@ class PantallaReserva extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () async {
-                          final DateTimeRange? picked = await showDateRangePicker(
+                          final DateTimeRange? picked = await showDialog<DateTimeRange>(
                             context: context,
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(const Duration(days: 365)),
-                            initialDateRange: fechasSeleccionadas,
-                            builder: (context, child) {
+                            builder: (BuildContext context) {
                               return Theme(
                                 data: Theme.of(context).copyWith(
-                                  colorScheme: const ColorScheme.light(primary: Color(0xFF216A44),
-                                    onPrimary: Colors.white, surface: Colors.white, onSurface: Colors.black,
+                                  colorScheme: const ColorScheme.light(
+                                    primary: Color(0xFF216A44),
+                                    onPrimary: Colors.white,
+                                    surface: Color(0xFFF5F7F2),
+                                    onSurface: Colors.black,
                                   ),
                                 ),
-                                child: child!,
+                                child: Dialog(
+                                  insetPadding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  child: Container(
+                                    constraints: const BoxConstraints(maxWidth: 400, maxHeight: 520),
+                                    child: DateRangePickerDialog(
+                                      firstDate: DateTime.now(),
+                                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                                      initialDateRange: fechasSeleccionadas,
+                                      initialEntryMode: DatePickerEntryMode.calendar,
+                                    ),
+                                  ),
+                                ),
                               );
                             },
                           );
@@ -191,7 +203,9 @@ class PantallaReserva extends StatelessWidget {
           Padding(padding: EdgeInsets.only(right: 10.0),
             child: Text('Usuario', overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 20)),
           ),
-          CircleAvatar()
+          Padding(padding: EdgeInsets.only(right: 10.0),
+            child: CircleAvatar(),
+          )
         ],
       ),
       body: Center(
@@ -237,7 +251,10 @@ class PantallaReserva extends StatelessWidget {
                               Padding(padding: const EdgeInsets.only(left: 20), 
                                 child: Container(width: 300, height: 250, 
                                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), 
-                                    image: const DecorationImage(image: AssetImage('assets/images/fondo.jpg'),
+                                    image: DecorationImage(
+                                      image: (publicacion.imagenUrl != null && publicacion.imagenUrl!.startsWith('http'))
+                                          ? NetworkImage(publicacion.imagenUrl!) as ImageProvider
+                                          : const AssetImage('assets/images/fondo.jpg'),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -288,9 +305,8 @@ class PantallaReserva extends StatelessWidget {
                                             ),
                                           ),
                                           
-                                          // BOTÓN PAGAR (Llama al diálogo de reserva con el método recuperado)
                                           FilledButton(
-                                            onPressed: publicacion.disponibilidadtransporte ? () => _mostrarDialogoReserva(context) : null, 
+                                            onPressed: () => _mostrarDialogoReserva(context), 
                                             style: FilledButton.styleFrom(
                                               backgroundColor: const Color(0xFF216A44), 
                                               foregroundColor: const Color(0xFFFFFFFF),
@@ -308,13 +324,11 @@ class PantallaReserva extends StatelessWidget {
                           ),
                         ),
                         
-                        // SECCIÓN DE RESEÑAS CON EL CÍRCULO VERDE DEL DISEÑO
                         const Padding(padding: EdgeInsets.only(left: 60),
                           child: Text('Reseñas', style: TextStyle(fontSize: 30, fontFamily: 'Idiqlat', 
                           color: Colors.black, fontWeight: FontWeight.w800)),
                         ),
                         
-                        // LISTVIEW DINÁMICO DE RESEÑAS
                         Expanded(
                           child: Padding(padding: const EdgeInsets.only(left: 60, top: 10, bottom: 10),
                             child: publicacion.calificaciones.isEmpty
@@ -330,12 +344,10 @@ class PantallaReserva extends StatelessWidget {
                                             const Icon(Icons.circle, color: Color(0xFF216A44), size: 24),
                                             const SizedBox(width: 15),
                                             
-                                            // Nombre del autor de la reseña
                                             Text(calificacion.nombreUsuario, style: const TextStyle(
                                               fontSize: 25, fontWeight: FontWeight.bold, color: Colors.black),
                                             ),
                                             
-                                            // Comentario de la reseña
                                             Expanded(
                                               child: Text(calificacion.comentario, style: const TextStyle(
                                                 fontSize: 25, color: Colors.black), overflow: TextOverflow.ellipsis,

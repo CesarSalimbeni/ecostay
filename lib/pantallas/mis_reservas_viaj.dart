@@ -2,6 +2,9 @@ import 'package:ecostay/models/estadoreserva.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/models/reserva.dart'; 
 import 'package:ecostay/pantallas/estilo.dart';
+import 'package:ecostay/screens/home_viajero.dart';
+import 'package:ecostay/screens/perfil_anfitrion_screen.dart';
+import 'package:ecostay/screens/perfil_viajero_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 
@@ -60,11 +63,12 @@ class PantallaMisReservas extends StatelessWidget {
           elevation: const WidgetStatePropertyAll(0),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10.0),
+          Padding(padding: const EdgeInsets.only(right: 10.0),
             child: Text(viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, style: const TextStyle(fontSize: 20)),
           ),
-          const CircleAvatar()
+          Padding(padding: const EdgeInsets.only(right: 10.0),
+            child: const CircleAvatar(),
+          )
         ],
       ),
       body: Center(
@@ -78,8 +82,11 @@ class PantallaMisReservas extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
                 children: [
                   TextButton.icon(onPressed: () {
-                    //se pone el codigo para regresar al dashboard o home
-                  }, 
+                    Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => HomeViajero(viajero: viajero),
+                        ),
+                      );
+                    }, 
                     icon: const Icon(Icons.search, color: Color(0xFF216A44), size: 28),
                     label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                   ),
@@ -89,8 +96,11 @@ class PantallaMisReservas extends StatelessWidget {
                     fontWeight: FontWeight.w900)),
                   ),
                   TextButton.icon(onPressed: () {
-                    //aqui se pone el codigo para redireccionar al perfil
-                  }, 
+                    Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => PerfilViajero(viajero: viajero),
+                        ),
+                      );
+                    }, 
                     icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
                     label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                   ),

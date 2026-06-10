@@ -1,9 +1,10 @@
 import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/pagextracliente.dart';
 import 'package:ecostay/pantallas/pagextraviaj.dart';
 import 'package:ecostay/pantallas/registro.dart';
+import 'package:ecostay/screens/home_anfitrion.dart';
+import 'package:ecostay/screens/home_viajero.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/gestion_usuario.dart'; 
 
@@ -47,12 +48,12 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
 
       if (usuarioLogueado.rol == 'cliente') {
         Navigator.pushReplacement(context, 
-          MaterialPageRoute(builder: (context) => PantallaTempviaj(viajero: usuarioLogueado as Viajero),),
+          MaterialPageRoute(builder: (context) => HomeViajero(viajero: usuarioLogueado as Viajero),),
         );
         
       } else if (usuarioLogueado.rol == 'host') {
          Navigator.pushReplacement(context, MaterialPageRoute(
-          builder: (context) => PantallaTempcliente(prestador: usuarioLogueado as PrestadorServicio),
+          builder: (context) => HomeAnfitrion(prestador: usuarioLogueado as PrestadorServicio),
           ),
         );
         

@@ -1,318 +1,317 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/models/publicacion.dart';
+import 'package:ecostay/pantallas/estilo.dart';
+import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
+import 'package:ecostay/pantallas/reserva_viaj.dart';
 import 'package:flutter/material.dart';
-import 'perfil_viajero_screen.dart'; // <-- IMPORTACIÓN NECESARIA PARA NAVEGAR
+import 'perfil_viajero_screen.dart';
 
-class HomeViajero extends StatefulWidget {
-  const HomeViajero({super.key});
+class HomeViajero extends StatelessWidget {
+  final Viajero viajero; 
 
-  @override
-  State<HomeViajero> createState() => _HomeViajeroState();
-}
+  const HomeViajero({super.key, required this.viajero});
 
-class _HomeViajeroState extends State<HomeViajero> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: Container(
-            width: 1440,
-            height: 1024,
-            clipBehavior: Clip.antiAlias,
-            decoration: const BoxDecoration(color: Color(0xFFF5F7F2)),
-            child: Stack(
+    return Scaffold(backgroundColor: ColorPalette.bg,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, 
+        centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 40.0),
+          child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain,),
+        ),
+        title: SearchBar(
+          hintText: 'Buscar...', 
+          hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
+          leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
+          backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
+          elevation: const WidgetStatePropertyAll(0),
+        ),
+        actions: [
+          Padding(padding: const EdgeInsets.only(right: 10.0),
+            child: Text(viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+            style: const TextStyle(fontSize: 20)),
+          ),
+          Padding(padding: const EdgeInsets.only(right: 10.0),
+            child: const CircleAvatar(
+              backgroundColor: Color(0xFF216A44),
+              child: Icon(Icons.person, color: Colors.white),
+            ),
+          )
+        ],
+      ),
+      body: Column(crossAxisAlignment: CrossAxisAlignment.start, 
+        children: [
+          // MENÚ SUPERIOR
+          Padding(padding: const EdgeInsets.only(top: 15),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
               children: [
-                // ==========================================
-                // BARRA SUPERIOR
-                // ==========================================
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  child: Container(
-                    width: 1440,
-                    height: 116,
-                    decoration: const BoxDecoration(color: Colors.white),
-                  ),
+                TextButton.icon(onPressed: null, 
+                  icon: const Icon(Icons.search, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
+                  fontWeight: FontWeight.w900)),
                 ),
-                Positioned(
-                  left: 174,
-                  top: 36,
-                  child: Container(
-                    width: 443,
-                    height: 44,
-                    decoration: ShapeDecoration(
-                      color: const Color(0xFFF5F7F2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                TextButton.icon(onPressed: () {
+                  Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) => PantallaMisReservas(viajero: viajero),
                       ),
-                    ),
-                  ),
+                    );
+                  },
+                  icon: const Icon(Icons.send_outlined, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Reservas', style: TextStyle(color: Color(0xFF216A44), fontSize: 25, )),
                 ),
-                Positioned(
-                  left: 233,
-                  top: 48,
-                  child: const SizedBox(
-                    width: 354,
-                    height: 22,
-                    child: Text(
-                      'Buscar por hotel, aeropuerto...',
-                      style: TextStyle(
-                        color: Color(0xFF8E8E93),
-                        fontSize: 16,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
+                TextButton.icon(onPressed: () {
+                  Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) => PerfilViajero(viajero: viajero),
                       ),
-                    ),
-                  ),
+                    );
+                  }, 
+                  icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                 ),
-                // ÍCONO DE PERFIL (ARRIBA A LA DERECHA) - AHORA ES CLICKEABLE
-                Positioned(
-                  left: 1216,
-                  top: 34,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PerfilViajeroScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 50,
-                      height: 48,
-                      decoration: const ShapeDecoration(
-                        color: Color(0xFF216A44),
-                        shape: OvalBorder(),
-                      ),
-                      child: const Icon(Icons.person, color: Colors.white),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 1017,
-                  top: 47,
-                  child: const SizedBox(
-                    width: 178,
-                    height: 22,
-                    child: Text(
-                      'María Gonzáles',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 20,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
+              ],
+            ),
+          ),
 
-                // ==========================================
-                // MENÚ DE NAVEGACIÓN
-                // ==========================================
-                Positioned(
-                  left: 397,
-                  top: 140,
-                  child: SizedBox(
-                    width: 218,
-                    height: 80,
-                    child: Row(
-                      children: const [
-                        Icon(Icons.explore, color: Color(0xFF216A44), size: 32),
-                        SizedBox(width: 12),
-                        Text(
-                          'Explorar',
-                          style: TextStyle(
-                            color: Color(0xFF216A44),
-                            fontSize: 36,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 704,
-                  top: 140,
-                  child: SizedBox(
-                    width: 229,
-                    height: 80,
-                    child: Row(
-                      children: const [
-                        Icon(
-                          Icons.book_online,
-                          color: Color(0xFF216A44),
-                          size: 32,
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Reservas',
-                          style: TextStyle(
-                            color: Color(0xFF216A44),
-                            fontSize: 36,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // BOTÓN "PERFIL" - AHORA ES CLICKEABLE Y TE LLEVA A LA PANTALLA DE PERFIL
-                Positioned(
-                  left: 1022,
-                  top: 140,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PerfilViajeroScreen(),
-                        ),
-                      );
-                    },
-                    child: SizedBox(
-                      width: 246,
-                      height: 80,
-                      child: Row(
-                        children: const [
-                          Icon(
-                            Icons.account_circle,
-                            color: Color(0xFF216A44),
-                            size: 32,
-                          ),
-                          SizedBox(width: 12),
-                          Text(
-                            'Perfil',
-                            style: TextStyle(
-                              color: Color(0xFF216A44),
-                              fontSize: 36,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // ==========================================
-                // CONTENIDO CENTRAL
-                // ==========================================
-                Positioned(
-                  left: 174,
-                  top: 250,
-                  child: const Text(
-                    '¡Bienvenido de vuelta!',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 40,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 174,
-                  top: 320,
-                  child: Container(
-                    width: 1092,
-                    height: 250,
-                    decoration: ShapeDecoration(
-                      color: const Color(0xFF216A44),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Descubre nuevos destinos para tu próximo viaje',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // ==========================================
-                // SECCIÓN INFERIOR
-                // ==========================================
-                Positioned(
-                  left: 174,
-                  top: 610,
-                  child: Container(
-                    width: 1092,
-                    height: 300,
-                    decoration: ShapeDecoration(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    padding: const EdgeInsets.all(24),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+          // CONTENIDO PRINCIPAL CON SCROLL
+          Expanded(
+            child: SingleChildScrollView(
+              child: Center(
+                child: Padding(padding: const EdgeInsets.only(top: 30, bottom: 40),
+                  child: SizedBox(width: 992,
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Text(
-                              'Destinos recomendados',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 24,
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w600,
+                        
+                        // BARRA DE BÚSQUEDA INTERNA Y FILTROS
+                        Container(padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(flex: 4,
+                                child: Container(padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5F7F2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const TextField(
+                                    decoration: InputDecoration(
+                                      icon: Icon(Icons.search, color: Color(0xFF526F75)),
+                                      hintText: '¿A donde vas?',
+                                      hintStyle: TextStyle(color: Color(0xFF526F75)),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              '• Cusco, Perú',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.black54,
+                              const SizedBox(width: 12),
+                              Expanded(flex: 2,
+                                child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(color: const Color(0xFFF5F7F2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text('Presupuesto', style: TextStyle(color: Color(0xFF526F75))),
+                                ),
                               ),
-                            ),
-                            Text(
-                              '• Cancún, México',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.black54,
+                              const SizedBox(width: 12),
+                              OutlinedButton(
+                                onPressed: () {},
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.black, width: 1.2),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                ),
+                                child: const Text('Filtros', style: TextStyle(color: Colors.black, fontSize: 16, 
+                                fontWeight: FontWeight.w500)),
                               ),
-                            ),
-                            Text(
-                              '• Buenos Aires, Argentina',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.black54,
+                              const SizedBox(width: 12),
+                              ElevatedButton(
+                                onPressed: () {},
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF216A44),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                ),
+                                child: const Text('Buscar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        const Icon(
-                          Icons.card_travel,
-                          size: 120,
-                          color: Color(0xFF216A44),
+                        
+                        const SizedBox(height: 35),
+
+                        // FLUJO DINÁMICO DE TARJETAS DE DESTINO CONECTADO A FIRESTORE
+                        FutureBuilder<QuerySnapshot>(
+                          future: FirebaseFirestore.instance.collection('publications').get(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(
+                                child: Padding(padding: EdgeInsets.all(20.0),
+                                  child: CircularProgressIndicator(color: Color(0xFF216A44)),
+                                ),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              return Center(child: Text('Error al cargar publicaciones: ${snapshot.error}'));
+                            }
+                            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                              return const Center(
+                                child: Padding(padding: EdgeInsets.all(20.0),
+                                  child: Text('No hay publicaciones disponibles', 
+                                    style: TextStyle(fontSize: 18, color: Colors.grey)),
+                                ),
+                              );
+                            }
+
+                            final docs = snapshot.data!.docs;
+
+                            return Wrap(spacing: 16, runSpacing: 16,
+                              children: docs.map((doc) {
+                                final data = doc.data() as Map<String, dynamic>;
+                                
+                                final publicacion = Publicacion(
+                                  id: doc.id,
+                                  titulo: data['titulo'] ?? 'Sin título',
+                                  descripcion: data['descripcion'] ?? '',
+                                  precio: (data['precio'] as num?)?.toDouble() ?? 0.0,
+                                  ubicacion: data['ubicacion'] ?? 'Sin ubicación',
+                                  disponibilidadtransporte: data['transporte'] ?? false,
+                                  calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
+                                  calificaciones: const [], 
+                                  politicaCancelacion: data['politicaCancelacion'] ?? '',
+                                  nombreAnfitrion: data['nombreAnfitrion'] ?? '',
+                                  imagenUrl: data['imagenUrl'],
+                                );
+
+                                return SizedBox(
+                                  width: (992 - 32) / 3, 
+                                  child: GestureDetector(
+                                    onTap: () {Navigator.push( context,
+                                      MaterialPageRoute(builder: (context) => PantallaReserva(
+                                        publicacion: publicacion, viajero: viajero,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: _buildDestinationCard(
+                                      publicacion.titulo, 
+                                      publicacion.ubicacion, 
+                                      '\$${publicacion.precio}', 
+                                      publicacion.imagenUrl ?? 'assets/images/los_roques.jpg',
+                                      publicacion.calificacionPromedio.toStringAsFixed(1),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
                         ),
+                        
                       ],
                     ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ]
+      )
+    );
+  }
+
+  // Helper para construir las tarjetas de los destinos
+  Widget _buildDestinationCard(String title, String location, String price, String imagePath, String rating) {
+    return Container(
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4),
+          )
+        ]
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                child: imagePath.startsWith('http')
+                    ? Image.network(
+                        imagePath, height: 200, width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(height: 200, color: Colors.grey[300],
+                            child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                          );
+                        },
+                      )
+                    : Image.asset(
+                        imagePath, height: 200, width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(height: 200, color: Colors.grey[300],
+                            child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                          );
+                        },
+                      ),
+              ),
+              Positioned(top: 12, right: 12,
+                child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC2DC77),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    rating, 
+                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 22, fontFamily: 'Idiqlat', color: Colors.black, 
+                  fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                Text(location, style: const TextStyle(color: Color(0xFF6E867A), fontSize: 14),
+                ),
+                const SizedBox(height: 10),
+                const Divider(color: Color(0xFFEBEBEB), thickness: 1.5),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Text(
+                    price,
+                    style: const TextStyle(color: Color(0xFF216A44), fontSize: 24, fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
             ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+}
+
+// Clase espejo actualizada para recibir la publicación completa sin errores de compilación
+class PantallaDetallePublicacion extends StatelessWidget {
+  final Publicacion publicacion;
+  final Viajero viajero;
+
+  const PantallaDetallePublicacion({super.key, required this.publicacion, required this.viajero});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(publicacion.titulo)),
+      body: Center(child: Text("Cargando detalles de: ${publicacion.descripcion}")),
     );
   }
 }
