@@ -7,6 +7,7 @@ import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/registro.dart';
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -21,10 +22,21 @@ void main() async {
 class MyApp extends StatelessWidget {
   final String? error;
   const MyApp({super.key, this.error});
+=======
+import 'screens/busqueda_screen.dart'; // Importa tu pantalla de búsqueda
+
+void main() {
+  runApp(const MiApp());
+}
+
+class MiApp extends StatelessWidget {
+  const MiApp({Key? key}) : super(key: key);
+>>>>>>> origin/frontend-mis-frames
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+<<<<<<< HEAD
       title: 'EcoStay',
       theme: ThemeData(primarySwatch: Colors.green),
       
@@ -147,6 +159,13 @@ class _TestUserManagementScreenState extends State<TestUserManagementScreen> {
           ),
         ),
       ),
+=======
+      debugShowCheckedModeBanner: false,
+      title: 'Prueba de Búsqueda',
+      theme: ThemeData(primarySwatch: Colors.green),
+
+      home: const BusquedaScreen(),
+>>>>>>> origin/frontend-mis-frames
     );
   }
 }
