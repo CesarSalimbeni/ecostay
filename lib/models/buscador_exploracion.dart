@@ -16,18 +16,13 @@ class BuscadorExploracion {
     double? precioMax,
   }) async {
     try {
-      // 1. Consulta Base: Trae todo ordenado por calificación
-      Query query = _firestore.collection('publications').orderBy('calificacionPromedio', descending: true);
-
-      // 2. Filtro de igualdad en Firestore
-      if (ubicacion != null && ubicacion.isNotEmpty) {
-        query = query.where('ubicacion', isEqualTo: ubicacion);
-      }
+      // 1. Consulta Base Limpia: Traemos la colección (Evitamos problemas de índices en Firebase Web)
+      Query query = _firestore.collection('publications');
 
       // Ejecutamos la consulta en Firestore
       QuerySnapshot snapshot = await query.get();
 
-      // Mapeamos a objetos Publicacion
+      // Mapeamos a objetos Publicacion incluyendo TODOS los campos requeridos por la vista
       List<Publicacion> publicaciones = snapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         return Publicacion(
@@ -41,11 +36,18 @@ class BuscadorExploracion {
           calificaciones: [],
           politicaCancelacion: data['politicaCancelacion'] ?? '',
           nombreAnfitrion: data['nombreAnfitrion'] ?? '',
+          // 👇 ¡IMPORTANTE! Agregamos el mapeo de la URL de la imagen que faltaba para la UI
+          imagenUrl: data['imagenUrl'], 
         );
       }).toList();
 
-      // 3. FILTROS EN MEMORIA (Dart)
+      // 2. FILTROS Y ORDENAMIENTO EN MEMORIA (Dart - 100% Flexible y Rápido)
       
+      // Filtro por ubicación exacta (obtenida de los filtros dinámicos)
+      if (ubicacion != null && ubicacion.isNotEmpty) {
+        publicaciones = publicaciones.where((pub) => pub.ubicacion.trim() == ubicacion.trim()).toList();
+      }
+
       // Filtro por calificación mínima
       if (calificacionMin != null) {
         publicaciones = publicaciones.where((pub) => pub.calificacionPromedio >= calificacionMin).toList();
@@ -61,13 +63,16 @@ class BuscadorExploracion {
         publicaciones = publicaciones.where((pub) => pub.precio <= precioMax).toList();
       }
 
-      // Filtro por coincidencia de texto en el título (ignora mayúsculas y el orden de las palabras)
+      // Filtro por coincidencia de texto en el título (ignora mayúsculas y espacios)
       if (titulo != null && titulo.isNotEmpty) {
-        String queryMinuscula = titulo.toLowerCase();
+        String queryMinuscula = titulo.toLowerCase().trim();
         publicaciones = publicaciones.where((pub) {
           return pub.titulo.toLowerCase().contains(queryMinuscula);
         }).toList();
       }
+
+      // 3. ORDENAMIENTO POR DEFECTO: Mayor calificación primero (Reemplaza al orderBy conflictivo)
+      publicaciones.sort((a, b) => b.calificacionPromedio.compareTo(a.calificacionPromedio));
 
       return publicaciones;
     } catch (e) {

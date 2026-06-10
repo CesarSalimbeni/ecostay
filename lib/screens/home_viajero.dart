@@ -21,6 +21,9 @@ class _HomeViajeroState extends State<HomeViajero> {
   final BuscadorExploracion _buscador = BuscadorExploracion();
   
   final TextEditingController _searchController = TextEditingController();
+  // Controlador para la barra de presupuesto superior
+  final TextEditingController _presupuestoController = TextEditingController();
+
   String? _ubicacionSeleccionada;
   double? _calificacionMin;
   double? _precioMin;
@@ -39,6 +42,13 @@ class _HomeViajeroState extends State<HomeViajero> {
     _cargarDatosDeFiltrosDinamicos();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _presupuestoController.dispose();
+    super.dispose();
+  }
+
   Future<void> _cargarDatosDeFiltrosDinamicos() async {
     try {
       QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('publications').get();
@@ -51,7 +61,10 @@ class _HomeViajeroState extends State<HomeViajero> {
         final data = doc.data() as Map<String, dynamic>;
         
         if (data['ubicacion'] != null && data['ubicacion'].toString().isNotEmpty) {
-          ubicacionesSet.add(data['ubicacion'].toString().trim());
+          String ubicacionTexto = data['ubicacion'].toString().trim();
+          if (ubicacionTexto.toLowerCase() != "prueba de ubicación.") {
+            ubicacionesSet.add(ubicacionTexto);
+          }
         }
 
         if (data['precio'] != null) {
@@ -142,7 +155,6 @@ class _HomeViajeroState extends State<HomeViajero> {
                         ),
                       const SizedBox(height: 20),
 
-
                       const Text('Rango de Precio (\$):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -204,6 +216,7 @@ class _HomeViajeroState extends State<HomeViajero> {
                       _precioMin = null;
                       _precioMax = null;
                       _calificacionMin = null;
+                      _presupuestoController.clear(); // Limpia la barra superior también
                     });
                     _ejecutarBusqueda();
                     Navigator.pop(context);
@@ -218,6 +231,13 @@ class _HomeViajeroState extends State<HomeViajero> {
                       _calificacionMin = tempCalificacion == 0.0 ? null : tempCalificacion;
                       _precioMin = double.tryParse(pMinController.text);
                       _precioMax = double.tryParse(pMaxController.text);
+                      
+                      // Refleja el precio máximo del pop-up en la barra superior
+                      if (_precioMax != null) {
+                        _presupuestoController.text = _precioMax!.toStringAsFixed(0);
+                      } else {
+                        _presupuestoController.clear();
+                      }
                     });
                     _ejecutarBusqueda(); 
                     Navigator.pop(context);
@@ -328,18 +348,35 @@ class _HomeViajeroState extends State<HomeViajero> {
                                 ),
                               ),
                               const SizedBox(width: 12),
+                              
+                              // CAJA DE PRESUPUESTO ACTIVA: Transformada a TextField editable
                               Expanded(flex: 2,
-                                child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                child: Container(padding: const EdgeInsets.symmetric(horizontal: 12),
                                   decoration: BoxDecoration(color: const Color(0xFFF5F7F2),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Text(
-                                    _precioMax != null ? 'Max: \$$_precioMax' : 'Presupuesto', 
+                                  child: TextField(
+                                    controller: _presupuestoController,
+                                    keyboardType: TextInputType.number,
                                     style: const TextStyle(color: Color(0xFF526F75)),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _precioMax = double.tryParse(value);
+                                      });
+                                      _ejecutarBusqueda(); // Filtra instantáneamente al escribir
+                                    },
+                                    decoration: const InputDecoration(
+                                      icon: Icon(Icons.attach_money, color: Color(0xFF526F75), size: 20),
+                                      hintText: 'Presupuesto Máx',
+                                      hintStyle: TextStyle(color: Color(0xFF526F75)),
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(vertical: 14),
+                                    ),
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
+                              
                               OutlinedButton(
                                 onPressed: () => _mostrarPopUpFiltros(context),
                                 style: OutlinedButton.styleFrom(
@@ -348,7 +385,7 @@ class _HomeViajeroState extends State<HomeViajero> {
                                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                                 ),
                                 child: Text(
-                                  _ubicacionSeleccionada != null || _calificacionMin != null || _precioMin != null
+                                  _ubicacionSeleccionada != null || _calificacionMin != null || _precioMin != null || _precioMax != null
                                       ? 'Filtros (*)' 
                                       : 'Filtros', 
                                   style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w500),
@@ -422,7 +459,6 @@ class _HomeViajeroState extends State<HomeViajero> {
                             );
                           },
                         ),
-                        
                       ],
                     ),
                   ),
