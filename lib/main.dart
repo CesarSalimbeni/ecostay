@@ -1,15 +1,9 @@
-import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
-import 'package:ecostay/pantallas/publicaciones_anf.dart';
-import 'package:ecostay/pantallas/reservas_anf.dart';
-import 'package:ecostay/pantallas/reserva_viaj.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/viajero.dart';
-import 'package:ecostay/pantallas/registro.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'screens/busqueda_screen.dart'; // Importado de la rama de tu amigo
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
