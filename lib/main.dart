@@ -7,9 +7,9 @@ import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/registro.dart';
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'screens/busqueda_screen.dart'; // Importado de la rama de tu amigo
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,27 +22,19 @@ void main() async {
 class MyApp extends StatelessWidget {
   final String? error;
   const MyApp({super.key, this.error});
-=======
-import 'screens/busqueda_screen.dart'; // Importa tu pantalla de búsqueda
-
-void main() {
-  runApp(const MiApp());
-}
-
-class MiApp extends StatelessWidget {
-  const MiApp({Key? key}) : super(key: key);
->>>>>>> origin/frontend-mis-frames
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-<<<<<<< HEAD
+      debugShowCheckedModeBanner: false, // Traído de la rama de tu amigo
       title: 'EcoStay',
       theme: ThemeData(primarySwatch: Colors.green),
       
-      // CAMBIAMOS ESTA LÍNEA: 
-      // En vez de PantallaInicio(), cargamos PantallaRegistro()
+      // Nota: Actualmente cargará PantallaInicio. 
+      // Si quieres ver directamente la pantalla de búsqueda de tu amigo, 
+      // comenta la línea de abajo y descomenta la siguiente:
       home: PantallaInicio(), 
+      // home: const BusquedaScreen(),
     );
   }
 }
@@ -159,13 +151,6 @@ class _TestUserManagementScreenState extends State<TestUserManagementScreen> {
           ),
         ),
       ),
-=======
-      debugShowCheckedModeBanner: false,
-      title: 'Prueba de Búsqueda',
-      theme: ThemeData(primarySwatch: Colors.green),
-
-      home: const BusquedaScreen(),
->>>>>>> origin/frontend-mis-frames
     );
   }
 }
