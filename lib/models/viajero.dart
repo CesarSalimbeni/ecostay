@@ -5,7 +5,6 @@ import 'gestion_reservacion.dart';
 import 'usuario.dart';
 
 class Viajero extends Usuario {
-  String rol = "cliente";
   String telefono;
   String cedula;
   String ciudad; // ciudad
@@ -15,8 +14,8 @@ class Viajero extends Usuario {
     required super.id,
     required super.nombre,
     required super.email,
-    required super.password,
     required super.fechaRegistro,
+    required super.suspendido,
     required this.telefono,
     required this.cedula,
     required this.ciudad,
@@ -60,7 +59,7 @@ class Viajero extends Usuario {
       'telefono': telefono,
       'cedula': cedula,
       'ciudad': ciudad,
-      // No guardamos la contraseña aquí por seguridad
+      'supendido': suspendido
     };
   }
 }

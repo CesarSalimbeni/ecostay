@@ -6,7 +6,6 @@ import 'package:ecostay/models/reserva.dart';
 import 'usuario.dart';
 
 class PrestadorServicio extends Usuario {
-  String rol = "host";
   String rif;
   String telefono;
   String direccion;
@@ -20,8 +19,8 @@ class PrestadorServicio extends Usuario {
     required super.id,
     required super.nombre,
     required super.email,
-    required super.password,
     required super.fechaRegistro,
+    required super.suspendido,
     required this.rif,
     required this.telefono,
     required this.direccion,
@@ -83,6 +82,7 @@ class PrestadorServicio extends Usuario {
       'telefono': telefono,
       'direccion': direccion,
       'cuentaPayPal': cuentaPayPal,
+      'supendido': suspendido
     };
   }
 }

@@ -265,13 +265,13 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                                                 id: _prestadorActual.id,
                                                 nombre: _nombreController.text,
                                                 email: _emailController.text,
-                                                password: _prestadorActual.password,
                                                 fechaRegistro: _prestadorActual.fechaRegistro,
                                                 rif: _rifController.text,
                                                 telefono: _telefonoController.text,
                                                 direccion: _direccionController.text,
                                                 cuentaPayPal: _paypalController.text,
                                                 estadisticas: _prestadorActual.estadisticas,
+                                                suspendido: _prestadorActual.suspendido
                                               );
                                             });
 
