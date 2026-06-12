@@ -46,32 +46,6 @@ class PrestadorServicio extends Usuario {
       throw Exception('Error al cargar datos del prestador: $e');
     }
   }
-
-  void crearPublicacion(Map<String, dynamic> datos) {
-    GestionPublicacion gestion = GestionPublicacion();
-    gestion.crearPublicacion(
-      titulo: datos['titulo'],
-      descripcion: datos['descripcion'],
-      precio: datos['precio'],
-      ubicacion: datos['ubicacion'],
-      autoruid: id,
-      disponibilidadtransporte: datos['disponibilidad'],
-      politicaCancelacion: datos['politicaCancelacion'],
-      nombreAnfitrion: nombre,
-    );
-  }
-
-  void gestionarCancelacion(Map<String, dynamic> reserva) {
-    print('$nombre (Prestador) gestionó una cancelación.');
-  }
-
-  void verDashboard() {
-    print('Mostrando Dashboard para $nombre.');
-  }
-
-  void verEstadisticasGlobales() {
-    print('Mostrando estadísticas globales del Prestador.');
-  }
   
   Map<String, dynamic> toMap() {
     return {

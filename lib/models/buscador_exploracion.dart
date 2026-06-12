@@ -1,19 +1,23 @@
 //Este file contendra las funciones para la busqueda y exploracion de publicaciones, utilizando filtros como titulo,
 //ubicacion, calificacion minima, precio minimo y precio maximo.
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecostay/models/gestion_publicacion.dart';
 import 'publicacion.dart';
 
 class BuscadorExploracion {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  GestionPublicacion gestionPublicacion = GestionPublicacion();
 
   //Esta función sirve para buscar publicaciones utilizando varios filtros.
   //Tambien se puede usar para explorar publicaciones sin filtros, simplemente dejando los parametros como null.
   Future<List<Publicacion>> buscarPublicaciones({
     String? titulo,
     String? ubicacion,
+    String? estilo,
     double? calificacionMin,
     double? precioMin,
     double? precioMax,
+    bool? disponibilidadtransporte,
   }) async {
     try {
       // 1. Consulta Base Limpia: Traemos la colección (Evitamos problemas de índices en Firebase Web)
@@ -25,20 +29,7 @@ class BuscadorExploracion {
       // Mapeamos a objetos Publicacion incluyendo TODOS los campos requeridos por la vista
       List<Publicacion> publicaciones = snapshot.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        return Publicacion(
-          id: doc.id,
-          titulo: data['titulo'] ?? '',
-          descripcion: data['descripcion'] ?? '',
-          precio: (data['precio'] as num?)?.toDouble() ?? 0.0, 
-          ubicacion: data['ubicacion'] ?? '',
-          disponibilidadtransporte: data['transporte'] ?? false,
-          calificacionPromedio: (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0,
-          calificaciones: [],
-          politicaCancelacion: data['politicaCancelacion'] ?? '',
-          nombreAnfitrion: data['nombreAnfitrion'] ?? '',
-          // 👇 ¡IMPORTANTE! Agregamos el mapeo de la URL de la imagen que faltaba para la UI
-          imagenUrl: data['imagenUrl'], 
-        );
+        return gestionPublicacion.mapToPublicacion(doc.id, data);
       }).toList();
 
       // 2. FILTROS Y ORDENAMIENTO EN MEMORIA (Dart - 100% Flexible y Rápido)
@@ -46,6 +37,11 @@ class BuscadorExploracion {
       // Filtro por ubicación exacta (obtenida de los filtros dinámicos)
       if (ubicacion != null && ubicacion.isNotEmpty) {
         publicaciones = publicaciones.where((pub) => pub.ubicacion.trim() == ubicacion.trim()).toList();
+      }
+
+      // Filtro por estilo
+      if (estilo != null && estilo.isNotEmpty) {
+        publicaciones = publicaciones.where((pub) => pub.ubicacion.trim() == estilo.trim()).toList();
       }
 
       // Filtro por calificación mínima
@@ -61,6 +57,10 @@ class BuscadorExploracion {
       // Filtro por precio máximo
       if (precioMax != null) {
         publicaciones = publicaciones.where((pub) => pub.precio <= precioMax).toList();
+      }
+
+      if (disponibilidadtransporte != null) {
+        publicaciones = publicaciones.where((pub) => pub.disponibilidadtransporte).toList();
       }
 
       // Filtro por coincidencia de texto en el título (ignora mayúsculas y espacios)
