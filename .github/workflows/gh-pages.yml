@@ -1,0 +1,47 @@
+name: Deploy Flutter Web to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master # O el nombre de tu rama principal (ej. master)
+
+# Permisos necesarios para escribir en GitHub Pages
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Descargar el código del repositorio
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Configurar el entorno de Java (Requerido por Flutter)
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # 3. Configurar Flutter en la máquina virtual
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # 4. Obtener las dependencias del proyecto (shared_preferences, lottie, etc.)
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 5. Compilar la versión Web asegurando el soporte PWA y la URL base correcta
+      - name: Build Web
+        run: flutter build web --base-href "/${{ github.event.repository.name }}/" --pwa-strategy=offline-first
+
+      # 6. Desplegar los archivos generados a la rama gh-pages
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: build/web # Carpeta donde Flutter guarda la compilación web
+          branch: gh-pages  # Rama automática que creará GitHub para la página
