@@ -31,6 +31,43 @@ class _GraficoPrestadorWidgetState extends State<GraficoPrestadorWidget> {
   // Guardo si quiero ver el gráfico de línea o de barras
   bool _mostrarGraficoLinea = true;
 
+  // Función para obtener las reservas desde Firestore
+  Stream<List<Reserva>> _getReservasStream() {
+    String? uid = _auth.currentUser?.uid;
+
+    // Si no hay usuario, devuelvo una lista vacía
+    if (uid == null) {
+      return Stream.value([]);
+    }
+
+    return _firestore.collection('reservas').snapshots().map((snapshot) {
+      // Creo una lista vacía donde voy a guardar las reservas filtradas
+      List<Reserva> reservasFiltradas = [];
+      for (var doc in snapshot.docs) {
+        Map<String, dynamic> data = doc.data();
+
+        // Verifico que el prestador sea el usuario actual Y que esté pagado
+        bool esMiReserva = data['prestadorId'] == uid;
+        bool estaPagada = data['estado'] == 'pagado';
+
+        if (esMiReserva && estaPagada) {
+          Reserva nuevaReserva = Reserva(
+            id: doc.id,
+            fechaInicio: (data['fechaInicio'] as Timestamp).toDate(),
+            fechaFin: (data['fechaFin'] as Timestamp).toDate(),
+            total: (data['total'] as num).toDouble(),
+            estado: EstadoReserva.COMPLETADA, 
+          );
+
+          // Agrego la reserva a mi lista
+          reservasFiltradas.add(nuevaReserva);
+        }
+      }
+
+      return reservasFiltradas;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
