@@ -1,4 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecostay/models/calificacion.dart';
+import 'package:ecostay/models/gestion_publicacion.dart';
+import 'package:ecostay/models/publicacion.dart';
+import 'package:ecostay/models/reporte.dart';
 enum TipoObjeto {
   PUBLICACION,
   CALIFICACION
@@ -14,6 +18,12 @@ class GestionReportes {
     required String motivo,
   }) async {
     try {
+      //Evitar que el mismo usuario reporte lo mismo dos veces
+      bool yaReportado = await duplicacionReporte(objetoId, usuarioReportoId);
+      if (yaReportado) {
+        throw Exception('Ya has reportado este elemento anteriormente.');
+      }
+      
       await _firestore.collection('reports').add({
         'objetoId': objetoId,
         'publicacionId': publicacionId,
@@ -44,6 +54,12 @@ class GestionReportes {
     required String motivo,
   }) async {
     try {
+      //Evitar que el mismo usuario reporte lo mismo dos veces
+      bool yaReportado = await duplicacionReporte(objetoId, usuarioReportoId);
+      if (yaReportado) {
+        throw Exception('Ya has reportado este elemento anteriormente.');
+      }
+
       await _firestore.collection('reports').add({
         'objetoId': objetoId,
         'autorObjetoId': autorPublicacionId,
@@ -62,7 +78,7 @@ class GestionReportes {
   }
 
 
-  Future<List<Map<String, dynamic>>> buscarCalificacionesReportadas() async {
+  Future<List<Calificacion>> buscarCalificacionesReportadas() async {
     try {
       QuerySnapshot query = await _firestore
           .collectionGroup('ratings')
@@ -72,9 +88,21 @@ class GestionReportes {
 
       return query.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        data['publicacionId'] = doc.reference.parent.parent?.id; 
-        return data;
+
+        DateTime fechaDoc = DateTime.now();
+        if (data['fecha'] != null && data['fecha'] is Timestamp) {
+          fechaDoc = (data['fecha'] as Timestamp).toDate();
+        }
+
+        return Calificacion(
+          id: doc.id,
+          puntaje: (data['puntaje'] as num).toDouble(),
+          comentario: data['comentario'] ?? '',
+          fecha: fechaDoc,
+          nombreUsuario:
+              data['nombreUsuario'] ?? '',
+          publicacionId: doc.reference.parent.parent?.id
+        );
       }).toList();
     } catch (e) {
       print('Error al buscar calificaciones reportadas: $e');
@@ -83,8 +111,9 @@ class GestionReportes {
   }
 
 
-  Future<List<Map<String, dynamic>>> buscarPublicacionesReportadas() async {
+  Future<List<Publicacion>> buscarPublicacionesReportadas() async {
     try {
+      GestionPublicacion gestionPublicacion = GestionPublicacion();
       QuerySnapshot query = await _firestore
           .collection('publications')
           .where('contadorReportes', isGreaterThan: 0)
@@ -93,8 +122,7 @@ class GestionReportes {
 
       return query.docs.map((doc) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        return data;
+        return gestionPublicacion.mapToPublicacion(doc.id, data);
       }).toList();
     } catch (e) {
       print('Error al buscar publicaciones reportadas: $e');
@@ -103,7 +131,7 @@ class GestionReportes {
   }
 
 
-  Future<List<Map<String, dynamic>>> buscarReportesPorObjeto(String objetoId) async {
+  Future<List<Reporte>> buscarReportesPorObjeto(String objetoId) async {
     try {
       QuerySnapshot query = await _firestore
           .collection('reports')
@@ -111,9 +139,7 @@ class GestionReportes {
           .get();
 
       return query.docs.map((doc) {
-        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        data['id'] = doc.id;
-        return data;
+        return Reporte.fromFirestore(doc);
       }).toList();
     } catch (e) {
       print('Error al buscar reportes del objeto: $e');
@@ -158,5 +184,24 @@ class GestionReportes {
     } catch (e) {
       throw Exception('Error al desestimar el reporte: $e');
     }
+  }
+
+  ///Esta función evita que un reporte se haga dos veces sobre la misma publicación o calificación.
+  ///Usar para el frontend
+  Future<bool> duplicacionReporte(
+    String objetoId,
+    String usuarioReportoId,
+  ) async {
+    QuerySnapshot reporteExistente = await _firestore
+        .collection('reports')
+        .where('objetoId', isEqualTo: objetoId)
+        .where('usuarioReportoId', isEqualTo: usuarioReportoId)
+        .limit(1)
+        .get();
+
+    if (reporteExistente.docs.isNotEmpty) {
+      return true;
+    }
+    return false;
   }
 }
