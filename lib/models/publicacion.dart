@@ -12,6 +12,7 @@ class Publicacion {
   final String politicaCancelacion;
   final String nombreAnfitrion;
   final String? imagenUrl;
+  final int contadorReportes; // <--- NUEVO: Agregado para el sistema de moderación
 
   Publicacion({
     required this.id,
@@ -25,5 +26,6 @@ class Publicacion {
     required this.politicaCancelacion,
     required this.nombreAnfitrion,
     this.imagenUrl,
+    this.contadorReportes = 0, // <--- NUEVO: Por defecto inicia en 0
   });
 }
