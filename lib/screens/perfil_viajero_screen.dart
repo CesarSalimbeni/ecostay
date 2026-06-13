@@ -231,12 +231,12 @@ class _PerfilViajeroState extends State<PerfilViajero> {
                                                 id: _viajeroActual.id,
                                                 nombre: _nombreController.text,
                                                 email: _correoController.text,
-                                                password: _viajeroActual.password,
                                                 fechaRegistro: _viajeroActual.fechaRegistro,
                                                 telefono: _telefonoController.text,
                                                 cedula: _cedulaController.text,
                                                 ciudad: _ciudadController.text,
                                                 historialReservas: _viajeroActual.historialReservas,
+                                                suspendido: _viajeroActual.suspendido
                                               );
                                             });
 

@@ -1,5 +1,4 @@
 import 'package:ecostay/models/publicacion.dart';
-import 'package:ecostay/models/calificacion.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/mis_reservas_viaj.dart';

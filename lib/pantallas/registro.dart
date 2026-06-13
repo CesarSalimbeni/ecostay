@@ -86,11 +86,11 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
           id: uid, 
           nombre: _nombreCtrl.text.trim(),
           email: _correoCtrl.text.trim(),
-          password: _passCtrl.text.trim(),
           fechaRegistro: DateTime.now(),
           telefono: _telefonoCtrl.text.trim(),
           cedula: _cedulaCtrl.text.trim(),
           ciudad: _direccionCtrl.text.trim(),
+          suspendido: false,
           historialReservas: [],
         );
       } else {
@@ -98,12 +98,12 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
           id: uid, 
           nombre: _nombreCtrl.text.trim(),
           email: _correoCtrl.text.trim(),      
-          password: _passCtrl.text.trim(),
           fechaRegistro: DateTime.now(),
           rif: _rifCtrl.text.trim(),
           telefono: _telefonoCtrl.text.trim(),
           direccion: _direccionCtrl.text.trim(),
           cuentaPayPal: _paypalCtrl.text.trim(),
+          suspendido: false,
           estadisticas: [],
         );
       }

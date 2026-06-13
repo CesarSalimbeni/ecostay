@@ -1,7 +1,6 @@
 import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/pagextraviaj.dart';
 import 'package:ecostay/pantallas/registro.dart';
 import 'package:ecostay/screens/home_anfitrion.dart';
 import 'package:ecostay/screens/home_viajero.dart';

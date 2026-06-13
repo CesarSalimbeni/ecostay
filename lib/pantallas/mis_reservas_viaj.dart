@@ -3,7 +3,6 @@ import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/models/reserva.dart'; 
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/screens/home_viajero.dart';
-import 'package:ecostay/screens/perfil_anfitrion_screen.dart';
 import 'package:ecostay/screens/perfil_viajero_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
