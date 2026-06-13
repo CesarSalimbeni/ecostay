@@ -4,7 +4,6 @@ class Calificacion {
   final String comentario;
   final DateTime fecha;
   final String nombreUsuario;
-  final int contadorReportes; 
 
   Calificacion({
     required this.id,
@@ -12,6 +11,5 @@ class Calificacion {
     required this.comentario,
     required this.fecha,
     required this.nombreUsuario,
-    this.contadorReportes = 0, 
   });
 }
