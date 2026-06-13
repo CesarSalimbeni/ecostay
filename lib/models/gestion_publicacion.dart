@@ -4,6 +4,7 @@ import 'publicacion.dart';
 
 class GestionPublicacion {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   Future<String> crearPublicacion({
     required String titulo, 
     required String descripcion, 
@@ -41,7 +42,6 @@ class GestionPublicacion {
       throw Exception('Error al editar publicación: $e');
     }
   }
-
 
   Future<void> eliminarPublicacion(String publicacionId) async {
     try {
@@ -142,7 +142,6 @@ class GestionCalificacion {
     }
   }
 
-
   Future<List<Calificacion>> obtenerCalificaciones(String publicacionId) async {
     try {
       QuerySnapshot snapshot = await _firestore.collection('publications').doc(publicacionId).collection('ratings').get();
@@ -160,6 +159,7 @@ class GestionCalificacion {
           comentario: data['comentario'] ?? '',
           fecha: fechaDoc, 
           nombreUsuario: data['nombreUsuario'] ?? '',
+          contadorReportes: data['contadorReportes'] ?? 0, 
         );
       }).toList();
     } catch (e) {
@@ -176,6 +176,7 @@ class GestionCalificacion {
       print('Error al eliminar calificación: $e');
     }
   }
+
   Future<void> calcularCalificacionPromedio(String publicacionId) async {
     try {
       QuerySnapshot snapshot = await _firestore.collection('publications').doc(publicacionId).collection('ratings').get();
