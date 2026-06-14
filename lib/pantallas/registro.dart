@@ -389,7 +389,11 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                       minimumSize: const Size(double.infinity, 50),
                     ),
                     child: _isLoading 
-                        ? const CircularProgressIndicator(color: Colors.white) 
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
                         : const Text("Crear Cuenta", style: TextStyle(fontSize: 16, fontFamily: 'Idiqlat')),
                   ),
                 )
