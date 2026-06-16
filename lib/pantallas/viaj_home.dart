@@ -2,11 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
+import 'package:ecostay/pantallas/viaj_mis_reservas.dart';
 import 'package:ecostay/pantallas/reserva_viaj.dart';
 import 'package:ecostay/models/buscador_exploracion.dart'; 
 import 'package:flutter/material.dart';
-import 'perfil_viajero_screen.dart';
+import 'viaj_perfil.dart';
 
 class HomeViajero extends StatefulWidget {
   final Viajero viajero; 

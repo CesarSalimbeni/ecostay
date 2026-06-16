@@ -2,9 +2,9 @@ import 'dart:math';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
-import 'package:ecostay/pantallas/publicaciones_anf.dart';
-import 'package:ecostay/pantallas/reservas_anf.dart';
-import 'package:ecostay/screens/home_anfitrion.dart';
+import 'package:ecostay/pantallas/anf_publicaciones.dart';
+import 'package:ecostay/pantallas/anf_reservas.dart';
+import 'package:ecostay/pantallas/anf_home.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
 

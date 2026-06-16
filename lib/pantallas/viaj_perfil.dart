@@ -1,9 +1,9 @@
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
+import 'package:ecostay/pantallas/viaj_mis_reservas.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
-import 'package:ecostay/screens/home_viajero.dart';
+import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:flutter/material.dart';
 
 class PerfilViajero extends StatefulWidget {

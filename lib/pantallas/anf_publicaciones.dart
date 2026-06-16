@@ -1,10 +1,10 @@
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/reservas_anf.dart';
+import 'package:ecostay/pantallas/anf_reservas.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
-import 'package:ecostay/screens/home_anfitrion.dart';
-import 'package:ecostay/screens/perfil_anfitrion_screen.dart'; 
+import 'package:ecostay/pantallas/anf_home.dart';
+import 'package:ecostay/pantallas/anf_perfil.dart'; 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
@@ -161,16 +161,20 @@ class PantallaPublicaciones extends StatelessWidget {
                       await gestionImg.subirImagen(publicacionAEditar.id, imagenSeleccionada!);
                     }
                   } else {
-                    String nuevoId = await gestionPub.crearPublicacion(
-                      titulo: tituloController.text,
-                      descripcion: descripcionController.text,
-                      precio: double.parse(precioController.text),
-                      ubicacion: ubicacionController.text,
-                      autoruid: prestador.id, 
-                      disponibilidadtransporte: transporteDisponible,
-                      politicaCancelacion: policancelacionController.text,
-                      nombreAnfitrion: prestador.nombre, 
-                    );
+                    String nuevoId = await gestionPub.crearPublicacion({
+                      'titulo': tituloController.text,
+                      'descripcion': descripcionController.text,
+                      'precio': double.parse(precioController.text),
+                      'ubicacion': ubicacionController.text,
+                      'providerId': prestador.id,
+                      'disponibilidadtransporte': transporteDisponible,
+                      'politicaCancelacion': policancelacionController.text,
+                      'nombreAnfitrion': prestador.nombre,
+                      'estilo': 'Otros',
+                      'cuposMax': 1,
+                      'cuposActual': 0,
+                      'calificacionPromedio': 0.0,
+                    });
                     if (imagenSeleccionada != null) {
                       await gestionImg.subirImagen(nuevoId, imagenSeleccionada!);
                     }

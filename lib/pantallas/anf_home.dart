@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/publicaciones_anf.dart';
-import 'package:ecostay/pantallas/reservas_anf.dart';
+import 'package:ecostay/pantallas/anf_publicaciones.dart';
+import 'package:ecostay/pantallas/anf_reservas.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
-import 'perfil_anfitrion_screen.dart';
+import 'anf_perfil.dart';
 
 class HomeAnfitrion extends StatelessWidget {
   final PrestadorServicio prestador;

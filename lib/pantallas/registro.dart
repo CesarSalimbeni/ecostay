@@ -1,5 +1,7 @@
+import 'package:ecostay/pantallas/anf_home.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
@@ -108,25 +110,19 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         );
       }
       
-      // COMENTADO TEMPORALMENTE HASTA CREAR LAS PANTALLAS
-      /*
-      // Cambio de pantalla dependiendo del rol
       if (mounted) {
         if (usuarioCreado is Viajero) {
         Navigator.pushReplacement(context, MaterialPageRoute(
-              // Reemplaza "PantallaInicioViajero" con el nombre real de tu clase
-              builder: (context) => PantallaInicioViajero(viajero: usuarioCreado),
+              builder: (context) => HomeViajero(viajero: usuarioCreado as Viajero),
             ),
           );
         } else if (usuarioCreado is PrestadorServicio) {
           Navigator.pushReplacement(context, MaterialPageRoute(
-              // Reemplaza "PantallaDashboardPrestador" con el nombre real de tu clase
-              builder: (context) => PantallaDashboardPrestador(prestador: usuarioCreado),
+              builder: (context) => HomeAnfitrion(prestador: usuarioCreado as PrestadorServicio),
             ),
           );
         }
       }
-      */
 
       // Mensaje temporal de éxito para pruebas
       if (mounted) {

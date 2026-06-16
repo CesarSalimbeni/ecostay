@@ -1,9 +1,11 @@
+import 'package:ecostay/models/administrador.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/registro.dart';
-import 'package:ecostay/screens/home_anfitrion.dart';
-import 'package:ecostay/screens/home_viajero.dart';
+import 'package:ecostay/pantallas/anf_home.dart';
+import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/gestion_usuario.dart'; 
 
@@ -19,6 +21,7 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
   final TextEditingController _passwordController = TextEditingController();
   final GestionUsuario _gestionUsuario = GestionUsuario();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -56,6 +59,11 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
           ),
         );
         
+      } else{
+        Navigator.pushReplacement(context, MaterialPageRoute(
+          builder: (context) => HomeAdmin(administrador: usuarioLogueado as Administrador),
+          ),
+        );
       }
       
       } catch (e) {
@@ -128,12 +136,17 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
                           ),
                           TextField(
                             controller: _passwordController,
-                            obscureText: true,
+                            obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: "contraseña", 
                               border: OutlineInputBorder(), 
                               filled: true, 
-                              fillColor: ColorPalette.bg
+                              fillColor: ColorPalette.bg,
+                              suffixIcon: IconButton(onPressed: () {
+                                setState(() {_obscurePassword = !_obscurePassword;});
+                              }, 
+                              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                  color: const Color(0xFF526F75)))
                             ),
                           ),
                           const SizedBox(height: 50,),

@@ -1,7 +1,7 @@
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
+import 'package:ecostay/pantallas/viaj_mis_reservas.dart';
 import 'package:ecostay/paypal_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
