@@ -15,6 +15,7 @@ class HomeAnfitrion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    // Base para tipografía adaptativa, es decir, se adapta tanto para telefono como para computadora.
     final fontSize = min(size.width * 0.11, size.height * 0.11).clamp(28.0, 96.0) as double;
 
     return Scaffold(backgroundColor: ColorPalette.bg,
