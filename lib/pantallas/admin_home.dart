@@ -1,4 +1,6 @@
 import 'package:ecostay/models/administrador.dart';
+import 'package:ecostay/pantallas/admin_locaciones.dart';
+import 'package:ecostay/pantallas/admin_moderacion.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:flutter/material.dart';
@@ -11,13 +13,6 @@ class HomeAdmin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> usuariosMock = [
-      {'id': 'U-001', 'nombre': 'María Gónzales', 'email': 'maria@correo.com', 'rol': 'Viajero', 'estado': 'Activo'},
-      {'id': 'U-002', 'nombre': 'Carlos Méndez', 'email': 'carlos@correo.com', 'rol': 'Anfitrión', 'estado': 'Activo'},
-      {'id': 'U-003', 'nombre': 'Miguel Angle', 'email': 'miguelangle@correo.com', 'rol': 'Anfitrión', 'estado': 'Activo'},
-      {'id': 'U-004', 'nombre': 'Pedro Ruiz', 'email': 'pedro@correo.com', 'rol': 'Viajero', 'estado': 'Suspendido'},
-      {'id': 'U-005', 'nombre': 'Luis Pérez', 'email': 'luis@correo.com', 'rol': 'Anfitrión', 'estado': 'Activo'},
-    ];
 
     final size = MediaQuery.of(context).size;
     final fontSize = min(size.width * 0.11, size.height * 0.11).clamp(28.0, 96.0) as double;
@@ -71,19 +66,19 @@ class HomeAdmin extends StatelessWidget {
                 ),
                 TextButton.icon(
                   onPressed:() {
-                      /*Navigator.pushReplacement(context,
-                        MaterialPageRoute(builder: (context) => PantallaReservasH(prestador: prestador),
+                      Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => AdminModeracion(administrador: administrador),
                         ),
-                      );*/
+                      );
                     },
                   icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Moderaciones', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
+                  label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    /*Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => PerfilAnfitrion(prestador: prestador)),
-                    );*/
+                    Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => AdminLocaciones(administrador: administrador)),
+                    );
                   }, 
                   icon: const Icon(Icons.layers_outlined, color: Color(0xFF216A44), size: 28),
                   label: const Text('Locaciones', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
@@ -91,136 +86,167 @@ class HomeAdmin extends StatelessWidget {
               ],
             ),
           ),
+          
+          // --- NEW: Title Header Section ---
+          Padding(
+            padding: const EdgeInsets.only(left: 60.0, top: 40.0, bottom: 20.0),
+            child: const Text(
+              'Resumen de la plataforma', style: TextStyle(fontSize: 32, fontFamily: 'Idiqlat',
+                color: Colors.black, fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+
+          
           Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 50),
-                child: Container(width: 1240, height: 520, 
-                  decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25),), 
-                  child: Padding(padding: const EdgeInsets.all(30.0),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+            child: SizedBox(width: 1240, height: 400,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(width: 460,
+                    child: Column(
                       children: [
-                        const Text('Usuarios', style: TextStyle(fontSize: 32, 
-                          fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(child: _buildStatCard(Icons.people_outline, '23', 'Usuarios Activos')),
+                              const SizedBox(width: 20),
+                              Expanded(child: _buildStatCard(Icons.attach_money, '\$1004.3', 'Volumen de Reservas')),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 20),
-                        
-                        Container(width: double.infinity, decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25),
-                          border: Border.all(color: Colors.grey.shade300, width: 1),),
-                          child: Column(mainAxisSize: MainAxisSize.min,
-                          children: [_buildTableHeader(const Color(0xFFF4F6F4), const Color(0xFF526F75)),
-                            ListView.separated(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-                              itemCount: usuariosMock.length,
-                              separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
-                              itemBuilder: (context, index) {
-                                final user = usuariosMock[index];
-                                return _buildUsuarioRowItem(
-                                  id: user['id'],
-                                  nombre: user['nombre'],
-                                  email: user['email'],
-                                  rol: user['rol'],
-                                  estado: user['estado'],
-                                  brandGreen: const Color(0xFF216A44),
-                                  darkRed: const Color(0xFF7A1C1C),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 15), // Spacing base baseline
-                          ],
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(child: _buildStatCard(Icons.explore_outlined, '14', 'Destinos Totales')),
+                              const SizedBox(width: 20),
+                              Expanded(child: _buildStatCard(Icons.local_offer_outlined, '\$134', 'Reportes de Costos')),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 40),
+
+
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(30.0),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Destinos más buscados',
+                            style: TextStyle(fontSize: 28, fontFamily: 'Idiqlat', fontWeight: FontWeight.bold, 
+                            color: Colors.black),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Por número de busquedas mensuales',
+                            style: TextStyle(fontSize: 14, color: Color(0xFF7A8E89)),
+                          ),
+                          const SizedBox(height: 20),
+                          Expanded(
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                return Stack(
+                                  children: [
+                                    // Vertical dashed gridlines background
+                                    Positioned.fill(
+                                      child: Padding(padding: const EdgeInsets.only(left: 90.0, bottom: 25.0),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: List.generate(5, (index) => Container(
+                                            width: 1, color: Colors.grey.shade100,
+                                          )),
+                                        ),
+                                      ),
+                                    ),
+                                    // Custom Bars Layer
+                                    Column(
+                                      children: [
+                                        Expanded(child: _buildBarRow('Mérida', 1250, 1400)),
+                                        Expanded(child: _buildBarRow('Los Roques', 950, 1400)),
+                                        Expanded(child: _buildBarRow('Canaima', 850, 1400)),
+                                        Expanded(child: _buildBarRow('Choroní', 600, 1400)),
+                                        Expanded(child: _buildBarRow('Margarita', 450, 1400)),
+                                        const SizedBox(height: 25), 
+                                      ],
+                                    ),
+                                    // X-Axis numerical metrics baseline
+                                    Positioned(left: 90.0, right: 0, bottom: 0,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: ['0', '350', '700', '1050', '1400'].map((val) => Text(
+                                          val,
+                                          style: const TextStyle(fontSize: 12, color: Color(0xFF9CB0AA)),
+                                        )).toList(),
+                                      ),
+                                    )
+                                  ],
+                                );
+                              }
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  )
+                ],
               ),
             ),
           )
-        ],
-      ),
+        ]
+      )
     );
   }
 
-  // --- NEW: Added missing table header widget method ---
-  Widget _buildTableHeader(Color bgColor, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+  // --- NEW: Helper Builder Row Method for the Chart Bars ---
+  Widget _buildBarRow(String label, double value, double maxVal) {
+    return Row(
+      children: [
+        SizedBox(width: 80,
+          child: Text(label,
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF526F75)),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(flex: 1, child: Text('ID', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18))),
-          Expanded(flex: 2, child: Text('Nombre', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18))),
-          Expanded(flex: 3, child: Text('Email', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18))),
-          Expanded(flex: 2, child: Text('Rol', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18))),
-          Expanded(flex: 2, child: Center(child: Text('Estado', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18)))),
-          Expanded(flex: 2, child: Center(child: Text('Acciones', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18)))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUsuarioRowItem({
-    required String id,
-    required String nombre,
-    required String email,
-    required String rol,
-    required String estado,
-    required Color brandGreen,
-    required Color darkRed,
-  }) {
-    bool isSuspended = estado == 'Suspendido';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-      child: Row(
-        children: [
-          Expanded(flex: 1, child: Text(id, style: const TextStyle(fontSize: 16, color: Colors.black87))),
-          Expanded(flex: 2, child: Text(nombre, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, 
-          color: Colors.black))),
-          Expanded(flex: 3, child: Text(email, style: const TextStyle(fontSize: 16, color: Colors.black54))),
-          Expanded(flex: 2, child: Text(rol, style: const TextStyle(fontSize: 16, color: Colors.black87))),
-          
-          Expanded(flex: 2,
-            child: Center(child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
-                decoration: BoxDecoration(color: isSuspended ? darkRed : const Color(0xFFE2E6E2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(estado,style: TextStyle(
-                    color: isSuspended ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.w500, fontSize: 15,
-                  ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Align(alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(widthFactor: value / maxVal,
+              child: Container(height: 26,
+                decoration: BoxDecoration(color: const Color(0xFF4C8A64), 
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
           ),
-          
-          // Acciones Icons (Toggle Block Status & View Profile Details)
-          Expanded(flex: 2,
-            child: Row(mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () {},
-                  icon: Icon(
-                    isSuspended ? Icons.check_circle : Icons.cancel,
-                    color: isSuspended ? brandGreen : darkRed, size: 28,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.visibility_outlined, color: Colors.black87, size: 28),
-                ),
-              ],
-            ),
+        ),
+      ],
+    );
+  }
+}
+
+Widget _buildStatCard(IconData icon, String value, String label) {
+    return Container(padding: const EdgeInsets.all(19.2), 
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), 
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(padding: const EdgeInsets.all(8), 
+            decoration: BoxDecoration(color: const Color(0xFF38664D), borderRadius: BorderRadius.circular(9.6),), 
+            child: Icon(icon, color: Colors.white, size: 25.6), 
           ),
+          const SizedBox(height: 12.8), 
+          Text(value, style: const TextStyle(fontSize: 30.4, color: Colors.black, fontWeight: FontWeight.w500)), 
+          const SizedBox(height: 3.2), 
+          Text(label, style: const TextStyle(fontSize: 12.8, color: Color(0xFF6E867A))), 
         ],
       ),
     );
   }
-}
