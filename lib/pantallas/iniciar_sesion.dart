@@ -32,10 +32,25 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
 
   // Inicio de sesion
   Future<void> _iniciarSesion() async {
-    //verificación de campos
-    if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
+    final emailText = _emailController.text.trim();
+    final passwordText = _passwordController.text.trim();
+
+    // 1. Verificación de campos vacíos
+    if (emailText.isEmpty || passwordText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor, llena todos los campos.')),
+      );
+      return;
+    }
+
+    // 2. Validación estricta del dominio @unimet.edu.ve
+    final unimetRegex = RegExp(r'^[\w-\.]+@correo\.unimet\.edu\.ve$');
+    if (!unimetRegex.hasMatch(emailText.toLowerCase())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Acceso denegado: Debes usar un correo institucional @correo.unimet.edu.ve'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
@@ -44,8 +59,8 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
 
     try {
       var usuarioLogueado = await _gestionUsuario.iniciarSesion(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
+        emailText,
+        passwordText,
       );
 
       if (usuarioLogueado.rol == 'cliente') {
@@ -116,8 +131,8 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              labelText: "tu@correo.com", 
-                              border: OutlineInputBorder(),
+                              labelText: "tu@correo.unimet.edu.ve", // Modificado para guiar al usuario
+                              border: const OutlineInputBorder(),
                               filled: true, 
                               fillColor: ColorPalette.bg
                             ),
@@ -139,7 +154,7 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: "contraseña", 
-                              border: OutlineInputBorder(), 
+                              border: const OutlineInputBorder(), 
                               filled: true, 
                               fillColor: ColorPalette.bg,
                               suffixIcon: IconButton(onPressed: () {

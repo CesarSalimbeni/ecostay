@@ -43,7 +43,8 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     _paypalCtrl.dispose();
     super.dispose();
   }
-    Future<void> _crearCuenta() async {
+  
+  Future<void> _crearCuenta() async {
     setState(() => _isLoading = true);
     try {
       final isViajero = _selectedRole == UserRole.viajero;
@@ -53,13 +54,15 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         ? {
             'telefono': _telefonoCtrl.text.trim(),
             'cedula': _cedulaCtrl.text.trim(),
-            'direccion': _direccionCtrl.text.trim(), 
+            'direccion': _direccionCtrl.text.trim(), // Se usa para Ciudad
+            'suspendido': false
           }
         : {
             'telefono': _telefonoCtrl.text.trim(),
             'direccion': _direccionCtrl.text.trim(),
             'rif': _rifCtrl.text.trim(),
             'cuentaPayPal': _paypalCtrl.text.trim(),
+            'suspendido': false
           };
 
       await _gestionUsuario.registrarUsuario(
@@ -116,7 +119,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('¡Cuenta creada con éxito!')),
+          const SnackBar(content: Text('¡Cuenta creada con éxito!')),
         );
       }
     } catch (e) {
@@ -129,7 +132,8 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-    @override
+
+  @override
   Widget build(BuildContext context) {
     final isViajero = _selectedRole == UserRole.viajero;
 

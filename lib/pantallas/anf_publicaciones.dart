@@ -167,6 +167,7 @@ class PantallaPublicaciones extends StatelessWidget {
                       'precio': double.parse(precioController.text),
                       'ubicacion': ubicacionController.text,
                       'providerId': prestador.id,
+                      'autoruid': prestador.id, 
                       'disponibilidadtransporte': transporteDisponible,
                       'politicaCancelacion': policancelacionController.text,
                       'nombreAnfitrion': prestador.nombre,
@@ -468,8 +469,8 @@ class PantallaPublicaciones extends StatelessWidget {
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildActionBtn(Icons.visibility_outlined, const Color(0xFF216A44), () { /* Read view action */ }),
-                _buildActionBtn(Icons.edit_outlined, const Color(0xFF216A44), onEdit), // <-- Botón de modificar enlazado
-                _buildActionBtn(Icons.delete_outline, const Color(0xFF903030), onDelete), // <-- Botón de eliminar enlazado
+                _buildActionBtn(Icons.edit_outlined, const Color(0xFF216A44), onEdit), 
+                _buildActionBtn(Icons.delete_outline, const Color(0xFF903030), onDelete), 
               ],
             ),
           ),
