@@ -1,4 +1,6 @@
+import 'package:ecostay/models/estadoreserva.dart';
 import 'package:ecostay/models/publicacion.dart';
+import 'package:ecostay/models/reserva.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/viaj_home.dart';
@@ -166,11 +168,25 @@ class _PantallaReservaState extends State<PantallaReserva> {
                               disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
                               ),
+                              // DENTRO DE LA PARTE DE PAGO -> ElevatedButton (Pagar Ahora)
                               onPressed: () {
                                 bool exito = paypalService.procesarPago(montoTotal);
                                 
                                 if (exito) {
-                                  if (dialogoContext.mounted) {Navigator.pop(dialogoContext);}
+                                  final nuevaReserva = Reserva(
+                                  id: 'res_${Random().nextInt(100000)}', 
+                                  fechaInicio: _fechasSeleccionadas!.start,
+                                  fechaFin: _fechasSeleccionadas!.end,
+                                  total: montoTotal,
+                                  estado: EstadoReserva.CONFIRMADA, 
+                                  cupos: 1,
+                                );
+
+                                  widget.viajero.historialReservas.add(nuevaReserva);
+
+                                  if (dialogoContext.mounted) {
+                                    Navigator.pop(dialogoContext);
+                                  }
                                   
                                   setState(() {
                                     _isPagoPendiente = false;
@@ -185,7 +201,8 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                   );
                                 }
                               },
-                              child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, 
+                              fontSize: 16)),
                             ),
                           ],
                         ),
@@ -251,9 +268,11 @@ class _PantallaReservaState extends State<PantallaReserva> {
                   ),
                   TextButton.icon(
                     onPressed: () {
-                      Navigator.pushReplacement(context,
-                        MaterialPageRoute(builder: (context) => PantallaMisReservas(viajero: widget.viajero)),);
-                    }, 
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => PantallaMisReservas(viajero: widget.viajero)),
+                    );
+                  }, 
                     icon: const Icon(Icons.send_outlined, color: Color(0xFF216A44), size: 28),
                     label: const Text('Reservas', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                   ),
