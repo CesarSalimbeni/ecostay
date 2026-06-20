@@ -1,174 +1,202 @@
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
+import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:ecostay/pantallas/viaj_mis_reservas.dart';
+import 'package:ecostay/pantallas/viaj_perfil.dart';
 import 'package:ecostay/paypal_service.dart';
+import 'package:ecostay/models/gestion_reservacion.dart'; 
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-class PantallaReserva extends StatelessWidget {
+class PantallaReserva extends StatefulWidget {
   final Publicacion publicacion;
   final Viajero viajero;
 
   const PantallaReserva({super.key, required this.publicacion, required this.viajero});
 
-  void _mostrarDialogoReserva(BuildContext context) {
+  @override
+  State<PantallaReserva> createState() => _PantallaReservaState();
+}
+
+class _PantallaReservaState extends State<PantallaReserva> {
+  DateTimeRange? _fechasSeleccionadas;
+  bool _isPagoPendiente = false; 
+
+  void _mostrarDialogoReserva(BuildContext pantallaContext) {
     final paypalService = PaypalService(apiKey: "TU_CLAVE_API_PAYPAL");
+    final gestionReservacion = GestionReservacion();
+    final messenger = ScaffoldMessenger.of(pantallaContext);
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        DateTimeRange? fechasSeleccionadas;
-
+    showDialog(context: pantallaContext,
+      builder: (BuildContext dialogoContext) {
         return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            int noches = fechasSeleccionadas != null ? fechasSeleccionadas!.duration.inDays : 0;
-            if (noches == 0 && fechasSeleccionadas != null) noches = 1;
-            double montoTotal = noches * publicacion.precio;
+          builder: (BuildContext bldContext, StateSetter setDialogState) {
+            int noches = _fechasSeleccionadas != null ? _fechasSeleccionadas!.duration.inDays : 0;
+            if (noches == 0 && _fechasSeleccionadas != null) noches = 1;
+            double montoTotal = noches * widget.publicacion.precio;
 
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: const Text(
-                'Finalizar Reserva',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+            return AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),),
+              title: Text(
+                _isPagoPendiente ? 'Finalizar Pago con PayPal' : 'Seleccionar Fechas de Reserva',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
               ),
               content: SizedBox(width: 450,
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('1. Selecciona las fechas de estadía:',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: OutlinedButton.icon(style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          side: const BorderSide(color: Color(0xFF216A44), width: 2),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () async {
-                          final DateTimeRange? picked = await showDialog<DateTimeRange>(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: const ColorScheme.light(
-                                    primary: Color(0xFF216A44),
-                                    onPrimary: Colors.white,
-                                    surface: Color(0xFFF5F7F2),
-                                    onSurface: Colors.black,
-                                  ),
-                                ),
-                                child: Dialog(
-                                  insetPadding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: Container(
-                                    constraints: const BoxConstraints(maxWidth: 400, maxHeight: 520),
-                                    child: DateRangePickerDialog(
-                                      firstDate: DateTime.now(),
-                                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                                      initialDateRange: fechasSeleccionadas,
-                                      initialEntryMode: DatePickerEntryMode.calendar,
+                    
+                    //PARTE SOLICITUD
+                    if (!_isPagoPendiente) ...[
+                      const Text('1. Selecciona las fechas de estadía:',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: OutlinedButton.icon(style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            side: const BorderSide(color: Color(0xFF216A44), width: 2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () async {
+                            final DateTimeRange? picked = await showDialog<DateTimeRange>(
+                              context: dialogoContext,
+                              builder: (BuildContext context) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: const ColorScheme.light(
+                                      primary: Color(0xFF216A44), onPrimary: Colors.white,
+                                      surface: Color(0xFFF5F7F2), onSurface: Colors.black,
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          );
-                          if (picked != null) {
-                            setState(() {
-                              fechasSeleccionadas = picked;
-                            });
-                          }
-                        },
-                        icon: const Icon(Icons.date_range, color: Color(0xFF216A44)),
-                        label: Text(
-                          fechasSeleccionadas == null
-                              ? 'Elegir Fechas'
-                              : '${fechasSeleccionadas!.start.day}/${fechasSeleccionadas!.start.month}/${fechasSeleccionadas!.start.year} - ${fechasSeleccionadas!.end.day}/${fechasSeleccionadas!.end.month}/${fechasSeleccionadas!.end.year}',
-                          style: const TextStyle(color: Color(0xFF216A44), fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 25),
-                    const Divider(thickness: 1),
-                    const SizedBox(height: 15),
-
-                    const Text('2. Proceder con el pago:',style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-                    const SizedBox(height: 12),
-                    
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: fechasSeleccionadas == null ? Colors.grey.shade100 : Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: fechasSeleccionadas == null ? Colors.grey.shade300 : Colors.blue.shade300, 
-                          width: 1.5
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.paypal, 
-                              color: fechasSeleccionadas == null ? Colors.grey : const Color(0xFF003087), size: 35
-                              ),
-                              const SizedBox(width: 8),
-                              Text('PayPal',
-                                style: TextStyle(
-                                  color: fechasSeleccionadas == null ? Colors.grey : const Color(0xFF003087),
-                                  fontWeight: FontWeight.bold, fontSize: 22, fontStyle: FontStyle.italic
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 15),
-                          Text(
-                            fechasSeleccionadas == null 
-                              ? 'Por favor, selecciona las fechas primero.' 
-                              : 'Total a transferir: \$${montoTotal.toStringAsFixed(2)} ($noches ${noches == 1 ? 'noche' : 'noches'})',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: fechasSeleccionadas == null ? Colors.grey : Colors.blue.shade900, 
-                              fontWeight: FontWeight.bold, fontSize: 16
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-                          
-                          ElevatedButton(style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFC439), foregroundColor: Colors.black,
-                            disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
-                            ),
-                            onPressed: fechasSeleccionadas == null ? null : () {
-                              bool exito = paypalService.procesarPago(montoTotal);
-                              
-                              if (exito) {
-                                Navigator.pop(context);
-                                
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('¡Reserva completada con éxito por \$${montoTotal.toStringAsFixed(2)}!'),
-                                    backgroundColor: const Color(0xFF216A44),
+                                  child: Dialog(
+                                    insetPadding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    child: Container(
+                                      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 520),
+                                      child: DateRangePickerDialog(firstDate: DateTime.now(),
+                                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                                        initialDateRange: _fechasSeleccionadas,
+                                        initialEntryMode: DatePickerEntryMode.calendar,
+                                      ),
+                                    ),
                                   ),
                                 );
-                              }
-                            },
-                            child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
-                            ),
+                              },
+                            );
+                            if (picked != null) {
+                              setDialogState(() {
+                                _fechasSeleccionadas = picked;
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.date_range, color: Color(0xFF216A44)),
+                          label: Text(
+                            _fechasSeleccionadas == null
+                                ? 'Elegir Fechas'
+                                : '${_fechasSeleccionadas!.start.day}/${_fechasSeleccionadas!.start.month}/${_fechasSeleccionadas!.start.year} - ${_fechasSeleccionadas!.end.day}/${_fechasSeleccionadas!.end.month}/${_fechasSeleccionadas!.end.year}',
+                            style: const TextStyle(color: Color(0xFF216A44), fontSize: 16, fontWeight: FontWeight.w600),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 25),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF216A44), foregroundColor: Colors.white,
+                          disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
+                        ),
+                        onPressed: _fechasSeleccionadas == null ? null : () async {
+                          await gestionReservacion.crearReservaSegura(
+                            viajeroId: widget.viajero.id, 
+                            publicacionId: widget.publicacion.id, 
+                            data: {
+                              'fechaInicio': _fechasSeleccionadas!.start.toIso8601String(),
+                              'fechaFin': _fechasSeleccionadas!.end.toIso8601String(),
+                              'estado': 'PENDIENTE',
+                              'total': montoTotal,
+                              'cupos': 1,
+                            }
+                          );
+
+                          setState(() {_isPagoPendiente = true;});
+                          
+                          if (dialogoContext.mounted) {Navigator.pop(dialogoContext);}
+
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('¡Solicitud de reserva creada! Proceda a pagar.'),
+                              backgroundColor: Color(0xFF216A44),
+                            ),
+                          );
+                        },
+                        child: const Text('Solicitar Reserva', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      )
+                    ]
+                    
+                    //PARTE PAGO
+                    else ...[
+                      const Text('2. Proceder con el pago:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+                      const SizedBox(height: 12),
+                      Container(width: double.infinity, padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: Colors.blue.shade300, width: 1.5),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.paypal, color: Color(0xFF003087), size: 35),
+                                const SizedBox(width: 8),
+                                Text('PayPal',
+                                  style: TextStyle(color: const Color(0xFF003087),
+                                    fontWeight: FontWeight.bold, fontSize: 22, fontStyle: FontStyle.italic),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            Text(
+                              'Total a transferir: \$${montoTotal.toStringAsFixed(2)} ($noches ${noches == 1 ? 'noche' : 'noches'})',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const SizedBox(height: 15),
+                            
+                            ElevatedButton(style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFFC439), foregroundColor: Colors.black,
+                              disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
+                              ),
+                              onPressed: () {
+                                bool exito = paypalService.procesarPago(montoTotal);
+                                
+                                if (exito) {
+                                  if (dialogoContext.mounted) {Navigator.pop(dialogoContext);}
+                                  
+                                  setState(() {
+                                    _isPagoPendiente = false;
+                                    _fechasSeleccionadas = null;
+                                  });
+
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text('¡Reserva completada con éxito por \$${montoTotal.toStringAsFixed(2)}!'),
+                                      backgroundColor: const Color(0xFF216A44),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context),
+                TextButton(onPressed: () => Navigator.pop(dialogoContext),
                   child: const Text('Cancelar', style: TextStyle(color: Colors.red, fontSize: 16)),
                 ),
               ],
@@ -214,21 +242,26 @@ class PantallaReserva extends StatelessWidget {
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
                 children: [
                   TextButton.icon(
-                    onPressed: () {}, 
+                    onPressed: () {
+                      Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => HomeViajero(viajero: widget.viajero)),);
+                    }, 
                     icon: const Icon(Icons.search, color: Color(0xFF216A44), size: 28),
                     label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                   ),
                   TextButton.icon(
                     onPressed: () {
                       Navigator.pushReplacement(context,
-                        MaterialPageRoute(builder: (context) => PantallaMisReservas(viajero: viajero)),
-                      );
+                        MaterialPageRoute(builder: (context) => PantallaMisReservas(viajero: widget.viajero)),);
                     }, 
                     icon: const Icon(Icons.send_outlined, color: Color(0xFF216A44), size: 28),
                     label: const Text('Reservas', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                   ),
                   TextButton.icon(
-                    onPressed: () {}, 
+                    onPressed: () {
+                      Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => PerfilViajero(viajero: widget.viajero)),);
+                    },
                     icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
                     label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                   ),
@@ -239,8 +272,7 @@ class PantallaReserva extends StatelessWidget {
             // TARJETA DE DETALLE PRINCIPAL
             Center(child: Padding(padding: const EdgeInsets.only(top: 50),
                 child: Container(width: 1240, height: 500, 
-                  decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25),
-                  ), 
+                  decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25),), 
                   child: Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -251,8 +283,8 @@ class PantallaReserva extends StatelessWidget {
                                 child: Container(width: 300, height: 250, 
                                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), 
                                     image: DecorationImage(
-                                      image: (publicacion.imagenUrl != null && publicacion.imagenUrl!.startsWith('http'))
-                                          ? NetworkImage(publicacion.imagenUrl!) as ImageProvider
+                                      image: (widget.publicacion.imagenUrl != null && widget.publicacion.imagenUrl!.startsWith('http'))
+                                          ? NetworkImage(widget.publicacion.imagenUrl!) as ImageProvider
                                           : const AssetImage('assets/images/fondo.jpg'),
                                       fit: BoxFit.cover,
                                     ),
@@ -265,7 +297,7 @@ class PantallaReserva extends StatelessWidget {
                                 child: Padding(padding: const EdgeInsets.all(20),
                                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
                                     children: [
-                                      Text(publicacion.titulo,style: const TextStyle(fontFamily: 'Idiqlat', 
+                                      Text(widget.publicacion.titulo,style: const TextStyle(fontFamily: 'Idiqlat', 
                                       fontSize: 40, fontWeight: FontWeight.w800),
                                       ),
                                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, 
@@ -273,7 +305,7 @@ class PantallaReserva extends StatelessWidget {
                                           Column(crossAxisAlignment: CrossAxisAlignment.start, 
                                             children: [
                                               Padding(padding: const EdgeInsets.only(top: 10),
-                                                child: Text('Lugar: ${publicacion.ubicacion}', style: const TextStyle(
+                                                child: Text('Lugar: ${widget.publicacion.ubicacion}', style: const TextStyle(
                                                   fontSize: 30), overflow: TextOverflow.ellipsis, maxLines: 1),
                                               ),
                                               Padding(padding: const EdgeInsets.only(top: 10),
@@ -281,7 +313,7 @@ class PantallaReserva extends StatelessWidget {
                                                 children: [
                                                 const Text('Rating: ', style: TextStyle(fontSize: 30)),
                                                 const Icon(Icons.star, color: Colors.amber, size: 32),
-                                                Text(' ${publicacion.calificacionPromedio.toStringAsFixed(1)}', 
+                                                Text(' ${widget.publicacion.calificacionPromedio.toStringAsFixed(1)}', 
                                                 style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),),
                                                 ],),
                                               ),
@@ -291,12 +323,12 @@ class PantallaReserva extends StatelessWidget {
                                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
                                               children: [
                                                 Padding(padding: const EdgeInsets.only(top: 10),
-                                                  child: Text('Anfitrión: ${publicacion.nombreAnfitrion}', 
+                                                  child: Text('Anfitrión: ${widget.publicacion.nombreAnfitrion}', 
                                                   style: const TextStyle(fontSize: 30), 
                                                   overflow: TextOverflow.ellipsis, maxLines: 1),
                                                 ),
                                                 Padding(padding: const EdgeInsets.only(top: 10),
-                                                  child: Text('Precio: \$${publicacion.precio.toStringAsFixed(0)}', 
+                                                  child: Text('Precio: \$${widget.publicacion.precio.toStringAsFixed(0)}', 
                                                   style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
                                                   maxLines: 1),
                                                 ),
@@ -311,7 +343,10 @@ class PantallaReserva extends StatelessWidget {
                                               foregroundColor: const Color(0xFFFFFFFF),
                                               disabledBackgroundColor: Colors.grey,
                                             ),
-                                            child: const Text('Pagar', style: TextStyle(fontSize: 30)),
+                                            child: Text(
+                                              _isPagoPendiente ? 'Pagar' : 'Solicitar', 
+                                              style: const TextStyle(fontSize: 30)
+                                            ),
                                           ),
                                         ],
                                       )
@@ -330,13 +365,13 @@ class PantallaReserva extends StatelessWidget {
                         
                         Expanded(
                           child: Padding(padding: const EdgeInsets.only(left: 60, top: 10, bottom: 10),
-                            child: publicacion.calificaciones.isEmpty
+                            child: widget.publicacion.calificaciones.isEmpty
                                 ? const Text('No hay reseñas disponibles para esta posada todavía.', 
                                   style: TextStyle(fontSize: 20, color: Colors.grey))
                                 : ListView.builder(
-                                    itemCount: publicacion.calificaciones.length,
+                                    itemCount: widget.publicacion.calificaciones.length,
                                     itemBuilder: (context, index) {
-                                      final calificacion = publicacion.calificaciones[index];
+                                      final calificacion = widget.publicacion.calificaciones[index];
                                       return Padding(padding: const EdgeInsets.symmetric(vertical: 8.0),
                                         child: Row(
                                           children: [
