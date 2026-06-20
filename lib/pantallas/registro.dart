@@ -60,12 +60,14 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
             'telefono': _telefonoCtrl.text.trim(),
             'cedula': _cedulaCtrl.text.trim(),
             'direccion': _direccionCtrl.text.trim(), // Se usa para Ciudad
+            'suspendido': false
           }
         : {
             'telefono': _telefonoCtrl.text.trim(),
             'direccion': _direccionCtrl.text.trim(),
             'rif': _rifCtrl.text.trim(),
             'cuentaPayPal': _paypalCtrl.text.trim(),
+            'suspendido':false
           };
 
       // Registro en Firebase

@@ -161,16 +161,16 @@ class PantallaPublicaciones extends StatelessWidget {
                       await gestionImg.subirImagen(publicacionAEditar.id, imagenSeleccionada!);
                     }
                   } else {
-                    String nuevoId = await gestionPub.crearPublicacion(
-                      titulo: tituloController.text,
-                      descripcion: descripcionController.text,
-                      precio: double.parse(precioController.text),
-                      ubicacion: ubicacionController.text,
-                      autoruid: prestador.id, 
-                      disponibilidadtransporte: transporteDisponible,
-                      politicaCancelacion: policancelacionController.text,
-                      nombreAnfitrion: prestador.nombre, 
-                    );
+                    String nuevoId = await gestionPub.crearPublicacion({
+                      'titulo': tituloController.text,
+                      'descripcion': descripcionController.text,
+                      'precio': double.parse(precioController.text),
+                      'ubicacion': ubicacionController.text,
+                      'autoruid': prestador.id, 
+                      'disponibilidadtransporte': transporteDisponible,
+                      'politicaCancelacion': policancelacionController.text,
+                      'nombreAnfitrion': prestador.nombre, 
+                  });
                     if (imagenSeleccionada != null) {
                       await gestionImg.subirImagen(nuevoId, imagenSeleccionada!);
                     }
