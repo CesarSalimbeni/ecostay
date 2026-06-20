@@ -2,9 +2,11 @@ import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
-import 'package:ecostay/paypal_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:ecostay/models/reserva.dart';
+import 'package:ecostay/models/estadoreserva.dart';
+import 'package:ecostay/pantallas/resumen_reserva_screen.dart';
 
 class PantallaReserva extends StatelessWidget {
   final Publicacion publicacion;
@@ -13,7 +15,6 @@ class PantallaReserva extends StatelessWidget {
   const PantallaReserva({super.key, required this.publicacion, required this.viajero});
 
   void _mostrarDialogoReserva(BuildContext context) {
-    final paypalService = PaypalService(apiKey: "TU_CLAVE_API_PAYPAL");
 
     showDialog(
       context: context,
@@ -144,19 +145,32 @@ class PantallaReserva extends StatelessWidget {
                             disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
                             ),
+                            // CÓDIGO MODIFICADO:
                             onPressed: fechasSeleccionadas == null ? null : () {
-                              bool exito = paypalService.procesarPago(montoTotal);
-                              
-                              if (exito) {
-                                Navigator.pop(context);
-                                
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('¡Reserva completada con éxito por \$${montoTotal.toStringAsFixed(2)}!'),
-                                    backgroundColor: const Color(0xFF216A44),
+                              // 1. Cierra el diálogo igual que antes
+                              Navigator.pop(context);
+  
+                              // 2. Transforma los datos que calculó el calendario de tu amiga en una Reserva real
+                              final reservaAutomatica = Reserva(
+                                id: "REC-${DateTime.now().millisecondsSinceEpoch}",
+                                fechaInicio: fechasSeleccionadas!.start,
+                                fechaFin: fechasSeleccionadas!.end,
+                                estado: EstadoReserva.PENDIENTE, 
+                                total: montoTotal,               
+                                cupos: 1,                        
+                              );
+
+                              // 3. Abre la pantalla de resumen pasándole el viajero, la posada y la reserva
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ResumenReservaScreen(
+                                    usuarioActual: viajero,           
+                                    reservaNueva: reservaAutomatica,   
+                                    publicacionActual: publicacion,   
                                   ),
-                                );
-                              }
+                                ),
+                              );
                             },
                             child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
                             ),
