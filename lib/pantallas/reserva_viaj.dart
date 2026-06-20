@@ -150,7 +150,7 @@ class PantallaReserva extends StatelessWidget {
                               // 1. Cierra el diálogo igual que antes
                               Navigator.pop(context);
   
-                              // 2. Transforma los datos que calculó el calendario de tu amiga en una Reserva real
+                              // 2. Transforma los datos que calculó el calendario en una Reserva real
                               final reservaAutomatica = Reserva(
                                 id: "REC-${DateTime.now().millisecondsSinceEpoch}",
                                 fechaInicio: fechasSeleccionadas!.start,
