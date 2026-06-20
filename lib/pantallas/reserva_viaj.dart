@@ -55,10 +55,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
                     
                     //PARTE SOLICITUD
                     if (!_isPagoPendiente) ...[
-                      const Text('1. Selecciona las fechas de estadía:',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
                       Center(
                         child: OutlinedButton.icon(style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -136,92 +132,93 @@ class _PantallaReservaState extends State<PantallaReserva> {
                             ),
                           );
                         },
-                        child: const Text('Solicitar Reserva', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        child: const Text('Solicitar Reserva', style: TextStyle(fontWeight: FontWeight.bold, 
+                        fontSize: 16)),
                       )
                     ]
                     
                     //PARTE PAGO
                     else ...[
-                      const Text('2. Proceder con el pago:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-                      const SizedBox(height: 12),
-                      Container(width: double.infinity, padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.blue.shade300, width: 1.5),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.paypal, color: Color(0xFF003087), size: 35),
-                                const SizedBox(width: 8),
-                                Text('PayPal',
-                                  style: TextStyle(color: const Color(0xFF003087),
-                                    fontWeight: FontWeight.bold, fontSize: 22, fontStyle: FontStyle.italic),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
-                            Text(
-                              'Total a transferir: \$${montoTotal.toStringAsFixed(2)} ($noches ${noches == 1 ? 'noche' : 'noches'})',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            const SizedBox(height: 15),
-                            
-                            ElevatedButton(style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFFC439), foregroundColor: Colors.black,
-                              disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
+                      Center(
+                        child: Container(width: double.infinity, padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.blue.shade300, width: 1.5),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.paypal, color: Color(0xFF003087), size: 35),
+                                  const SizedBox(width: 8),
+                                  Text('PayPal',
+                                    style: TextStyle(color: const Color(0xFF003087),
+                                      fontWeight: FontWeight.bold, fontSize: 22, fontStyle: FontStyle.italic),
+                                  ),
+                                ],
                               ),
-                              // AJUSTADO: Uso correcto de iniciarFlujoPaypal con su callback interactivo
-                              onPressed: () {
-                                paypalService.iniciarFlujoPaypal(
-                                  context: dialogoContext,
-                                  monto: montoTotal,
-                                  idReserva: mockIdReserva,
-                                  tituloPublicacion: widget.publicacion.titulo,
-                                  onResultado: (exito) {
-                                    if (exito) {
-                                      final nuevaReserva = Reserva(
-                                        id: mockIdReserva, 
-                                        fechaInicio: _fechasSeleccionadas!.start,
-                                        fechaFin: _fechasSeleccionadas!.end,
-                                        total: montoTotal,
-                                        estado: EstadoReserva.CONFIRMADA, 
-                                        cupos: 1,
-                                      );
-
-                                      widget.viajero.historialReservas.add(nuevaReserva);
-
-                                      if (pantallaContext.mounted) {
-                                        setState(() {
-                                          _isPagoPendiente = false;
-                                          _fechasSeleccionadas = null;
-                                        });
+                              const SizedBox(height: 15),
+                              Text(
+                                'Total a transferir: \$${montoTotal.toStringAsFixed(2)} ($noches ${noches == 1 ? 'noche' : 'noches'})',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              const SizedBox(height: 15),
+                              
+                              ElevatedButton(style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFFC439), foregroundColor: Colors.black,
+                                disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
+                                ),
+                                // AJUSTADO: Uso correcto de iniciarFlujoPaypal con su callback interactivo
+                                onPressed: () {
+                                  paypalService.iniciarFlujoPaypal(
+                                    context: dialogoContext,
+                                    monto: montoTotal,
+                                    idReserva: mockIdReserva,
+                                    tituloPublicacion: widget.publicacion.titulo,
+                                    onResultado: (exito) {
+                                      if (exito) {
+                                        final nuevaReserva = Reserva(
+                                          id: mockIdReserva, 
+                                          fechaInicio: _fechasSeleccionadas!.start,
+                                          fechaFin: _fechasSeleccionadas!.end,
+                                          total: montoTotal,
+                                          estado: EstadoReserva.CONFIRMADA, 
+                                          cupos: 1,
+                                        );
+                        
+                                        widget.viajero.historialReservas.add(nuevaReserva);
+                        
+                                        if (pantallaContext.mounted) {
+                                          setState(() {
+                                            _isPagoPendiente = false;
+                                            _fechasSeleccionadas = null;
+                                          });
+                                        }
+                        
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text('¡Reserva completada con éxito por \$${montoTotal.toStringAsFixed(2)}!'),
+                                            backgroundColor: const Color(0xFF216A44),
+                                          ),
+                                        );
+                                      } else {
+                                        messenger.showSnackBar(
+                                          const SnackBar(
+                                            content: Text('El pago no se pudo completar.'),
+                                            backgroundColor: Colors.redAccent,
+                                          ),
+                                        );
                                       }
-
-                                      messenger.showSnackBar(
-                                        SnackBar(
-                                          content: Text('¡Reserva completada con éxito por \$${montoTotal.toStringAsFixed(2)}!'),
-                                          backgroundColor: const Color(0xFF216A44),
-                                        ),
-                                      );
-                                    } else {
-                                      messenger.showSnackBar(
-                                        const SnackBar(
-                                          content: Text('El pago no se pudo completar.'),
-                                          backgroundColor: Colors.redAccent,
-                                        ),
-                                      );
-                                    }
-                                  },
-                                );
-                              },
-                              child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, 
-                              fontSize: 16)),
-                            ),
-                          ],
+                                    },
+                                  );
+                                },
+                                child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, 
+                                fontSize: 16)),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
