@@ -43,18 +43,6 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
       return;
     }
 
-    // 2. Validación estricta del dominio @unimet.edu.ve
-    final unimetRegex = RegExp(r'^[\w-\.]+@correo\.unimet\.edu\.ve$');
-    if (!unimetRegex.hasMatch(emailText.toLowerCase())) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Acceso denegado: Debes usar un correo institucional @correo.unimet.edu.ve'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-
     setState(() => _isLoading = true);
 
     try {

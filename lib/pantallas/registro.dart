@@ -45,9 +45,25 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   }
   
   Future<void> _crearCuenta() async {
+    final isViajero = _selectedRole == UserRole.viajero;
+    final emailText = _correoCtrl.text.trim();
+
+    // Validación estricta del dominio @correo.unimet.edu.ve solo para viajeros
+    if (isViajero) {
+      final unimetRegex = RegExp(r'^[\w-\.]+@correo\.unimet\.edu\.ve$');
+      if (!unimetRegex.hasMatch(emailText.toLowerCase())) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Acceso denegado: Los viajeros deben usar un correo institucional @correo.unimet.edu.ve'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+    }
+
     setState(() => _isLoading = true);
     try {
-      final isViajero = _selectedRole == UserRole.viajero;
       final String rolBackend = isViajero ? 'cliente' : 'host';
 
       Map<String, dynamic> extras = isViajero 
@@ -66,7 +82,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
           };
 
       await _gestionUsuario.registrarUsuario(
-        email: _correoCtrl.text.trim(),
+        email: emailText,
         password: _passCtrl.text.trim(),
         nombre: _nombreCtrl.text.trim(),
         rol: rolBackend,
@@ -80,7 +96,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         usuarioCreado = Viajero(
           id: uid, 
           nombre: _nombreCtrl.text.trim(),
-          email: _correoCtrl.text.trim(),
+          email: emailText,
           fechaRegistro: DateTime.now(),
           telefono: _telefonoCtrl.text.trim(),
           cedula: _cedulaCtrl.text.trim(),
@@ -92,7 +108,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         usuarioCreado = PrestadorServicio(
           id: uid, 
           nombre: _nombreCtrl.text.trim(),
-          email: _correoCtrl.text.trim(),      
+          email: emailText,      
           fechaRegistro: DateTime.now(),
           rif: _rifCtrl.text.trim(),
           telefono: _telefonoCtrl.text.trim(),
