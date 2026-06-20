@@ -4,7 +4,8 @@ import 'package:ecostay/pantallas/anf_publicaciones.dart';
 import 'package:ecostay/pantallas/anf_reservas.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
-import 'anf_perfil.dart';
+import 'package:ecostay/pantallas/anf_perfil.dart';
+import 'package:ecostay/widgets/grafico_prestador.dart';
 
 class HomeAnfitrion extends StatelessWidget {
   final PrestadorServicio prestador;
@@ -14,6 +15,7 @@ class HomeAnfitrion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    // Base para tipografía adaptativa, es decir, se adapta tanto para telefono como para computadora.
     final fontSize = min(size.width * 0.11, size.height * 0.11).clamp(28.0, 96.0) as double;
 
     return Scaffold(backgroundColor: ColorPalette.bg,
@@ -162,18 +164,10 @@ class HomeAnfitrion extends StatelessWidget {
           const Text('Ingresos Mensuales', style: TextStyle(fontFamily: 'Idiqlat', fontSize: 25.6, color: Colors.black)), 
           const Text('Últimos 6 meses', style: TextStyle(color: Color(0xFF6E867A), fontSize: 12.8)), 
           const SizedBox(height: 24), 
+          // CAMBIO DE INTEGRACIÓN: Se quita el contenedor provisional gris y se añade el gráfico real de fl_chart.
           Expanded(
-            child: Container(width: double.infinity,
-              decoration: const BoxDecoration(border: Border(
-                  left: BorderSide(color: Color(0xFFD0D7D3), width: 1.2), 
-                  bottom: BorderSide(color: Color(0xFFD0D7D3), width: 1.2) 
-                ),
-              ),
-              child: const Center(
-                child: Text('Gráfico de Líneas\n(Agrega fl_chart aquí)', textAlign: TextAlign.center,
-                 style: TextStyle(color: Colors.grey)),
-              ),
-            ),
+            child: GraficoPrestadorWidget(), // widget heredó automáticamente el comportamiento elástico. Así la gráfica se estira 
+                                            // o encoge sola para llenar la tarjeta blanca sin empujar los textos ni romper los márgenes.
           ),
         ],
       ),
