@@ -65,6 +65,12 @@ flutter:
   assets:
     - assets/images/fondo.jpg
     - assets/images/logo.jpg
+    - assets/png/logo.png
+    - assets/png/iconusu.png 
+    - assets/png/iconmode.png
+    - assets/png/icondash.png
+    - assets/png/iconloca.png 
+
   fonts:
     - family: Idiqlat
       fonts:
