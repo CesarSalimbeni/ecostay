@@ -1,6 +1,10 @@
 //Este file contendra las funciones para la gestion de publicaciones, como crear, editar y eliminar.
 //Además de funciones para agregar y obtener calificaciones de las publicaciones, utilizando una subcolección.
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecostay/models/estadoreserva.dart';
+import 'package:ecostay/models/gestion_reportes.dart';
+import 'package:ecostay/models/gestion_reservacion.dart';
+import 'package:ecostay/models/reserva.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'calificacion.dart';
@@ -38,11 +42,40 @@ class GestionPublicacion {
   }
 
   //Esta función sirve para eliminar una publicación existente en Firestore, utilizando el ID de la publicación.
+  //Ahora incluye validación de seguridad para reservas activas y limpieza integral de imágenes y reportes.
   Future<void> eliminarPublicacion(String publicacionId) async {
     try {
-      await _firestore.collection('publications').doc(publicacionId).delete();
+      // 1. CONDICIONAL: Verificar si hay reservas pendientes o confirmadas (activas)
+      final GestionReservacion gestionReservas = GestionReservacion();
+      List<Reserva> reservasAsociadas = await gestionReservas.obtenerReservasPorPublicacion(publicacionId);
+      
+      // Buscamos si existe alguna reserva que no esté ni CANCELADA ni COMPLETADA
+      bool tieneReservasActivas = reservasAsociadas.any((reserva) => 
+        reserva.estado == EstadoReserva.PENDIENTE || 
+        reserva.estado == EstadoReserva.CONFIRMADA
+      );
+
+      if (tieneReservasActivas) {
+        throw Exception(
+          'No se puede eliminar la publicación porque tiene reservas activas (pendientes o confirmadas).'
+        );
+      }
+
+      // 2. ELIMINAR REPORTES ASOCIADOS (Reutilizando la lógica de desestimar)
+      // Como queremos borrar la publicación por completo, desestimar sus reportes limpia la colección 'reports'
+      final GestionReportes gestionReportes = GestionReportes();
+      await gestionReportes.desestimarReporte(
+        objetoId: publicacionId, 
+        tipo: TipoObjeto.PUBLICACION
+      );
+
+      // 3. ELIMINAR IMAGEN ASOCIADA (Firebase Storage)
       GestionImagenPublicacion gestionImagen = GestionImagenPublicacion();
       await gestionImagen.eliminarImagen(publicacionId);
+
+      // 4. ELIMINAR DOCUMENTO PRINCIPAL DE FIRESTORE
+      await _firestore.collection('publications').doc(publicacionId).delete();
+
     } catch (e) {
       throw Exception('Error al eliminar publicación: $e');
     }
@@ -199,9 +232,8 @@ class GestionCalificacion {
           .doc(calificacionId)
           .delete();
       await calcularCalificacionPromedio(publicacionId);
-      print('Calificación eliminada exitosamente');
     } catch (e) {
-      print('Error al eliminar calificación: $e');
+      throw('Error al eliminar calificación: $e');
     }
   }
 
@@ -229,7 +261,7 @@ class GestionCalificacion {
         'calificacionPromedio': promedio,
       });
     } catch (e) {
-      print('Error al calcular calificación promedio: $e');
+      throw('Error al calcular calificación promedio: $e');
     }
   }
 }
@@ -255,11 +287,9 @@ class GestionImagenPublicacion {
       await _firestore.collection('publications').doc(publicacionId).update({
         'imagenUrl': downloadUrl,
       });
-      print('Imagen subida exitosamente');
       return downloadUrl;
     } catch (e) {
-      print('Error al subir imagen: $e');
-      return null;
+      throw('Error al subir imagen: $e');
     }
   }
 
@@ -279,13 +309,12 @@ class GestionImagenPublicacion {
           await _firestore.collection('publications').doc(publicacionId).update(
             {'imagenUrl': FieldValue.delete()},
           );
-          print('Imagen eliminada exitosamente');
         }
       } else {
-        print('No se encontró imagen para eliminar');
+
       }
     } catch (e) {
-      print('Error al eliminar imagen: $e');
+      throw ('Error al eliminar imagen: $e');
     }
   }
 
@@ -303,11 +332,9 @@ class GestionImagenPublicacion {
           return data['imagenUrl'];
         }
       }
-      print('No se encontró imagen para esta publicación');
       return null;
     } catch (e) {
-      print('Error al obtener URL de imagen: $e');
-      return null;
+      throw('Error al obtener URL de imagen: $e');
     }
   }
 }

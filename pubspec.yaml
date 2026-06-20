@@ -43,6 +43,8 @@ dependencies:
   flutter_paypal_payment: ^1.0.8
   flutter_paypal: ^0.2.1
   http: ^1.6.0
+  pdf: ^3.12.0
+  printing: ^5.14.3
 
 dev_dependencies:
   flutter_test:

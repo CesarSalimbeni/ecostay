@@ -1,67 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_paypal_payment/flutter_paypal_payment.dart';
 
 class PaypalService {
   String clientId;
   String secretKey;
 
-  // Esto lo dejo en true mientras estoy probando (modo sandbox = modo de pruebas)
   bool sandboxMode = true;
-
-  // Aqui guardo si el pago salio bien o mal, para poder revisarlo despues
   bool pagoExitoso = false;
-
-  // Contador para saber cuantas veces se intento procesar un pago
   int intentosDePago = 0;
 
-  // Constructor, le pido clientId y secretKey
   PaypalService({required this.clientId, required this.secretKey});
 
-  // Revisa si el monto es valido antes de cobrar
   bool validarMonto(double monto) {
     if (monto <= 0) {
       print("Error: el monto no puede ser cero o negativo");
       return false;
-    } else {
-      print("El monto es valido: \$${monto}");
-      return true;
     }
+    return true;
   }
 
-  // Arma el texto que se muestra en pantalla con la factura
   String armarTextoFactura(String idReserva, double monto) {
     String montoTexto = monto.toStringAsFixed(2);
-    String texto = "Factura: " + idReserva + "\nTotal: \$" + montoTexto;
-    return texto;
+    return "Factura: $idReserva\nTotal: \$$montoTexto";
   }
 
-  // Arma la lista de "transactions" en formato Map, como lo pide
-  // este paquete
-  List<Map<String, dynamic>> armarTransaccion(
-    double monto,
-    String tituloPublicacion,
-  ) {
-    String montoTexto = monto.toStringAsFixed(2);
-
-    List<Map<String, dynamic>> transaccion = [
-      {
-        "amount": {
-          "total": montoTexto,
-          "currency": "USD",
-          "details": {
-            "subtotal": montoTexto,
-            "shipping": '0',
-            "shipping_discount": 0,
-          }
-        },
-        "description": tituloPublicacion,
-      }
-    ];
-
-    return transaccion;
-  }
-
-  // Funcion principal: abre la pantalla real de pago del paquete
+  // FUNCIÓN PRINCIPAL SIMULADA CON LOGIN
   void iniciarFlujoPaypal({
     required BuildContext context,
     required double monto,
@@ -69,66 +31,216 @@ class PaypalService {
     required String tituloPublicacion,
     required Function(bool) onResultado,
   }) {
-    bool esValido = validarMonto(monto);
-
-    if (esValido == false) {
+    if (!validarMonto(monto)) {
+      pagoExitoso = false;
       onResultado(false);
       return;
     }
 
-    intentosDePago = intentosDePago + 1;
-    print("Intento numero $intentosDePago de procesar pago");
+    intentosDePago++;
+    print("Abriendo pasarela simulada para la reserva: $idReserva");
 
-    List<Map<String, dynamic>> miTransaccion =
-        armarTransaccion(monto, tituloPublicacion);
-
-    // OJO: este paquete NO tiene returnURL ni cancelURL.
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (BuildContext context) => PaypalCheckoutView(
-          sandboxMode: sandboxMode,
-          clientId: clientId,
-          secretKey: secretKey,
-          transactions: miTransaccion,
-          note: "Gracias por tu compra, factura: $idReserva",
-
-          // Esto se llama cuando el pago SI funciono
-          onSuccess: (Map params) async {
-            print("El pago se realizo con exito: $params");
+    // Mostramos una mini pantalla desde abajo (ModalBottomSheet) que simula PayPal
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Permite que suba cuando se abre el teclado
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return _PaypalMockLoginSheet(
+          monto: monto,
+          tituloPublicacion: tituloPublicacion,
+          onLoginSuccess: () {
+            // Si el login fue "exitoso", marcamos como aprobado y devolvemos true
             pagoExitoso = true;
-            Navigator.pop(context);
             onResultado(true);
           },
-
-          // Esto se llama cuando hubo un ERROR en el pago
-          onError: (error) {
-            print("El pago fallo: $error");
-            pagoExitoso = false;
-            Navigator.pop(context);
-            onResultado(false);
-          },
-
-          // Esto se llama si el usuario CANCELA el pago el mismo
           onCancel: () {
-            print("El usuario cancelo el pago");
             pagoExitoso = false;
-            Navigator.pop(context);
             onResultado(false);
           },
+        );
+      },
+    );
+  }
+
+  void mostrarResumen() {
+    print("---- Resumen del pago SIMULADO ----");
+    print("Intentos realizados: $intentosDePago");
+    print("Resultado: ${pagoExitoso ? "el pago fue exitoso" : "el pago no se completó"}");
+    print("-----------------------------------");
+  }
+}
+
+// COMPONENTE VISUAL INTERNO DEL LOGIN SIMULADO
+class _PaypalMockLoginSheet extends StatefulWidget {
+  final double monto;
+  final String tituloPublicacion;
+  final VoidCallback onLoginSuccess;
+  final VoidCallback onCancel;
+
+  const _PaypalMockLoginSheet({
+    required this.monto,
+    required this.tituloPublicacion,
+    required this.onLoginSuccess,
+    required this.onCancel,
+  });
+
+  @override
+  State<_PaypalMockLoginSheet> createState() => _PaypalMockLoginSheetState();
+}
+
+class _PaypalMockLoginSheetState extends State<_PaypalMockLoginSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _cargando = false;
+
+  void _procesarLoginFalso() {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _cargando = true;
+      });
+
+      // Simulamos la verificación de credenciales y el cobro (2 segundos)
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          Navigator.pop(context); // Cierra el BottomSheet
+          widget.onLoginSuccess(); // Dispara el éxito
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Ajuste para que el teclado no tape el diseño
+    final paddingBottom = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      padding: EdgeInsets.fromLTRB(24, 24, 24, paddingBottom + 24),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Encabezado simulado de PayPal
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "PayPal",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
+                    color: Color(0xFF003087), // Azul corporativo PayPal
+                  ),
+                ),
+                Text(
+                  "\$${widget.monto.toStringAsFixed(2)} USD",
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+              ],
+            ),
+            const Divider(height: 30),
+            
+            if (_cargando) ...[
+              // Estado de carga si ya presionó pagar
+              const SizedBox(height: 40),
+              const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF003087)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Procesando pago de forma segura...",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 40),
+            ] else ...[
+              // Formulario de inicio de sesión
+              Text(
+                "Pagar con: ${widget.tituloPublicacion}",
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: "Correo electrónico Sandbox",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Por favor, ingresa un correo de prueba";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              
+              TextFormField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: "Contraseña",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Por favor, ingresa una contraseña cualquiera";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              
+              // Botón de Iniciar Sesión / Pagar
+              ElevatedButton(
+                onPressed: _procesarLoginFalso,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFC439), // Amarillo PayPal
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text("Iniciar sesión y Pagar", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+              const SizedBox(height: 10),
+              
+              // Botón Cancelar
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onCancel();
+                },
+                child: const Text("Cancelar y volver a la app", style: TextStyle(color: Colors.redAccent)),
+              ),
+            ],
+          ],
         ),
       ),
     );
   }
 
-  // Imprime en consola un resumen del ultimo pago
-  void mostrarResumen() {
-    print("---- Resumen del pago ----");
-    print("Intentos realizados: $intentosDePago");
-    if (pagoExitoso == true) {
-      print("Resultado: el pago fue exitoso");
-    } else {
-      print("Resultado: el pago no se completo");
-    }
-    print("---------------------------");
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
