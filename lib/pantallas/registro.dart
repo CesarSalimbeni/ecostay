@@ -342,20 +342,25 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                     ],
                   ),
                 
-                const SizedBox(height: 35),
-                
-                FilledButton(
-                  onPressed: _isLoading ? null : _crearCuenta,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF216A44),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    minimumSize: const Size(double.infinity, 50),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                  child: FilledButton(
+                    onPressed: _isLoading ? null : _crearCuenta,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF216A44),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: _isLoading 
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text("Crea tu cuenta de Ecostay", style: TextStyle(fontSize: 16, fontFamily: 'Idiqlat')),
                   ),
-                  child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.white) 
-                      : const Text("Crea tu cuenta de Ecostay", style: TextStyle(fontSize: 16, fontFamily: 'Idiqlat')),
                 ),
               ],
             ),

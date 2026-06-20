@@ -10,6 +10,7 @@ import 'package:ecostay/paypal_service.dart';
 import 'package:ecostay/models/gestion_reservacion.dart'; 
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:ecostay/pantallas/resumen_reserva_screen.dart';
 
 class PantallaReserva extends StatefulWidget {
   final Publicacion publicacion;
@@ -26,7 +27,11 @@ class _PantallaReservaState extends State<PantallaReserva> {
   bool _isPagoPendiente = false; 
 
   void _mostrarDialogoReserva(BuildContext pantallaContext) {
-    final paypalService = PaypalService(apiKey: "TU_CLAVE_API_PAYPAL");
+    // AJUSTADO: Constructor correcto para PaypalService
+    final paypalService = PaypalService(
+      clientId: "TU_CLIENT_ID_PAYPAL",
+      secretKey: "TU_SECRET_KEY_PAYPAL",
+    );
     final gestionReservacion = GestionReservacion();
     final messenger = ScaffoldMessenger.of(pantallaContext);
 
@@ -37,6 +42,7 @@ class _PantallaReservaState extends State<PantallaReserva> {
             int noches = _fechasSeleccionadas != null ? _fechasSeleccionadas!.duration.inDays : 0;
             if (noches == 0 && _fechasSeleccionadas != null) noches = 1;
             double montoTotal = noches * widget.publicacion.precio;
+            String mockIdReserva = 'res_${Random().nextInt(100000)}';
 
             return AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),),
               title: Text(
@@ -168,38 +174,49 @@ class _PantallaReservaState extends State<PantallaReserva> {
                               disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
                               ),
-                              // DENTRO DE LA PARTE DE PAGO -> ElevatedButton (Pagar Ahora)
+                              // AJUSTADO: Uso correcto de iniciarFlujoPaypal con su callback interactivo
                               onPressed: () {
-                                bool exito = paypalService.procesarPago(montoTotal);
-                                
-                                if (exito) {
-                                  final nuevaReserva = Reserva(
-                                  id: 'res_${Random().nextInt(100000)}', 
-                                  fechaInicio: _fechasSeleccionadas!.start,
-                                  fechaFin: _fechasSeleccionadas!.end,
-                                  total: montoTotal,
-                                  estado: EstadoReserva.CONFIRMADA, 
-                                  cupos: 1,
+                                paypalService.iniciarFlujoPaypal(
+                                  context: dialogoContext,
+                                  monto: montoTotal,
+                                  idReserva: mockIdReserva,
+                                  tituloPublicacion: widget.publicacion.titulo,
+                                  onResultado: (exito) {
+                                    if (exito) {
+                                      final nuevaReserva = Reserva(
+                                        id: mockIdReserva, 
+                                        fechaInicio: _fechasSeleccionadas!.start,
+                                        fechaFin: _fechasSeleccionadas!.end,
+                                        total: montoTotal,
+                                        estado: EstadoReserva.CONFIRMADA, 
+                                        cupos: 1,
+                                      );
+
+                                      widget.viajero.historialReservas.add(nuevaReserva);
+
+                                      if (pantallaContext.mounted) {
+                                        setState(() {
+                                          _isPagoPendiente = false;
+                                          _fechasSeleccionadas = null;
+                                        });
+                                      }
+
+                                      messenger.showSnackBar(
+                                        SnackBar(
+                                          content: Text('¡Reserva completada con éxito por \$${montoTotal.toStringAsFixed(2)}!'),
+                                          backgroundColor: const Color(0xFF216A44),
+                                        ),
+                                      );
+                                    } else {
+                                      messenger.showSnackBar(
+                                        const SnackBar(
+                                          content: Text('El pago no se pudo completar.'),
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                      );
+                                    }
+                                  },
                                 );
-
-                                  widget.viajero.historialReservas.add(nuevaReserva);
-
-                                  if (dialogoContext.mounted) {
-                                    Navigator.pop(dialogoContext);
-                                  }
-                                  
-                                  setState(() {
-                                    _isPagoPendiente = false;
-                                    _fechasSeleccionadas = null;
-                                  });
-
-                                  messenger.showSnackBar(
-                                    SnackBar(
-                                      content: Text('¡Reserva completada con éxito por \$${montoTotal.toStringAsFixed(2)}!'),
-                                      backgroundColor: const Color(0xFF216A44),
-                                    ),
-                                  );
-                                }
                               },
                               child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, 
                               fontSize: 16)),
