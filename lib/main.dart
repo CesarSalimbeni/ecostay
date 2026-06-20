@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       title: 'EcoStay',
       theme: ThemeData(primarySwatch: Colors.green),
       // Configurado para que la app inicie en la pantalla de bienvenida/inicio
-      home: const PantallaInicio(), 
+      home: PantallaInicio(), 
     );
   }
 }
