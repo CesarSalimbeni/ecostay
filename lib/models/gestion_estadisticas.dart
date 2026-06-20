@@ -1,82 +1,145 @@
-import 'usuario.dart';
-import 'reserva.dart';
-import 'estadoreserva.dart';
-import 'publicacion.dart';
-import 'estadistica.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecostay/models/estadoreserva.dart';
 
-// Esta clase calcula las estadisticas que se muestran en el
-// Dashboard del Administrador.
-// recibe listas ya armadas y calcula, sin tocar Firebase todavia
-class GestionEstadisticas {
+class GestionDashboard {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Cuenta cuantos usuarios estan activos (no suspendidos)
-  int contarUsuariosActivos(List<Usuario> usuarios) {
-    int activos = 0;
-
-    for (int i = 0; i < usuarios.length; i++) {
-      if (usuarios[i].suspendido == false) {
-        activos = activos + 1;
-      }
+  /// 1. Obtiene la cantidad total de usuarios registrados en el sistema.
+  /// (Asumiendo que tu colección de usuarios se llama 'users')
+  Future<int> obtenerUsuariosActivos() async {
+    try {
+      // Usamos .count() para una consulta ultra rápida y económica en Firestore
+      AggregateQuerySnapshot snapshot = await _firestore.collection('users').count().get();
+      return snapshot.count ?? 0;
+    } catch (e) {
+      throw('Error al obtener usuarios activos: $e');
     }
-
-    return activos;
   }
 
-  // Suma el volumen total de dinero en reservas confirmadas o completadas
-  // (estas son las transacciones que ya se le pagaron a los prestadores)
-  double calcularVolumenReservas(List<Reserva> reservas) {
-    double total = 0;
-
-    for (int i = 0; i < reservas.length; i++) {
-      bool cuenta = reservas[i].estado == EstadoReserva.CONFIRMADA ||
-          reservas[i].estado == EstadoReserva.COMPLETADA;
-
-      if (cuenta) {
-        total = total + reservas[i].total;
-      }
+  /// 2. Obtiene la cantidad de publicaciones creadas en la plataforma.
+  Future<int> obtenerPublicacionesActivas() async {
+    try {
+      // Cuenta directamente todos los documentos dentro de 'publications'
+      AggregateQuerySnapshot snapshot = await _firestore.collection('publications').count().get();
+      return snapshot.count ?? 0;
+    } catch (e) {
+      throw('Error al obtener publicaciones activas: $e');
     }
-
-    return total;
   }
 
-  // Cuenta cuantas publicaciones siguen activas, es decir,
-  // que todavia les queda cupo disponible (cuposActual menor a cuposMax)
-  int contarPublicacionesActivas(List<Publicacion> publicaciones) {
-    int activas = 0;
+  /// 3. Obtiene la cantidad de reservas vigentes (PENDIENTES y CONFIRMADAS).
+  /// Excluye las canceladas o completadas según las reglas de tu negocio.
+  Future<int> obtenerReservasActivas() async {
+    try {
+      // Realizamos un filtrado por los estados activos definidos en tu EstadoReserva
+      QuerySnapshot snapshotPendientes = await _firestore
+          .collection('reservations')
+          .where('estado', isEqualTo: EstadoReserva.PENDIENTE.name)
+          .get();
 
-    for (int i = 0; i < publicaciones.length; i++) {
-      if (publicaciones[i].cuposActual < publicaciones[i].cuposMax) {
-        activas = activas + 1;
-      }
+      QuerySnapshot snapshotConfirmadas = await _firestore
+          .collection('reservations')
+          .where('estado', isEqualTo: EstadoReserva.CONFIRMADA.name)
+          .get();
+
+      return snapshotPendientes.docs.length + snapshotConfirmadas.docs.length;
+    } catch (e) {
+      throw('Error al obtener reservas activas: $e');
     }
-
-    return activas;
   }
 
-  // Cuenta cuantas reservas se han hecho en total
-  // (sin importar el estado, es el total de reservas creadas)
-  int contarReservasHechas(List<Reserva> reservas) {
-    return reservas.length;
+  /// 4. Calcula el volumen de transacciones (Suma total de los ingresos de reservas exitosas).
+  /// Filtra por CONFIRMADA y COMPLETADA para no sumar dinero de reservas canceladas.
+  Future<double> obtenerVolumenTransacciones() async {
+    double volumenTotal = 0.0;
+    try {
+      // Traemos las reservas que representen transacciones válidas o liquidadas
+      QuerySnapshot snapshot = await _firestore
+          .collection('reservations')
+          .where('estado', whereIn: [
+            EstadoReserva.CONFIRMADA.name,
+            EstadoReserva.COMPLETADA.name,
+          ])
+          .get();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        // Mapeamos el campo 'total' basándonos en tu modelo Reserva
+        double totalReserva = (data['total'] as num?)?.toDouble() ?? 0.0;
+        volumenTotal += totalReserva;
+      }
+
+      return volumenTotal;
+    } catch (e) {
+      throw('Error al calcular el volumen de transacciones: $e');
+    }
   }
 
-  // Funcion principal: arma las 4 tarjetas del dashboard del admin
-  List<Estadistica> generarEstadisticasGlobales({
-    required List<Usuario> usuarios,
-    required List<Reserva> reservas,
-    required List<Publicacion> publicaciones,
-  }) {
-    List<Estadistica> resultado = [];
+  /// Función auxiliar para empaquetar todos los datos del dashboard en una sola llamada.
+  Future<Map<String, dynamic>> obtenerMetricasGenerales() async {
+    // Ejecutamos todas las consultas en paralelo para mejorar drásticamente el rendimiento
+    final resultados = await Future.wait([
+      obtenerUsuariosActivos(),
+      obtenerPublicacionesActivas(),
+      obtenerReservasActivas(),
+      obtenerVolumenTransacciones(),
+    ]);
 
-    int usuariosActivos = contarUsuariosActivos(usuarios);
-    double volumenReservas = calcularVolumenReservas(reservas);
-    int publicacionesActivas = contarPublicacionesActivas(publicaciones);
-    int reservasHechas = contarReservasHechas(reservas);
+    return {
+      'usuariosActivos': resultados[0] as int,
+      'publicacionesActivas': resultados[1] as int,
+      'reservasActivas': resultados[2] as int,
+      'volumenTransacciones': resultados[3] as double,
+    };
+  }
+  /// Registra o incrementa el contador de un destino buscado en el mes actual.
+  Future<void> registrarBusquedaDestino(String ubicacion) async {
+    if (ubicacion.trim().isEmpty) return;
 
-    resultado.add(Estadistica(nombre: "Usuarios Activos", valor: usuariosActivos.toDouble()));
-    resultado.add(Estadistica(nombre: "Volumen de Reservas", valor: volumenReservas));
-    resultado.add(Estadistica(nombre: "Publicaciones Activas", valor: publicacionesActivas.toDouble()));
-    resultado.add(Estadistica(nombre: "Reservas Hechas", valor: reservasHechas.toDouble()));
+    try {
+      // 1. Obtener el año y mes actual en formato YYYY-MM
+      DateTime ahora = DateTime.now();
+      String anoMes = "${ahora.year}-${ahora.month.toString().padLeft(2, '0')}";
+      
+      // Limpiamos el texto para evitar duplicados por espacios o mayúsculas
+      String destinoLimpio = ubicacion.trim();
+      String documentoId = "${anoMes}_$destinoLimpio";
 
-    return resultado;
+      // 2. Referencia al documento único del mes + destino
+      DocumentReference docRef = _firestore.collection('destinos_buscados').doc(documentoId);
+
+      // 3. Guardar o incrementar atómicamente
+      await docRef.set({
+        'anoMes': anoMes,
+        'destino': destinoLimpio,
+        'contador': FieldValue.increment(1),
+        'ultimaBusqueda': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)); // 'merge: true' asegura que si no existe, lo crea.
+      
+    } catch (e) {
+      throw('Error al registrar métrica de búsqueda: $e');
+    }
+  }
+
+  /// Obtiene los destinos más buscados de un mes específico ordenados de mayor a menor.
+  /// Formato requerido para [anoMes]: "YYYY-MM" (Ej: "2026-06")
+  Future<List<Map<String, dynamic>>> obtenerDestinosMasBuscados({
+    required String anoMes, 
+    int limite = 5,
+  }) async {
+    try {
+      QuerySnapshot snapshot = await _firestore
+          .collection('destinos_buscados')
+          .where('anoMes', isEqualTo: anoMes)
+          .orderBy('contador', descending: true)
+          .limit(limite)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return doc.data() as Map<String, dynamic>;
+      }).toList();
+    } catch (e) {
+      throw('Error al obtener destinos más buscados: $e');
+    }
   }
 }
