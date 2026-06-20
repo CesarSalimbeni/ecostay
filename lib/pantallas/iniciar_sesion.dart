@@ -43,6 +43,18 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
       return;
     }
 
+    // 2. Validación estricta del dominio @unimet.edu.ve
+    final unimetRegex = RegExp(r'^[\w-\.]+@unimet\.edu\.ve$');
+    if (!unimetRegex.hasMatch(emailText.toLowerCase())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Acceso denegado: Debes usar un correo institucional @unimet.edu.ve'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -62,15 +74,14 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
           ),
         );
         
-      } else{
+      } else {
         Navigator.pushReplacement(context, MaterialPageRoute(
           builder: (context) => HomeAdmin(administrador: usuarioLogueado as Administrador),
           ),
         );
       }
       
-      } catch (e) {
-      // Error de login (contraseña mal, usuario no existe, etc.)
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
       );
@@ -119,7 +130,7 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              labelText: "tu@correo.unimet.edu.ve", // Modificado para guiar al usuario
+                              labelText: "tu@correo.unimet.edu.ve", // Modificado para guiar al usuario con el dominio completo
                               border: const OutlineInputBorder(),
                               filled: true, 
                               fillColor: ColorPalette.bg

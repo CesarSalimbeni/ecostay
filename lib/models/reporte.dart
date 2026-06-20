@@ -21,6 +21,7 @@ class Reporte {
     required this.tipo,
     required this.fechaReporte,
   });
+
   factory Reporte.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     

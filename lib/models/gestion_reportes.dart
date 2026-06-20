@@ -3,6 +3,8 @@ import 'package:ecostay/models/calificacion.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/reporte.dart';
+
+/// Define el tipo de contenido que está siendo reportado.
 enum TipoObjeto {
   PUBLICACION,
   CALIFICACION
@@ -10,6 +12,7 @@ enum TipoObjeto {
 
 class GestionReportes {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   Future<void> reportarCalificacion({
     required String objetoId,
     required String publicacionId,
@@ -18,7 +21,7 @@ class GestionReportes {
     required String motivo,
   }) async {
     try {
-      //Evitar que el mismo usuario reporte lo mismo dos veces
+      // Evitar que el mismo usuario reporte lo mismo dos veces
       bool yaReportado = await duplicacionReporte(objetoId, usuarioReportoId);
       if (yaReportado) {
         throw Exception('Ya has reportado este elemento anteriormente.');
@@ -54,7 +57,7 @@ class GestionReportes {
     required String motivo,
   }) async {
     try {
-      //Evitar que el mismo usuario reporte lo mismo dos veces
+      // Evitar que el mismo usuario reporte lo mismo dos veces
       bool yaReportado = await duplicacionReporte(objetoId, usuarioReportoId);
       if (yaReportado) {
         throw Exception('Ya has reportado este elemento anteriormente.');
@@ -77,7 +80,6 @@ class GestionReportes {
     }
   }
 
-
   Future<List<Calificacion>> buscarCalificacionesReportadas() async {
     try {
       QuerySnapshot query = await _firestore
@@ -99,8 +101,7 @@ class GestionReportes {
           puntaje: (data['puntaje'] as num).toDouble(),
           comentario: data['comentario'] ?? '',
           fecha: fechaDoc,
-          nombreUsuario:
-              data['nombreUsuario'] ?? '',
+          nombreUsuario: data['nombreUsuario'] ?? '',
           publicacionId: doc.reference.parent.parent?.id
         );
       }).toList();
@@ -109,7 +110,6 @@ class GestionReportes {
       return [];
     }
   }
-
 
   Future<List<Publicacion>> buscarPublicacionesReportadas() async {
     try {
@@ -129,7 +129,6 @@ class GestionReportes {
       return [];
     }
   }
-
 
   Future<List<Reporte>> buscarReportesPorObjeto(String objetoId) async {
     try {
@@ -186,8 +185,8 @@ class GestionReportes {
     }
   }
 
-  ///Esta función evita que un reporte se haga dos veces sobre la misma publicación o calificación.
-  ///Usar para el frontend
+  /// Esta función evita que un reporte se haga dos veces sobre la misma publicación o calificación.
+  /// Usar para el frontend
   Future<bool> duplicacionReporte(
     String objetoId,
     String usuarioReportoId,

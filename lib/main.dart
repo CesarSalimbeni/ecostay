@@ -20,15 +20,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Traído de la rama de tu amigo
+      debugShowCheckedModeBanner: false,
       title: 'EcoStay',
       theme: ThemeData(primarySwatch: Colors.green),
-      
-      // Nota: Actualmente cargará PantallaInicio. 
-      // Si quieres ver directamente la pantalla de búsqueda de tu amigo, 
-      // comenta la línea de abajo y descomenta la siguiente:
-      home: PantallaInicio(), 
-      // home: const BusquedaScreen(),
+      // Configurado para que la app inicie en la pantalla de bienvenida/inicio
+      home: const PantallaInicio(), 
     );
   }
 }
