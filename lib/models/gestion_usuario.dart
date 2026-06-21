@@ -71,35 +71,7 @@ class GestionUsuario {
     
     if (!doc.exists) throw Exception('Usuario no encontrado');
     
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    String rol = data['rol'];
-    DateTime fecha = (data['fechaRegistro'] as Timestamp).toDate();
-
-    switch (rol) {
-      case 'cliente':
-        return Viajero(
-          id: uid, nombre: data['nombre'], email: data['email'], 
-          fechaRegistro: fecha, telefono: data['telefono'] ?? '',
-          cedula: data['cedula'] ?? '', ciudad: data['ciudad'] ?? '', historialReservas: [],
-          suspendido: data['suspendido']
-        );
-      case 'host':
-        return PrestadorServicio(
-          id: uid, nombre: data['nombre'], email: data['email'],
-           fechaRegistro: fecha, rif: data['rif'] ?? '',
-          telefono: data['telefono'] ?? '', direccion: data['direccion'] ?? '',
-          cuentaPayPal: data['cuentaPayPal'] ?? '', estadisticas: [],
-          suspendido: data['suspendido']
-        );
-      case 'admin':
-        return Administrador(
-          id: uid, nombre: data['nombre'], email: data['email'],
-           fechaRegistro: fecha, nivelAcceso: data['nivelAcceso'] ?? 0,
-           suspendido: data['suspendido']
-        );
-      default:
-        throw Exception('Rol desconocido');
-    }
+    return _mapearDocumentoAUsuario(doc);
   }
 
   Future<void> editarInformacion(String uid, Map<String, dynamic> nuevaInformacion) async {
@@ -108,12 +80,52 @@ class GestionUsuario {
     await _firestore.collection('users').doc(uid).update(nuevaInformacion);
   }
 
-  Future<void> eliminarCuenta(String uid) async {
+  /// Elimina por completo la cuenta del usuario de Firebase Auth, Firestore y Storage.
+  /// Requiere la [contrasenaActual] por seguridad para reautenticar al usuario.
+  Future<void> eliminarCuentaCompleta({
+    required String contrasenaActual,
+  }) async {
     try {
+      User? usuarioActual = _auth.currentUser;
+      if (usuarioActual == null) throw Exception('No hay ningún usuario con sesión activa.');
+
+      String uid = usuarioActual.uid;
+      String? email = usuarioActual.email;
+
+      if (email == null) throw Exception('No se pudo verificar el correo electrónico.');
+
+      // 1. REAUTENTICACIÓN (Obligatoria en Firebase antes de acciones sensibles)
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: email,
+        password: contrasenaActual,
+      );
+      await usuarioActual.reauthenticateWithCredential(credential);
+
+      // 2. ELIMINAR IMAGEN DE PERFIL
+      // Instanciamos la clase auxiliar de imágenes y borramos el archivo si existe
+      final gestionImagen = GestionImagenPerfil();
+      await gestionImagen.eliminarImagen(uid);
+
+      // 3. ELIMINAR DOCUMENTO DE FIRESTORE
       await _firestore.collection('users').doc(uid).delete();
-      await _auth.currentUser!.delete();
+
+      // 4. ELIMINAR USUARIO DE FIREBASE AUTH
+      await usuarioActual.delete();
+      
+    } on FirebaseAuthException catch (e) {
+      // Manejo de errores específicos de Firebase Auth
+      switch (e.code) {
+        case 'wrong-password':
+          throw Exception('La contraseña ingresada es incorrecta.');
+        case 'user-mismatch':
+          throw Exception('Las credenciales no coinciden con el usuario actual.');
+        case 'requires-recent-login':
+          throw Exception('Por seguridad, por favor cierra sesión e ingresa nuevamente antes de eliminar tu cuenta.');
+        default:
+          throw Exception('Error de autenticación: ${e.message}');
+      }
     } catch (e) {
-      throw Exception('Error al eliminar cuenta: $e');
+      throw Exception('Error al eliminar la cuenta de manera integral: $e');
     }
   }
 
@@ -138,6 +150,75 @@ class GestionUsuario {
       }
     } catch (e) {
       return 'Error de conexión: $e';
+    }
+  }
+
+  /// Busca usuarios por nombre.
+  /// Si [nombreBusqueda] está vacío o es nulo, actúa como un explorador y devuelve todos los usuarios.
+  /// Retorna una lista de instancias de la clase base [Usuario].
+  Future<List<Usuario>> buscarUsuariosPorNombre(String? nombreBusqueda) async {
+    try {
+      Query query = _firestore.collection('users');
+
+      if (nombreBusqueda != null && nombreBusqueda.trim().isNotEmpty) {
+        String busqueda = nombreBusqueda.trim();
+        
+        // Simulación de "Comienza con" para Firestore
+        query = query
+            .where('nombre', isGreaterThanOrEqualTo: busqueda)
+            .where('nombre', isLessThanOrEqualTo: '$busqueda\uf8ff');
+      }
+
+      QuerySnapshot querySnapshot = await query.get();
+
+      // Mapeamos cada documento transformándolo en su clase correspondiente de tipo Usuario
+      List<Usuario> usuarios = querySnapshot.docs.map((doc) {
+        return _mapearDocumentoAUsuario(doc);
+      }).toList();
+
+      return usuarios;
+    } catch (e) {
+      throw Exception('Error al buscar usuarios: $e');
+    }
+  }
+
+  /// Método auxiliar privado para centralizar la conversión de Firestore a objetos de tipo Usuario.
+  Usuario _mapearDocumentoAUsuario(DocumentSnapshot doc) {
+    if (!doc.exists) throw Exception('Usuario no encontrado');
+    
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    String uid = doc.id;
+    String rol = data['rol'] ?? 'cliente';
+    
+    // Validamos la fecha de registro de forma segura por si viene nula temporalmente
+    DateTime fecha = data['fechaRegistro'] != null 
+        ? (data['fechaRegistro'] as Timestamp).toDate() 
+        : DateTime.now();
+
+    switch (rol) {
+      case 'cliente':
+        return Viajero(
+          id: uid, nombre: data['nombre'] ?? 'Sin nombre', email: data['email'] ?? '', 
+          fechaRegistro: fecha, telefono: data['telefono'] ?? '',
+          cedula: data['cedula'] ?? '', ciudad: data['ciudad'] ?? '', historialReservas: [],
+          suspendido: data['suspendido'] ?? false
+        );
+      case 'host':
+        return PrestadorServicio(
+          id: uid, nombre: data['nombre'] ?? 'Sin nombre', email: data['email'] ?? '',
+          fechaRegistro: fecha, rif: data['rif'] ?? '',
+          telefono: data['telefono'] ?? '', direccion: data['direccion'] ?? '',
+          cuentaPayPal: data['cuentaPayPal'] ?? '', estadisticas: [],
+          suspendido: data['suspendido'] ?? false
+        );
+      case 'admin':
+        return Administrador(
+          id: uid, nombre: data['nombre'] ?? 'Sin nombre', email: data['email'] ?? '',
+          fechaRegistro: fecha, nivelAcceso: data['nivelAcceso'] ?? 0,
+          suspendido: data['suspendido'] ?? false
+        );
+      default:
+        throw Exception('Rol desconocido: $rol');
     }
   }
 

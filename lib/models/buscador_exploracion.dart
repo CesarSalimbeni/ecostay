@@ -1,12 +1,14 @@
 //Este file contendra las funciones para la busqueda y exploracion de publicaciones, utilizando filtros como titulo,
 //ubicacion, calificacion minima, precio minimo y precio maximo.
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecostay/models/gestion_estadisticas.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
 import 'publicacion.dart';
 
 class BuscadorExploracion {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   GestionPublicacion gestionPublicacion = GestionPublicacion();
+  final GestionDashboard _gestionMetricas = GestionDashboard();
 
   //Esta función sirve para buscar publicaciones utilizando varios filtros.
   //Tambien se puede usar para explorar publicaciones sin filtros, simplemente dejando los parametros como null.
@@ -20,6 +22,10 @@ class BuscadorExploracion {
     bool? disponibilidadtransporte,
   }) async {
     try {
+      if (ubicacion != null && ubicacion.trim().isNotEmpty) {
+        // No usamos 'await' aquí para no retrasar la carga de la UI del usuario
+        _gestionMetricas.registrarBusquedaDestino(ubicacion); 
+      }
       // 1. Consulta Base Limpia: Traemos la colección (Evitamos problemas de índices en Firebase Web)
       Query query = _firestore.collection('publications');
 
