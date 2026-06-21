@@ -1,4 +1,5 @@
 import 'package:ecostay/models/estadoreserva.dart';
+import 'package:ecostay/models/gestion_publicacion.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/models/reserva.dart'; 
 import 'package:ecostay/pantallas/estilo.dart';
@@ -268,29 +269,55 @@ class PantallaMisReservas extends StatelessWidget {
                                         side: const BorderSide(color: Colors.black)),
                                       ),
                                       
-                                      // AJUSTADO: Botón Detalles conectado dinámicamente con argumentos
-                                      FilledButton.icon(
-                                        onPressed: () {
-                                          /*if (reserva.estado == EstadoReserva.CONFIRMADA) {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => PantallaReserva(
-                                                  publicacion: reserva.publicacion, // Pasa el objeto Publicacion asociado a la reserva
-                                                  viajero: viajero,                 // Pasa el viajero de esta clase
+                                      // AJUSTADO: Botón Detalles 
+                                      FilledButton.icon(onPressed: () async {
+                                          showDialog(context: context, barrierDismissible: false,
+                                            builder: (BuildContext context) {
+                                              return const Center(
+                                                child: CircularProgressIndicator(color: Color(0xFF216A44)),
+                                              );
+                                            },
+                                          );
+
+                                          try {
+                                            final (_, _, String idDeLaPublicacion) = await _gestionReservacion.obtenerInformacion(reserva.id);
+
+                                            final GestionPublicacion gestionPublicacion = GestionPublicacion();
+                                            final publicacionCompleta = await gestionPublicacion.obtenerPublicacionPorId(idDeLaPublicacion);
+
+                                            if (context.mounted) Navigator.pop(context);
+
+                                            if (publicacionCompleta != null) {
+                                              if (context.mounted) {
+                                                Navigator.push(context,
+                                                  MaterialPageRoute(builder: (context) => PantallaReserva(
+                                                      publicacion: publicacionCompleta, viajero: viajero,                 
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            } else {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('No se pudo encontrar la información de esta publicación.'),
+                                                    backgroundColor: Colors.redAccent,
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          } catch (e) {
+                                            if (context.mounted) Navigator.pop(context);
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Error al obtener los detalles: $e'),
+                                                  backgroundColor: Colors.redAccent,
                                                 ),
-                                              ),
-                                            );
-                                          } else {
-                                            // Feedback opcional si toca una reserva no confirmada
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: Text('El resumen solo está disponible para reservas confirmadas (Estado actual: ${_obtenerTextoEstado(reserva.estado)}).'),
-                                                backgroundColor: Colors.orange.shade800,
-                                              ),
-                                            );
-                                          }*/
-                                        }, 
+                                              );
+                                            }
+                                          }
+                                        },
                                         icon: const Icon(Icons.info_outline, color: Colors.white),
                                         label: const Text('Detalles', style: TextStyle(fontSize: 25, 
                                         color: Color(0xFFFFFFFF))), 

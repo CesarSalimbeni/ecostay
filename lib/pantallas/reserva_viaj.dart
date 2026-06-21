@@ -54,6 +54,124 @@ class _PantallaReservaState extends State<PantallaReserva> {
     }
   }
 
+  // AGREGAR RESEÑA
+  void _mostrarDialogoComentario(BuildContext pantallaContext) {
+    final textController = TextEditingController();
+    double puntajeSeleccionado = 5.0;
+    final messenger = ScaffoldMessenger.of(pantallaContext);
+    final gestionCalificacion = GestionCalificacion();
+
+    showDialog(
+      context: pantallaContext,
+      builder: (BuildContext dialogoContext) {
+        return StatefulBuilder(
+          builder: (BuildContext bldContext, StateSetter setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text('Deja una Reseña', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+              content: SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('¿Cómo fue tu experiencia?', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                    const SizedBox(height: 15),
+                    
+                    // Selector de estrellas interactivo
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        final starValue = index + 1.0;
+                        return IconButton(
+                          icon: Icon(
+                            starValue <= puntajeSeleccionado ? Icons.star : Icons.star_border,
+                            color: Colors.amber,
+                            size: 36,
+                          ),
+                          onPressed: () {
+                            setDialogState(() {
+                              puntajeSeleccionado = starValue;
+                            });
+                          },
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 15),
+                    
+                    // Campo de entrada de comentario
+                    TextField(
+                      controller: textController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Escribe tu comentario aquí...',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF216A44), width: 2),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogoContext),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.red, fontSize: 16)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF216A44),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () async {
+                    if (textController.text.trim().isEmpty) {
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Por favor escribe un comentario.'), 
+                        backgroundColor: Colors.orange),
+                      );
+                      return;
+                    }
+
+                    try {
+                      await gestionCalificacion.agregarCalificacion(
+                        publicacionId: widget.publicacion.id,
+                        viajeroId: widget.viajero.id,
+                        reservacionId: 'res_manual_${Random().nextInt(1000)}',
+                        comentario: textController.text.trim(),
+                        puntaje: puntajeSeleccionado,
+                        nombreUsuario: widget.viajero.nombre ?? 'Viajero Anónimo',
+                      );
+
+                      if (dialogoContext.mounted) Navigator.pop(dialogoContext);
+                      
+                      setState(() {
+                        _cargandoCalificaciones = true;
+                      });
+                      _cargarResenas();
+
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('¡Reseña publicada con éxito!'), 
+                        backgroundColor: Color(0xFF216A44)),
+                      );
+                    } catch (e) {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('Error al guardar reseña: $e'), backgroundColor: Colors.redAccent),
+                      );
+                    }
+                  },
+                  child: const Text('Publicar', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _mostrarDialogoReserva(BuildContext pantallaContext) {
     final paypalService = PaypalService(
       clientId: "TU_CLIENT_ID_PAYPAL",
@@ -330,9 +448,8 @@ class _PantallaReservaState extends State<PantallaReserva> {
                           child: Row(mainAxisAlignment: MainAxisAlignment.start, 
                             children: [
                               Padding(padding: const EdgeInsets.only(left: 20), 
-                                child: Container(width: 300, height: 250, 
-                                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), 
-                                    image: DecorationImage(
+                                child: Container(width: 300, height: 250, decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20), image: DecorationImage(
                                       image: (widget.publicacion.imagenUrl != null && widget.publicacion.imagenUrl!.startsWith('http'))
                                           ? NetworkImage(widget.publicacion.imagenUrl!) as ImageProvider
                                           : const AssetImage('assets/images/fondo.jpg'),
@@ -385,8 +502,7 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                             ),
                                           ),
                                           
-                                          FilledButton(
-                                            onPressed: () => _mostrarDialogoReserva(context), 
+                                          FilledButton(onPressed: () => _mostrarDialogoReserva(context), 
                                             style: FilledButton.styleFrom(
                                               backgroundColor: const Color(0xFF216A44), 
                                               foregroundColor: const Color(0xFFFFFFFF),
@@ -407,12 +523,34 @@ class _PantallaReservaState extends State<PantallaReserva> {
                           ),
                         ),
                         
-                        const Padding(padding: EdgeInsets.only(left: 60),
-                          child: Text('Reseñas', style: TextStyle(fontSize: 30, fontFamily: 'Idiqlat', 
-                          color: Colors.black, fontWeight: FontWeight.w800)),
+                        // BOTON Y TITULO DE COMENTARIOS
+                        Padding(
+                          padding: const EdgeInsets.only(left: 60, right: 40),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Reseñas', style: TextStyle(fontSize: 30, fontFamily: 'Idiqlat', 
+                              color: Colors.black, fontWeight: FontWeight.w800),
+                              ),
+                              TextButton.icon(
+                                style: TextButton.styleFrom(foregroundColor: const Color(0xFF216A44),
+                                  disabledForegroundColor: Colors.grey,
+                                ),
+                                onPressed: widget.viajero.historialReservas.any((reserva) => reserva.estado == EstadoReserva.CONFIRMADA)
+                                    ? () => _mostrarDialogoComentario(context)
+                                    : null,
+                                icon: const Icon(Icons.rate_review, size: 26),
+                                label: Text('Escribir Reseña', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold,
+                                    color: widget.viajero.historialReservas.any((reserva) => reserva.estado == EstadoReserva.CONFIRMADA)
+                                        ? const Color(0xFF216A44)
+                                        : Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         
-                        // SECCIÓN DE RESEÑAS
                         // SECCIÓN DE RESEÑAS ACTUALIZADA CON SCROLLBAR
                         Expanded(
                           child: Padding(padding: const EdgeInsets.only(left: 60, top: 10, bottom: 10),
