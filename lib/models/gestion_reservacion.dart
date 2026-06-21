@@ -8,7 +8,7 @@ class GestionReservacion {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Crea una nueva reserva en Firestore si hay suficientes cupos, de lo contrario, no lo hace.
-  Future<void> crearReservaSegura({
+  Future<String> crearReservaSegura({
     required Map<String, dynamic> data,
     required String viajeroId,
     required String publicacionId,
@@ -47,6 +47,7 @@ class GestionReservacion {
           'cuposActual': FieldValue.increment(cuposSolicitados),
         });
       });
+      return reservaRef.id;
     } catch (e) {
       print('Error en la transacción de reserva: $e');
       rethrow; // Devuelve el error para que la interfaz de Flutter lo muestre al usuario
@@ -116,7 +117,6 @@ class GestionReservacion {
   }
 
   Reserva mapToReserva(String id, Map<String, dynamic> data) {
-    print("DEBUG RESERVA ($id) - Campo estado en Firestore es: '${data['estado']}'");
     // Procesador inteligente de fechas
     DateTime procesarFecha(dynamic campo) {
       if (campo is Timestamp) {

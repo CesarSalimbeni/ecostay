@@ -318,8 +318,6 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
   Widget _buildFilaReservaWeb(ReservaUIWrapper item) {
     final reserva = item.reserva;
 
-    print("INTERFAZ DIBUJANDO -> Id: ${reserva.id} | Estado Real en Objeto: ${reserva.estado}");
-
     Color statusBg = const Color(0xFFEAEAEA);
     Color statusText = Colors.black87;
     String etiquetaEstado = 'Solicitado';

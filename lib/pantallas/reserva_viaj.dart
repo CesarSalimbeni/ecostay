@@ -24,14 +24,49 @@ class PantallaReserva extends StatefulWidget {
 
 class _PantallaReservaState extends State<PantallaReserva> {
   DateTimeRange? _fechasSeleccionadas;
-  bool _isPagoPendiente = false; 
   bool _cargandoCalificaciones = true;
+  String? _idReservaCreada;
+  bool _cargandoReserva = true;
+  Reserva? _reservaActual; 
+  final GestionReservacion _gestionReservacion = GestionReservacion();
 
   @override
   void initState() {
     super.initState();
     _cargarResenas();
+    _obtenerEstadoReservaUsuario();
   }
+
+  //REVISA SI EXISTE RESERVA PREVIA 
+Future<void> _obtenerEstadoReservaUsuario() async {
+  try {
+    final listaReservasGenerales = await _gestionReservacion.obtenerReservasPorViajero(widget.viajero.id);
+    Reserva? reservaEncontrada;
+
+    for (var reservaSimp in listaReservasGenerales) {
+      final (reservaData, viajeroId, publicacionId) = await _gestionReservacion.obtenerInformacion(reservaSimp.id);
+      
+      if (publicacionId == widget.publicacion.id && reservaData.estado != EstadoReserva.CANCELADA) {
+        reservaEncontrada = reservaData;
+        break;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _reservaActual = reservaEncontrada;
+        _cargandoReserva = false;
+      });
+    }
+  } catch (e) {
+    print('Error al validar la publicación de las reservas: $e');
+    if (mounted) {
+      setState(() {
+        _cargandoReserva = false;
+      });
+    }
+  }
+}
 
   Future<void> _cargarResenas() async {
     try {
@@ -56,6 +91,12 @@ class _PantallaReservaState extends State<PantallaReserva> {
 
   // AGREGAR RESEÑA
   void _mostrarDialogoComentario(BuildContext pantallaContext) {
+    if (_reservaActual == null || _reservaActual!.estado != EstadoReserva.COMPLETADA) {
+      ScaffoldMessenger.of(pantallaContext).showSnackBar(
+        const SnackBar(content: Text('Solo puedes dejar una reseña si tu reserva está COMPLETADA.'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
     final textController = TextEditingController();
     double puntajeSeleccionado = 5.0;
     final messenger = ScaffoldMessenger.of(pantallaContext);
@@ -173,31 +214,41 @@ class _PantallaReservaState extends State<PantallaReserva> {
   }
 
   void _mostrarDialogoReserva(BuildContext pantallaContext) {
+    if (_cargandoReserva) return;
     final paypalService = PaypalService(
       clientId: "TU_CLIENT_ID_PAYPAL",
       secretKey: "TU_SECRET_KEY_PAYPAL",
     );
-    final gestionReservacion = GestionReservacion();
     final messenger = ScaffoldMessenger.of(pantallaContext);
 
     showDialog(context: pantallaContext,
       builder: (BuildContext dialogoContext) {
         return StatefulBuilder(
           builder: (BuildContext bldContext, StateSetter setDialogState) {
-            int noches = _fechasSeleccionadas != null ? _fechasSeleccionadas!.duration.inDays : 0;
-            if (noches == 0 && _fechasSeleccionadas != null) noches = 1;
-            double montoTotal = noches * widget.publicacion.precio;
-            String mockIdReserva = 'res_${Random().nextInt(100000)}';
+            bool tieneReservaPendienteOPagable = _reservaActual != null && 
+                (_reservaActual!.estado == EstadoReserva.PENDIENTE || _reservaActual!.estado == EstadoReserva.CONFIRMADA);
+            int noches = 0;
+            double montoTotal = 0.0;
+
+            if (tieneReservaPendienteOPagable) {
+              noches = _reservaActual!.fechaFin.difference(_reservaActual!.fechaInicio).inDays;
+              if (noches == 0) noches = 1;
+              montoTotal = _reservaActual!.total;
+            } else {
+              noches = _fechasSeleccionadas != null ? _fechasSeleccionadas!.duration.inDays : 0;
+              if (noches == 0 && _fechasSeleccionadas != null) noches = 1;
+              montoTotal = noches * widget.publicacion.precio;
+            }
 
             return AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),),
               title: Text(
-                _isPagoPendiente ? 'Finalizar Pago con PayPal' : 'Seleccionar Fechas de Reserva',
+                tieneReservaPendienteOPagable ? 'Finalizar Pago con PayPal' : 'Seleccionar Fechas de Reserva',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
               ),
               content: SizedBox(width: 450,
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (!_isPagoPendiente) ...[
+                    if (!tieneReservaPendienteOPagable) ...[
                       Center(
                         child: OutlinedButton.icon(style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -253,21 +304,32 @@ class _PantallaReservaState extends State<PantallaReserva> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
                         ),
                         onPressed: _fechasSeleccionadas == null ? null : () async {
-                          await gestionReservacion.crearReservaSegura(
+                          String idReal = await _gestionReservacion.crearReservaSegura(
                             viajeroId: widget.viajero.id, 
                             publicacionId: widget.publicacion.id, 
                             data: {
                               'fechaInicio': _fechasSeleccionadas!.start.toIso8601String(),
                               'fechaFin': _fechasSeleccionadas!.end.toIso8601String(),
-                              'estado': 'PENDIENTE',
+                              'estado': EstadoReserva.PENDIENTE.name,
                               'total': montoTotal,
                               'cupos': 1,
                             }
                           );
 
-                          setState(() {_isPagoPendiente = true;});
+                          final nuevaReservaCreada = Reserva(
+                            id: idReal,
+                            fechaInicio: _fechasSeleccionadas!.start,
+                            fechaFin: _fechasSeleccionadas!.end,
+                            total: montoTotal,
+                            estado: EstadoReserva.CONFIRMADA, 
+                            cupos: 1,
+                          );
+
+                          setState(() {
+                            _reservaActual = nuevaReservaCreada;
+                          });
                           
-                          if (dialogoContext.mounted) {Navigator.pop(dialogoContext);}
+                          if (dialogoContext.mounted) { Navigator.pop(dialogoContext); }
 
                           messenger.showSnackBar(
                             const SnackBar(content: Text('¡Solicitud de reserva creada! Proceda a pagar.'),
@@ -312,27 +374,28 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
                                 ),
                                 onPressed: () {
+                                  final idParaPagar = _idReservaCreada ?? 'res_mock_${Random().nextInt(100000)}';
                                   paypalService.iniciarFlujoPaypal(
                                     context: dialogoContext,
                                     monto: montoTotal,
-                                    idReserva: mockIdReserva,
+                                    idReserva: idParaPagar,
                                     tituloPublicacion: widget.publicacion.titulo,
-                                    onResultado: (exito) {
+                                    onResultado: (exito) async {
                                       if (exito) {
-                                        final nuevaReserva = Reserva(
-                                          id: mockIdReserva, 
-                                          fechaInicio: _fechasSeleccionadas!.start,
-                                          fechaFin: _fechasSeleccionadas!.end,
-                                          total: montoTotal,
-                                          estado: EstadoReserva.CONFIRMADA, 
-                                          cupos: 1,
+                                        await _gestionReservacion.completarReserva(_reservaActual!.id);
+                                        
+                                        _reservaActual = Reserva(
+                                          id: _reservaActual!.id,
+                                          fechaInicio: _reservaActual!.fechaInicio,
+                                          fechaFin: _reservaActual!.fechaFin,
+                                          total: _reservaActual!.total,
+                                          cupos: _reservaActual!.cupos,
+                                          estado: EstadoReserva.COMPLETADA,
                                         );
-                        
-                                        widget.viajero.historialReservas.add(nuevaReserva);
+                                        widget.viajero.historialReservas.add(_reservaActual!);
                         
                                         if (pantallaContext.mounted) {
                                           setState(() {
-                                            _isPagoPendiente = false;
                                             _fechasSeleccionadas = null;
                                           });
                                         }
@@ -347,9 +410,7 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                         messenger.showSnackBar(
                                           const SnackBar(
                                             content: Text('El pago no se pudo completar.'),
-                                            backgroundColor: Colors.redAccent,
-                                          ),
-                                        );
+                                            backgroundColor: Colors.redAccent,),);
                                       }
                                     },
                                   );
@@ -509,7 +570,10 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                               disabledBackgroundColor: Colors.grey,
                                             ),
                                             child: Text(
-                                              _isPagoPendiente ? 'Pagar' : 'Solicitar', 
+                                              (_reservaActual != null && 
+                                                (_reservaActual!.estado == EstadoReserva.PENDIENTE ||
+                                                 _reservaActual!.estado == EstadoReserva.CONFIRMADA))
+                                                    ? 'Pagar' : 'Solicitar',
                                               style: const TextStyle(fontSize: 30)
                                             ),
                                           ),
