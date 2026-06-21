@@ -42,7 +42,7 @@ class _PantallaReservaState extends State<PantallaReserva> {
     }
   }
 
-  // REVISA SI EXISTE RESERVA PREVIA (Vital para cambiar el botón)
+  // REVISA SI EXISTE RESERVA PREVIA
   Future<void> _obtenerEstadoReservaUsuario() async {
     try {
       final listaReservasGenerales = await _gestionReservacion.obtenerReservasPorViajero(widget.viajero.id);
@@ -98,8 +98,8 @@ class _PantallaReservaState extends State<PantallaReserva> {
       builder: (context) => DialogoComentario(
         reservaActual: _reservaActual!,
         onResenaEnviada: () {
-          _cargarResenas(); // Vuelve a cargar las opiniones en tiempo real
-          _obtenerEstadoReservaUsuario(); // Actualiza el estado de la reserva por si acaso
+          _cargarResenas();
+          _obtenerEstadoReservaUsuario();
         },
       ),
     );
@@ -107,17 +107,12 @@ class _PantallaReservaState extends State<PantallaReserva> {
 
   // MÉTODO PARA MANEJAR EL LANZAMIENTO DEL DIÁLOGO DE REPORTES
   void _abrirDialogoReportar({String? calificacionId, String? autorCalificacionId}) {
-    if (_reservaActual == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Necesitas tener o haber solicitado una reserva para reportar este elemento.')),
-      );
-      return;
-    }
-
     showDialog(
       context: context,
       builder: (context) => DialogoReportar(
-        reservaActual: _reservaActual!,
+        reservaActual: _reservaActual,
+        publicacionId: widget.publicacion.id,
+        viajeroId: widget.viajero.id,
         calificacionId: calificacionId,
         autorCalificacionId: autorCalificacionId,
         onReporteEnviado: () {
@@ -148,9 +143,10 @@ class _PantallaReservaState extends State<PantallaReserva> {
           backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
           elevation: const WidgetStatePropertyAll(0),
         ),
-        actions: const [
+        actions: [
           Padding(padding: EdgeInsets.only(right: 10.0),
-            child: Text('Usuario', overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 20)),
+            child: Text(widget.viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+            style: TextStyle(fontSize: 20)),
           ),
           Padding(padding: EdgeInsets.only(right: 10.0),
             child: CircleAvatar(),
@@ -369,9 +365,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                                     }),
                                                   ),
                                                   const SizedBox(width: 10),
-
-                                                  // SE AGREGÓ EL ICONO DE REPORTE INDIVIDUAL POR COMENTARIO
-                                                  if (_reservaActual != null)
                                                     IconButton(
                                                       icon: const Icon(Icons.flag_outlined, color: Colors.redAccent, size: 22),
                                                       tooltip: 'Reportar Comentario',

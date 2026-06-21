@@ -5,14 +5,18 @@ import 'package:ecostay/models/gestion_reservacion.dart';
 import 'package:ecostay/models/gestion_reportes.dart'; 
 
 class DialogoReportar extends StatefulWidget {
-  final Reserva reservaActual;
+  final Reserva? reservaActual;
+  final String publicacionId;
+  final String viajeroId;
   final VoidCallback onReporteEnviado;
   final String? calificacionId; 
   final String? autorCalificacionId;
 
   const DialogoReportar({
     super.key,
-    required this.reservaActual,
+    this.reservaActual,
+    required this.publicacionId,
+    required this.viajeroId,
     required this.onReporteEnviado,
     this.calificacionId,
     this.autorCalificacionId,
@@ -138,30 +142,31 @@ class _DialogoReportarState extends State<DialogoReportar> {
               setState(() => _enviando = true);
               
               try {
-                final gestionReservacion = GestionReservacion();
                 final gestionPublicacion = GestionPublicacion();
                 final gestionReportes = GestionReportes();
                 
-                final infoReservacion = await gestionReservacion.obtenerInformacion(widget.reservaActual.id);
-                
-                final String viajeroId = infoReservacion.$2.toString();
-                final String publicacionId = infoReservacion.$3.toString();
+                final String viajeroId = widget.viajeroId;
+                final String publicacionId = widget.publicacionId;
 
                 final String? proveedorId = await gestionPublicacion.obtenerProveedor(publicacionId);
                 
-                // Opción B: Si en algún momento necesitas el nombre del anfitrión para el frontend:
-                // final publicacion = await gestionPublicacion.obtenerPublicacionPorId(publicacionId);
-                // final String nombreAnfitrion = publicacion?.nombreAnfitrion ?? 'Anfitrión Ecostay';
-
                 if (proveedorId == null) {
                   throw Exception('No se pudo encontrar la información del anfitrión.');
                 }
 
                 if (_esReporteComentario) {
+                  final String autorId = (widget.autorCalificacionId != null && widget.autorCalificacionId!.isNotEmpty)
+                      ? widget.autorCalificacionId!
+                      : proveedorId;
+
+                  final String comentarioId = (widget.calificacionId != null && widget.calificacionId!.isNotEmpty)
+                      ? widget.calificacionId!
+                      : 'id_comentario_invalido';
+
                   await gestionReportes.reportarCalificacion(
-                    objetoId: widget.calificacionId!,
+                    objetoId: comentarioId,
                     publicacionId: publicacionId,
-                    autorCalificacionId: widget.autorCalificacionId ?? proveedorId, 
+                    autorCalificacionId: autorId, 
                     usuarioReportoId: viajeroId,
                     motivo: motivo,
                   );
