@@ -4,56 +4,58 @@ import 'package:ecostay/models/estadoreserva.dart';
 class GestionDashboard {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// 1. Obtiene la cantidad total de usuarios registrados en el sistema.
-  /// (Asumiendo que tu colección de usuarios se llama 'users')
+  /// 1. Obtiene SOLO los usuarios cuyo estado sea 'activo' (Excluye suspendidos)
   Future<int> obtenerUsuariosActivos() async {
     try {
-      // Usamos .count() para una consulta ultra rápida y económica en Firestore
-      AggregateQuerySnapshot snapshot = await _firestore.collection('users').count().get();
+      AggregateQuerySnapshot snapshot = await _firestore
+          .collection('users')
+          .where('suspendido', isEqualTo: false) // Filtro de estado
+          .count()
+          .get();
       return snapshot.count ?? 0;
     } catch (e) {
       throw('Error al obtener usuarios activos: $e');
     }
   }
 
-  /// 2. Obtiene la cantidad de publicaciones creadas en la plataforma.
+  /// Obtiene las publicaciones activas
   Future<int> obtenerPublicacionesActivas() async {
     try {
-      // Cuenta directamente todos los documentos dentro de 'publications'
-      AggregateQuerySnapshot snapshot = await _firestore.collection('publications').count().get();
+      
+      AggregateQuerySnapshot snapshot = await _firestore
+          .collection('publications')
+          .count()
+          .get();
+      
       return snapshot.count ?? 0;
     } catch (e) {
       throw('Error al obtener publicaciones activas: $e');
     }
   }
 
-  /// 3. Obtiene la cantidad de reservas vigentes (PENDIENTES y CONFIRMADAS).
-  /// Excluye las canceladas o completadas según las reglas de tu negocio.
+  /// 3. Obtiene la cantidad de reservas vigentes (PENDIENTES y CONFIRMADAS)
   Future<int> obtenerReservasActivas() async {
     try {
-      // Realizamos un filtrado por los estados activos definidos en tu EstadoReserva
-      QuerySnapshot snapshotPendientes = await _firestore
+      // Usamos whereIn para agrupar los estados activos en una sola consulta estructurada
+      AggregateQuerySnapshot snapshot = await _firestore
           .collection('reservations')
-          .where('estado', isEqualTo: EstadoReserva.PENDIENTE.name)
+          .where('estado', whereIn: [
+            EstadoReserva.PENDIENTE.name,
+            EstadoReserva.CONFIRMADA.name,
+          ])
+          .count()
           .get();
 
-      QuerySnapshot snapshotConfirmadas = await _firestore
-          .collection('reservations')
-          .where('estado', isEqualTo: EstadoReserva.CONFIRMADA.name)
-          .get();
-
-      return snapshotPendientes.docs.length + snapshotConfirmadas.docs.length;
+      return snapshot.count ?? 0;
     } catch (e) {
       throw('Error al obtener reservas activas: $e');
     }
   }
 
-  /// 4. Calcula el volumen de transacciones (Suma total de los ingresos de reservas exitosas).
-  /// Filtra por CONFIRMADA y COMPLETADA para no sumar dinero de reservas canceladas.
+  /// 4. Calcula el volumen financiero de transacciones exitosas
   Future<double> obtenerVolumenTransacciones() async {
     double volumenTotal = 0.0;
     try {
-      // Traemos las reservas que representen transacciones válidas o liquidadas
       QuerySnapshot snapshot = await _firestore
           .collection('reservations')
           .where('estado', whereIn: [
@@ -64,7 +66,6 @@ class GestionDashboard {
 
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        // Mapeamos el campo 'total' basándonos en tu modelo Reserva
         double totalReserva = (data['total'] as num?)?.toDouble() ?? 0.0;
         volumenTotal += totalReserva;
       }
@@ -75,9 +76,8 @@ class GestionDashboard {
     }
   }
 
-  /// Función auxiliar para empaquetar todos los datos del dashboard en una sola llamada.
+  /// Consolidado general de métricas ejecutado en paralelo
   Future<Map<String, dynamic>> obtenerMetricasGenerales() async {
-    // Ejecutamos todas las consultas en paralelo para mejorar drásticamente el rendimiento
     final resultados = await Future.wait([
       obtenerUsuariosActivos(),
       obtenerPublicacionesActivas(),
