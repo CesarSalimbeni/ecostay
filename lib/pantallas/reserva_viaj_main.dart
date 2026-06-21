@@ -1,5 +1,6 @@
 import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:ecostay/pantallas/viaj_perfil.dart';
+import 'package:ecostay/widgets/reserva_viaj_reportar.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:ecostay/models/gestion_publicacion.dart';
@@ -104,6 +105,30 @@ class _PantallaReservaState extends State<PantallaReserva> {
     );
   }
 
+  // MÉTODO PARA MANEJAR EL LANZAMIENTO DEL DIÁLOGO DE REPORTES
+  void _abrirDialogoReportar({String? calificacionId, String? autorCalificacionId}) {
+    if (_reservaActual == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Necesitas tener o haber solicitado una reserva para reportar este elemento.')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => DialogoReportar(
+        reservaActual: _reservaActual!,
+        calificacionId: calificacionId,
+        autorCalificacionId: autorCalificacionId,
+        onReporteEnviado: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Reporte enviado correctamente para revisión.')),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -198,20 +223,39 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                 child: Padding(padding: const EdgeInsets.all(20),
                                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
                                     children: [
-                                      Text(widget.publicacion.titulo, style: const TextStyle(fontFamily: 'Idiqlat', fontSize: 40, fontWeight: FontWeight.w800)),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              widget.publicacion.titulo, 
+                                              style: const TextStyle(fontFamily: 'Idiqlat', fontSize: 40, 
+                                              fontWeight: FontWeight.w800),overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (_reservaActual != null)
+                                            IconButton(
+                                              icon: const Icon(Icons.flag_outlined, color: Colors.redAccent, size: 32),
+                                              tooltip: 'Reportar Publicación',
+                                              onPressed: () => _abrirDialogoReportar(),
+                                            ),
+                                        ],
+                                      ),
                                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, 
                                         children: [
                                           Column(crossAxisAlignment: CrossAxisAlignment.start, 
                                             children: [
                                               Padding(padding: const EdgeInsets.only(top: 10),
-                                                child: Text('Lugar: ${widget.publicacion.ubicacion}', style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, maxLines: 1),
+                                                child: Text('Lugar: ${widget.publicacion.ubicacion}', 
+                                                style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
+                                                maxLines: 1),
                                               ),
                                               Padding(padding: const EdgeInsets.only(top: 10),
                                                 child: Row(mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   const Text('Rating: ', style: TextStyle(fontSize: 30)),
                                                   const Icon(Icons.star, color: Colors.amber, size: 32),
-                                                  Text(' ${widget.publicacion.calificacionPromedio.toStringAsFixed(1)}', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+                                                  Text(' ${widget.publicacion.calificacionPromedio.toStringAsFixed(1)}', 
+                                                  style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
                                                 ],),
                                               ),
                                             ],
@@ -220,10 +264,14 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
                                               children: [
                                                 Padding(padding: const EdgeInsets.only(top: 10),
-                                                  child: Text('Anfitrión: ${widget.publicacion.nombreAnfitrion}', style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, maxLines: 1),
+                                                  child: Text('Anfitrión: ${widget.publicacion.nombreAnfitrion}', 
+                                                  style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
+                                                  maxLines: 1),
                                                 ),
                                                 Padding(padding: const EdgeInsets.only(top: 10),
-                                                  child: Text('Precio: \$${widget.publicacion.precio.toStringAsFixed(0)}', style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, maxLines: 1),
+                                                  child: Text('Precio: \$${widget.publicacion.precio.toStringAsFixed(0)}', 
+                                                  style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
+                                                  maxLines: 1),
                                                 ),
                                               ],
                                             ),
@@ -320,6 +368,18 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                                       );
                                                     }),
                                                   ),
+                                                  const SizedBox(width: 10),
+
+                                                  // SE AGREGÓ EL ICONO DE REPORTE INDIVIDUAL POR COMENTARIO
+                                                  if (_reservaActual != null)
+                                                    IconButton(
+                                                      icon: const Icon(Icons.flag_outlined, color: Colors.redAccent, size: 22),
+                                                      tooltip: 'Reportar Comentario',
+                                                      onPressed: () => _abrirDialogoReportar(
+                                                        calificacionId: calificacion.id,
+                                                        autorCalificacionId: calificacion.usuarioId,
+                                                      ),
+                                                    ),
                                                   const SizedBox(width: 20),
                                                 ],
                                               ),

@@ -23,7 +23,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'EcoStay',
       theme: ThemeData(primarySwatch: Colors.green),
-      // Configurado para que la app inicie en la pantalla de bienvenida/inicio
       home: PantallaInicio(), 
     );
   }

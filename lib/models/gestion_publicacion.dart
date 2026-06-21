@@ -176,6 +176,7 @@ class GestionCalificacion {
           .collection('ratings')
           .add({
             'viajeroId': viajeroId,
+            'usuarioId': viajeroId,
             'reservacionId': reservacionId,
             'comentario': comentario,
             'puntaje': puntaje,
@@ -210,8 +211,8 @@ class GestionCalificacion {
           puntaje: (data['puntaje'] as num).toDouble(),
           comentario: data['comentario'] ?? '',
           fecha: fechaDoc,
-          nombreUsuario:
-              data['nombreUsuario'] ?? '', // <-- Missing Parameter Added Here
+          nombreUsuario: data['nombreUsuario'] ?? '',
+          usuarioId: data['usuarioId'] ?? data['viajeroId'] ?? '',
         );
       }).toList();
     } catch (e) {

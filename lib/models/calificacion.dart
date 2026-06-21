@@ -4,6 +4,7 @@ class Calificacion {
   final String comentario;
   final DateTime fecha;
   final String nombreUsuario;
+  final String usuarioId;
   String? publicacionId;
 
   Calificacion({
@@ -12,6 +13,7 @@ class Calificacion {
     required this.comentario,
     required this.fecha,
     required this.nombreUsuario,
+    required this.usuarioId,
     this.publicacionId
   });
 }

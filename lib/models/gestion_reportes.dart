@@ -102,6 +102,7 @@ class GestionReportes {
           comentario: data['comentario'] ?? '',
           fecha: fechaDoc,
           nombreUsuario: data['nombreUsuario'] ?? '',
+          usuarioId: data['usuarioId'] ?? '',
           publicacionId: doc.reference.parent.parent?.id
         );
       }).toList();
