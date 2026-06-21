@@ -5,7 +5,7 @@ import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_locaciones.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import '../controllers/moderacion_controller.dart'; // Asegúrate de que la ruta sea correcta
+import '../controllers/moderacion_controller.dart';
 
 class AdminModeracion extends StatelessWidget {
   final Administrador administrador;
@@ -55,9 +55,7 @@ class AdminModeracion extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ==========================================
           // MENÚ DE NAVEGACIÓN SUPERIOR
-          // ==========================================
           Padding(
             padding: const EdgeInsets.only(top: 15, bottom: 25),
             child: Row(
@@ -84,7 +82,7 @@ class AdminModeracion extends StatelessWidget {
                   label: const Text('Usuarios', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                 ),
                 TextButton.icon(
-                  onPressed: null, // Deshabilitado porque ya estamos aquí
+                  onPressed: null,
                   icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
                   label: const Text(
                     'Moderación',
@@ -109,9 +107,7 @@ class AdminModeracion extends StatelessWidget {
             ),
           ),
 
-          // ==========================================
-          // SECCIÓN DE REPORTES (FEED)
-          // ==========================================
+          // SECCIÓN DE REPORTES
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 10),
@@ -119,9 +115,7 @@ class AdminModeracion extends StatelessWidget {
                 const Text(
                   'Reportes',
                   style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold, fontFamily: 'Idiqlat'
+                    color: Colors.black, fontSize: 36, fontWeight: FontWeight.bold, fontFamily: 'Idiqlat'
                   ),
                 ),
                 const SizedBox(height: 25),
@@ -157,9 +151,7 @@ class AdminModeracion extends StatelessWidget {
     );
   }
 
-  // ==========================================
   // HELPER PARA CONSTRUIR TARJETAS DE REPORTE
-  // ==========================================
   Widget _buildCardReporte({
     required BuildContext context,
     required String usuario,
@@ -181,31 +173,19 @@ class AdminModeracion extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Fila Superior: Info de Usuario y Badge de Reportes
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Column(crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text.rich(
-                    TextSpan(
+                  Text.rich(TextSpan(
                       children: [
-                        TextSpan(
-                          text: '$usuario ',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        TextSpan(text: '$usuario ', style: const TextStyle(color: Colors.black,
+                            fontSize: 20, fontWeight: FontWeight.bold,
                           ),
                         ),
-                        TextSpan(
-                          text: 'en $destino',
-                          style: const TextStyle(
-                            color: Colors.black,
+                        TextSpan(text: 'en $destino', style: const TextStyle(color: Colors.black,
                             fontSize: 18,
                           ),
                         ),
@@ -213,11 +193,7 @@ class AdminModeracion extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    tiempo,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
+                  Text(tiempo, style: const TextStyle(color: Colors.grey, fontSize: 14,
                     ),
                   ),
                 ],
@@ -225,15 +201,12 @@ class AdminModeracion extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB72E2E),
-                  borderRadius: BorderRadius.circular(15),
+                  color: const Color(0xFFB72E2E), borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
                   'Reportes: $cantidadReportes',
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -243,18 +216,14 @@ class AdminModeracion extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Caja de Comentario Reportado
-          Container(
-            width: double.infinity,
+          Container(width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F7F2),
-              borderRadius: BorderRadius.circular(15),
+              color: const Color(0xFFF5F7F2), borderRadius: BorderRadius.circular(15),
             ),
             child: Text(
               comentario,
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 18,
+              style: const TextStyle(color: Colors.black, fontSize: 18,
               ),
             ),
           ),
@@ -264,7 +233,6 @@ class AdminModeracion extends StatelessWidget {
           // Fila de Botones de Acción
           Row(
             children: [
-              // Botón Ignorar
               ElevatedButton.icon(
                 onPressed: () => _controller.ignorarReporte(),
                 icon: const Icon(Icons.check, color: Colors.white),

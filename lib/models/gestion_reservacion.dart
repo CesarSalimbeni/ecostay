@@ -116,12 +116,26 @@ class GestionReservacion {
   }
 
   Reserva mapToReserva(String id, Map<String, dynamic> data) {
+    print("DEBUG RESERVA ($id) - Campo estado en Firestore es: '${data['estado']}'");
+    // Procesador inteligente de fechas
+    DateTime procesarFecha(dynamic campo) {
+      if (campo is Timestamp) {
+        return campo.toDate();
+      } else if (campo is String) {
+        return DateTime.parse(campo);
+      }
+      return DateTime.now();
+    }
+
+    // Convertimos a String y limpiamos espacios o nulos de forma segura
+    final estadoFirestore = (data['estado']?.toString() ?? '').toUpperCase().trim();
+
     return Reserva(
       id: id,
-      fechaInicio: (data['fechaInicio'] as Timestamp).toDate(),
-      fechaFin: (data['fechaFin'] as Timestamp).toDate(),
+      fechaInicio: procesarFecha(data['fechaInicio']),
+      fechaFin: procesarFecha(data['fechaFin']),
       estado: EstadoReserva.values.firstWhere(
-        (e) => e.name == data['estado'],
+        (e) => e.name.toUpperCase() == estadoFirestore,
         orElse: () => EstadoReserva.PENDIENTE,
       ),
       cupos: data['cupos'],
@@ -162,11 +176,10 @@ class GestionReservacion {
 
       return query.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-
         return mapToReserva(doc.id, data);
       }).toList();
     } catch (e) {
-      print('Error al obtener las reservas del viajero: $e');
+      print('Error al obtener reservas por viajero: $e');
       return [];
     }
   }

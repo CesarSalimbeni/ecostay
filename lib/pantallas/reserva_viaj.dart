@@ -8,9 +8,9 @@ import 'package:ecostay/pantallas/viaj_mis_reservas.dart';
 import 'package:ecostay/pantallas/viaj_perfil.dart';
 import 'package:ecostay/paypal_service.dart';
 import 'package:ecostay/models/gestion_reservacion.dart'; 
+import 'package:ecostay/models/gestion_publicacion.dart'; 
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:ecostay/pantallas/resumen_reserva_screen.dart';
 
 class PantallaReserva extends StatefulWidget {
   final Publicacion publicacion;
@@ -25,9 +25,36 @@ class PantallaReserva extends StatefulWidget {
 class _PantallaReservaState extends State<PantallaReserva> {
   DateTimeRange? _fechasSeleccionadas;
   bool _isPagoPendiente = false; 
+  bool _cargandoCalificaciones = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarResenas();
+  }
+
+  Future<void> _cargarResenas() async {
+    try {
+      final gestionCalificacion = GestionCalificacion();
+      final listaResenas = await gestionCalificacion.obtenerCalificaciones(widget.publicacion.id);
+      
+      if (mounted) {
+        setState(() {
+          widget.publicacion.calificaciones.clear();
+          widget.publicacion.calificaciones.addAll(listaResenas);
+          _cargandoCalificaciones = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _cargandoCalificaciones = false;
+        });
+      }
+    }
+  }
 
   void _mostrarDialogoReserva(BuildContext pantallaContext) {
-    // AJUSTADO: Constructor correcto para PaypalService
     final paypalService = PaypalService(
       clientId: "TU_CLIENT_ID_PAYPAL",
       secretKey: "TU_SECRET_KEY_PAYPAL",
@@ -52,8 +79,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
               content: SizedBox(width: 450,
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    
-                    //PARTE SOLICITUD
                     if (!_isPagoPendiente) ...[
                       Center(
                         child: OutlinedButton.icon(style: OutlinedButton.styleFrom(
@@ -136,8 +161,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
                         fontSize: 16)),
                       )
                     ]
-                    
-                    //PARTE PAGO
                     else ...[
                       Center(
                         child: Container(width: double.infinity, padding: const EdgeInsets.all(20),
@@ -170,7 +193,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                 disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
                                 ),
-                                // AJUSTADO: Uso correcto de iniciarFlujoPaypal con su callback interactivo
                                 onPressed: () {
                                   paypalService.iniciarFlujoPaypal(
                                     context: dialogoContext,
@@ -222,7 +244,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
                         ),
                       ),
                     ],
-
                   ],
                 ),
               ),
@@ -240,9 +261,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final fontSize = min(size.width * 0.11, size.height * 0.11).clamp(28.0, 96.0) as double;
-
     return Scaffold(
       backgroundColor: ColorPalette.bg,
       appBar: AppBar(
@@ -302,7 +320,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
               ),
             ),
 
-            // TARJETA DE DETALLE PRINCIPAL
             Center(child: Padding(padding: const EdgeInsets.only(top: 50),
                 child: Container(width: 1240, height: 500, 
                   decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25),), 
@@ -325,7 +342,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                 ),
                               ),
                               
-                              // INFORMACIÓN DE LA PUBLICACIÓN
                               Expanded(
                                 child: Padding(padding: const EdgeInsets.all(20),
                                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
@@ -396,36 +412,60 @@ class _PantallaReservaState extends State<PantallaReserva> {
                           color: Colors.black, fontWeight: FontWeight.w800)),
                         ),
                         
+                        // SECCIÓN DE RESEÑAS
+                        // SECCIÓN DE RESEÑAS ACTUALIZADA CON SCROLLBAR
                         Expanded(
                           child: Padding(padding: const EdgeInsets.only(left: 60, top: 10, bottom: 10),
-                            child: widget.publicacion.calificaciones.isEmpty
-                                ? const Text('No hay reseñas disponibles para esta posada todavía.', 
-                                  style: TextStyle(fontSize: 20, color: Colors.grey))
-                                : ListView.builder(
-                                    itemCount: widget.publicacion.calificaciones.length,
-                                    itemBuilder: (context, index) {
-                                      final calificacion = widget.publicacion.calificaciones[index];
-                                      return Padding(padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                        child: Row(
-                                          children: [
-                                            const Icon(Icons.circle, color: Color(0xFF216A44), size: 24),
-                                            const SizedBox(width: 15),
-                                            
-                                            Text(calificacion.nombreUsuario, style: const TextStyle(
-                                              fontSize: 25, fontWeight: FontWeight.bold, color: Colors.black),
-                                            ),
-                                            
-                                            Expanded(
-                                              child: Text(calificacion.comentario, style: const TextStyle(
-                                                fontSize: 25, color: Colors.black), overflow: TextOverflow.ellipsis,
-                                                maxLines: 1,
+                            child: _cargandoCalificaciones
+                                ? const Center(
+                                    child: CircularProgressIndicator(color: Color(0xFF216A44)),
+                                  )
+                                : widget.publicacion.calificaciones.isEmpty
+                                    ? const Text(
+                                        'No hay reseñas disponibles para esta posada todavía.', 
+                                        style: TextStyle(fontSize: 20, color: Colors.grey),
+                                      )
+                                    : Scrollbar(
+                                        thumbVisibility: true, trackVisibility: true,
+                                        child: ListView.builder(physics: const BouncingScrollPhysics(),
+                                          itemCount: widget.publicacion.calificaciones.length,
+                                          itemBuilder: (context, index) {
+                                            final calificacion = widget.publicacion.calificaciones[index];
+                                            return Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(Icons.circle, color: Color(0xFF216A44), size: 24),
+                                                  const SizedBox(width: 15),
+                                                  
+                                                  Text('${calificacion.nombreUsuario}: ', 
+                                                    style: const TextStyle(fontSize: 25, 
+                                                      fontWeight: FontWeight.bold, color: Colors.black),
+                                                  ),
+                                                  
+                                                  Expanded(
+                                                    child: Text(calificacion.comentario, style: const TextStyle(
+                                                      fontSize: 25, color: Colors.black), overflow: TextOverflow.ellipsis,
+                                                      maxLines: 2,
+                                                    ),
+                                                  ),
+                                                  
+                                                  Row(
+                                                    children: List.generate(5, (starIndex) {
+                                                      return Icon(
+                                                        starIndex < calificacion.puntaje ? Icons.star : Icons.star_border,
+                                                        color: Colors.amber,
+                                                        size: 22,
+                                                      );
+                                                    }),
+                                                  ),
+                                                  const SizedBox(width: 20),
+                                                ],
                                               ),
-                                            ),
-                                          ],
+                                            );
+                                          },
                                         ),
-                                      );
-                                    },
-                                  ),
+                                      ),
                           ),
                         )
                       ],

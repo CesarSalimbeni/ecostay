@@ -1,3 +1,4 @@
+import 'package:ecostay/models/estadoreserva.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/models/reserva.dart';
 import 'package:ecostay/pantallas/estilo.dart';
@@ -6,11 +7,100 @@ import 'package:ecostay/pantallas/anf_home.dart';
 import 'package:ecostay/pantallas/anf_perfil.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:ecostay/models/gestion_reservacion.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class PantallaReservasH extends StatelessWidget {
+class ReservaUIWrapper {
+  final Reserva reserva;
+  final String nombreViajero;
+  final String tituloPublicacion;
+
+  ReservaUIWrapper({
+    required this.reserva,
+    required this.nombreViajero,
+    required this.tituloPublicacion,
+  });
+}
+
+class PantallaReservasH extends StatefulWidget {
   final PrestadorServicio prestador;
 
   const PantallaReservasH({super.key, required this.prestador});
+
+  @override
+  State<PantallaReservasH> createState() => _PantallaReservasHState();
+}
+
+class _PantallaReservasHState extends State<PantallaReservasH> {
+  final GestionReservacion _gestionReservacion = GestionReservacion();
+  late Future<List<ReservaUIWrapper>> _futureReservas;
+  String _filtroSeleccionado = 'Todas';
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarReservas();
+  }
+
+  void _cargarReservas() {
+    setState(() {
+      _futureReservas = _obtenerReservasDelAnfitrion();
+    });
+  }
+
+  Future<List<ReservaUIWrapper>> _obtenerReservasDelAnfitrion() async {
+    List<ReservaUIWrapper> reservasCompletas = [];
+    try {
+      final queryPublicaciones = await FirebaseFirestore.instance
+          .collection('publications')
+          .where('providerId', isEqualTo: widget.prestador.id)
+          .get();
+
+      Map<String, String> infoPublicaciones = {};
+      for (var doc in queryPublicaciones.docs) {
+        infoPublicaciones[doc.id] = doc.data()['titulo'] ?? 'Sin título';
+      }
+
+      if (infoPublicaciones.isEmpty) return [];
+
+      final queryReservas = await FirebaseFirestore.instance
+          .collection('reservations')
+          .where('publicacionId', whereIn: infoPublicaciones.keys.toList())
+          .get();
+
+      for (var doc in queryReservas.docs) {
+        final data = doc.data();
+        final reserva = _gestionReservacion.mapToReserva(doc.id, data);
+        final viajeroId = data['viajeroId'] ?? '';
+        final publicacionId = data['publicacionId'] ?? '';
+
+        String nombreViajero = 'Usuario EcoStay';
+        if (viajeroId.isNotEmpty) {
+          final docViajero = await FirebaseFirestore.instance
+              .collection('users') 
+              .doc(viajeroId)
+              .get();
+          if (docViajero.exists) {
+            nombreViajero = docViajero.data()?['nombre'] ?? 'Usuario EcoStay';
+          }
+        }
+
+        reservasCompletas.add(
+          ReservaUIWrapper(
+            reserva: reserva,
+            nombreViajero: nombreViajero,
+            tituloPublicacion: infoPublicaciones[publicacionId] ?? 'Destino Desconocido',
+          ),
+        );
+      }
+
+      reservasCompletas.sort((a, b) => b.reserva.fechaInicio.compareTo(a.reserva.fechaInicio));
+      
+    } catch (e) {
+      debugPrint("Error al mapear reservas del anfitrión: $e");
+    }
+    return reservasCompletas;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,12 +124,12 @@ class PantallaReservasH extends StatelessWidget {
         ),
         actions: [
           Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: Text(prestador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-            style: const TextStyle(fontSize: 20),
+            child: Text(widget.prestador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+              style: const TextStyle(fontSize: 20),
             ),
           ),
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: const CircleAvatar(
+          const Padding(padding: const EdgeInsets.only(right: 10.0),
+            child: CircleAvatar(
               backgroundColor: Color(0xFF216A44),
               child: Icon(Icons.person, color: Colors.white),
             ),
@@ -54,7 +144,7 @@ class PantallaReservasH extends StatelessWidget {
                 children: [
                   TextButton.icon(
                     onPressed: () {Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => HomeAnfitrion(prestador: prestador)),
+                      MaterialPageRoute(builder: (context) => HomeAnfitrion(prestador: widget.prestador)),
                       );
                     },   
                     icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
@@ -62,7 +152,7 @@ class PantallaReservasH extends StatelessWidget {
                   ),
                   TextButton.icon(
                     onPressed: () {Navigator.pushReplacement(context,
-                        MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: prestador)),
+                        MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: widget.prestador)),
                       );
                     }, 
                     icon: const Icon(Icons.upload, color: Color(0xFF216A44), size: 28),
@@ -76,7 +166,7 @@ class PantallaReservasH extends StatelessWidget {
                   ),
                   TextButton.icon(
                     onPressed: () {Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => PerfilAnfitrion(prestador: prestador)),
+                      MaterialPageRoute(builder: (context) => PerfilAnfitrion(prestador: widget.prestador)),
                       );
                     }, 
                     icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
@@ -89,32 +179,128 @@ class PantallaReservasH extends StatelessWidget {
             // --- MAIN CONTENT CONTAINER ---
             Center(
               child: Padding(
-                padding: const EdgeInsets.only(top: 50),
-                child: Container(width: 1240, height: 520, 
-                  decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25),), 
+                padding: const EdgeInsets.only(top: 30),
+                child: Container(width: 1240,height: 560, decoration: BoxDecoration(
+                    color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25),
+                  ), 
                   child: Padding(padding: const EdgeInsets.all(30.0),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Reservas Recibidas', style: TextStyle(fontSize: 32, 
-                          fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800),
+                        const Text(
+                          'Reservas Recibidas', 
+                          style: TextStyle(fontSize: 32, fontFamily: 'Idiqlat', color: Colors.black, 
+                          fontWeight: FontWeight.w800),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 15),
                         
-                        // --- DYNAMIC LIST VIEW OF BOOKINGS ---
-                        Expanded(
-                          child: prestador.reservas.isEmpty
-                              ? const Center(
-                                  child: Text('No has recibido ninguna reserva todavía.', 
-                                    style: TextStyle(fontSize: 22, color: Colors.grey),
+                        // --- FILTROS DE PESTAÑAS (Todas, Pendientes, Confirmadas) ---
+                        Container(padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(color: const Color(0xFFF4F7F6),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: ['Todas', 'Pendientes', 'Confirmadas'].map((filtro) {
+                              final esActivo = _filtroSeleccionado == filtro;
+                              return GestureDetector(
+                                onTap: () => setState(() => _filtroSeleccionado = filtro),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: esActivo ? Colors.white : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: esActivo ? [BoxShadow(color: Colors.black.withOpacity(0.05), 
+                                    blurRadius: 4)] : [],
                                   ),
-                                )
-                              : ListView.builder(
-                                  itemCount: prestador.reservas.length,
-                                  itemBuilder: (context, index) {
-                                    final reserva = prestador.reservas[index];
-                                    return _buildReservaRowItem(reserva);
-                                  },
+                                  child: Text(filtro,style: TextStyle(
+                                      color: esActivo ? Colors.black : const Color(0xFF526F75),
+                                      fontWeight: esActivo ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
                                 ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+                        
+                        // --- TABLA DINÁMICA ---
+                        Expanded(
+                          child: FutureBuilder<List<ReservaUIWrapper>>(future: _futureReservas,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator(color: Color(0xFF216A44)));
+                              }
+                              if (snapshot.hasError) {
+                                return Center(child: Text('Error al cargar datos: ${snapshot.error}', 
+                                style: const TextStyle(color: Colors.red)));
+                              }
+                              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                return const Center(child: Text('No has recibido ninguna reserva todavía.', 
+                                style: TextStyle(fontSize: 22, color: Colors.grey)));
+                              }
+
+                              // Aplicar filtro local
+                              final reservasFiltradas = snapshot.data!.where((item) {
+                                if (_filtroSeleccionado == 'Pendientes') {
+                                  return item.reserva.estado == EstadoReserva.PENDIENTE;
+                                }
+                                if (_filtroSeleccionado == 'Confirmadas') {
+                                  return item.reserva.estado == EstadoReserva.CONFIRMADA;
+                                }
+                                return true;
+                              }).toList();
+
+                              if (reservasFiltradas.isEmpty) {
+                                return const Center(child: Text('No hay reservas en esta categoría.', 
+                                style: TextStyle(fontSize: 18, color: Colors.grey)));
+                              }
+
+                              return Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade200),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  children: [
+                                    // Fila de Encabezado Estática
+                                    Container(
+                                      color: const Color(0xFFF4F7F6),
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                                      child: Row(
+                                        children: const [
+                                          Expanded(flex: 2, child: Text('Viajero', style: TextStyle(
+                                            fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
+                                          Expanded(flex: 2, child: Text('Destino', style: TextStyle(
+                                            fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
+                                          Expanded(flex: 2, child: Text('Fecha', style: TextStyle(
+                                            fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
+                                          Expanded(flex: 1, child: Text('Cupos', style: TextStyle(
+                                            fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
+                                          Expanded(flex: 1, child: Text('Total', style: TextStyle(
+                                            fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
+                                          Expanded(flex: 2, child: Text('Estado', style: TextStyle(
+                                            fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
+                                          Expanded(flex: 2, child: Text('Acciones', style: TextStyle(
+                                            fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
+                                        ],
+                                      ),
+                                    ),
+                                    // Cuerpo de la tabla
+                                    Expanded(
+                                      child: ListView.builder(
+                                        itemCount: reservasFiltradas.length,
+                                        itemBuilder: (context, index) {
+                                          final item = reservasFiltradas[index];
+                                          return _buildFilaReservaWeb(item);
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                         )
                       ],
                     ),
@@ -129,61 +315,78 @@ class PantallaReservasH extends StatelessWidget {
   }
 
   // --- COMPONENT: ROW CUSTOM RENDERER ---
-  Widget _buildReservaRowItem(Reserva reserva) {
-    // Styling states based on status types
-    Color statusColor = Colors.orange;
-    if (reserva.estado.name == 'CONFIRMADA') statusColor = const Color(0xFF216A44);
-    if (reserva.estado.name == 'CANCELADA') statusColor = Colors.red.shade700;
+  Widget _buildFilaReservaWeb(ReservaUIWrapper item) {
+    final reserva = item.reserva;
 
-    return Container(margin: const EdgeInsets.symmetric(vertical: 8.0),padding: const EdgeInsets.all(20), 
-      decoration: BoxDecoration(color: const Color(0xFFF9FBFB), borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
+    print("INTERFAZ DIBUJANDO -> Id: ${reserva.id} | Estado Real en Objeto: ${reserva.estado}");
+
+    Color statusBg = const Color(0xFFEAEAEA);
+    Color statusText = Colors.black87;
+    String etiquetaEstado = 'Solicitado';
+
+    if (reserva.estado == EstadoReserva.CONFIRMADA) {
+      statusBg = const Color(0xFF1E4D36);
+      statusText = Colors.white;
+      etiquetaEstado = 'Pagado';
+    } else if (reserva.estado == EstadoReserva.COMPLETADA) {
+      statusBg = Colors.blueGrey;
+      statusText = Colors.white;
+      etiquetaEstado = 'Completado';
+    } else if (reserva.estado == EstadoReserva.CANCELADA) {
+      statusBg = const Color(0xFF8A1C14);
+      statusText = Colors.white;
+      etiquetaEstado = 'Cancelado';
+    }
+
+    List<String> meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    String stringFecha = "${reserva.fechaInicio.day}-${meses[reserva.fechaInicio.month - 1]} ${reserva.fechaInicio.year}";
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200)),),
       child: Row(
         children: [
-          const Icon(Icons.circle, color: Color(0xFF216A44), size: 20),
-          const SizedBox(width: 20),
-          
-          // Dates Frame
-          Expanded(flex: 2,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Fechas de Estadía', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                const SizedBox(height: 4),
-                Text(
-                  '${reserva.fechaInicio.day}/${reserva.fechaInicio.month}/${reserva.fechaInicio.year} - ${reserva.fechaFin.day}/${reserva.fechaFin.month}/${reserva.fechaFin.year}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          
-          // Total Cost Frame
+          Expanded(flex: 2, child: Text(item.nombreViajero, style: const TextStyle(
+            fontWeight: FontWeight.bold, fontSize: 15))),
+          Expanded(flex: 2, child: Text(item.tituloPublicacion, style: const TextStyle(
+            color: Colors.black87, fontSize: 15))),
+          Expanded(flex: 2, child: Text(stringFecha, style: const TextStyle(fontSize: 15))),
+          Expanded(flex: 1, child: Text('${reserva.cupos}', style: const TextStyle(fontSize: 15))),
+          Expanded(flex: 1, child: Text('${reserva.total.toInt()}\$', style: const TextStyle(
+            fontWeight: FontWeight.bold, fontSize: 15))),
           Expanded(
-            flex: 1,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Total Recibido', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                const SizedBox(height: 4),
-                Text(
-                  '\$${reserva.total.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF216A44)),
-                ),
-              ],
+            flex: 2,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(12)),
+                child: Text(etiquetaEstado, style: TextStyle(color: statusText, fontWeight: FontWeight.w600, 
+                fontSize: 13)),
+              ),
             ),
           ),
-
-          // Status Badge Frame
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: statusColor),
-            ),
-            child: Text(
-              reserva.estado.name,
-              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 14),
+          Expanded(flex: 2,
+            child: Row(mainAxisSize: MainAxisSize.min,
+              children: [
+                if (reserva.estado == EstadoReserva.PENDIENTE) ...[
+                  IconButton(
+                    icon: const Icon(Icons.check_circle, color: Color(0xFF387653), size: 24),
+                    onPressed: () async {
+                      await _gestionReservacion.confirmarReserva(reserva.id);
+                      _cargarReservas();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.cancel, color: Color(0xFF8A1C14), size: 24),
+                    onPressed: () async {
+                      await _gestionReservacion.cancelarReserva(reserva.id);
+                      _cargarReservas();
+                    },
+                  ),
+                ],
+                const Icon(Icons.visibility, color: Colors.black87, size: 20),
+              ],
             ),
           ),
         ],
