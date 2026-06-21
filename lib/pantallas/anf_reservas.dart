@@ -325,15 +325,15 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
     if (reserva.estado == EstadoReserva.CONFIRMADA) {
       statusBg = const Color(0xFF1E4D36);
       statusText = Colors.white;
-      etiquetaEstado = 'Pagado';
+      etiquetaEstado = 'Confirmada';
     } else if (reserva.estado == EstadoReserva.COMPLETADA) {
       statusBg = Colors.blueGrey;
       statusText = Colors.white;
-      etiquetaEstado = 'Completado';
+      etiquetaEstado = 'Pagada';
     } else if (reserva.estado == EstadoReserva.CANCELADA) {
       statusBg = const Color(0xFF8A1C14);
       statusText = Colors.white;
-      etiquetaEstado = 'Cancelado';
+      etiquetaEstado = 'Cancelada';
     }
 
     List<String> meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -382,8 +382,7 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
                       _cargarReservas();
                     },
                   ),
-                ],
-                const Icon(Icons.visibility, color: Colors.black87, size: 20),
+                ]
               ],
             ),
           ),

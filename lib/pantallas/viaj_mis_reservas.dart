@@ -3,7 +3,7 @@ import 'package:ecostay/models/gestion_publicacion.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/models/reserva.dart'; 
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/reserva_viaj.dart';
+import 'package:ecostay/pantallas/reserva_viaj._solicitardart';
 import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:ecostay/pantallas/viaj_perfil.dart';
 import 'package:ecostay/models/gestion_reservacion.dart'; 

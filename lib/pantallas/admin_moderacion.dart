@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:ecostay/models/administrador.dart';
 import 'package:ecostay/pantallas/admin_home.dart';
-import 'package:ecostay/pantallas/admin_locaciones.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import '../controllers/moderacion_controller.dart';
@@ -92,16 +91,6 @@ class AdminModeracion extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => AdminLocaciones(administrador: administrador)),
-                    );
-                  },
-                  icon: const Icon(Icons.layers_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Locaciones', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                 ),
               ],
             ),

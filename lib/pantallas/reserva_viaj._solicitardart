@@ -240,7 +240,8 @@ Future<void> _obtenerEstadoReservaUsuario() async {
               montoTotal = noches * widget.publicacion.precio;
             }
 
-            return AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),),
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20),),
               title: Text(
                 tieneReservaPendienteOPagable ? 'Finalizar Pago con PayPal' : 'Seleccionar Fechas de Reserva',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
@@ -249,8 +250,10 @@ Future<void> _obtenerEstadoReservaUsuario() async {
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (!tieneReservaPendienteOPagable) ...[
+                      // SOLICITUD DE RESERVA
                       Center(
-                        child: OutlinedButton.icon(style: OutlinedButton.styleFrom(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             side: const BorderSide(color: Color(0xFF216A44), width: 2),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -266,12 +269,12 @@ Future<void> _obtenerEstadoReservaUsuario() async {
                                       surface: Color(0xFFF5F7F2), onSurface: Colors.black,
                                     ),
                                   ),
-                                  child: Dialog(
-                                    insetPadding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
+                                  child: Dialog(insetPadding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                     child: Container(
                                       constraints: const BoxConstraints(maxWidth: 400, maxHeight: 520),
-                                      child: DateRangePickerDialog(firstDate: DateTime.now(),
+                                      child: DateRangePickerDialog(
+                                        firstDate: DateTime.now(),
                                         lastDate: DateTime.now().add(const Duration(days: 365)),
                                         initialDateRange: _fechasSeleccionadas,
                                         initialEntryMode: DatePickerEntryMode.calendar,
@@ -321,7 +324,7 @@ Future<void> _obtenerEstadoReservaUsuario() async {
                             fechaInicio: _fechasSeleccionadas!.start,
                             fechaFin: _fechasSeleccionadas!.end,
                             total: montoTotal,
-                            estado: EstadoReserva.CONFIRMADA, 
+                            estado: EstadoReserva.PENDIENTE,
                             cupos: 1,
                           );
 
@@ -332,21 +335,64 @@ Future<void> _obtenerEstadoReservaUsuario() async {
                           if (dialogoContext.mounted) { Navigator.pop(dialogoContext); }
 
                           messenger.showSnackBar(
-                            const SnackBar(content: Text('¡Solicitud de reserva creada! Proceda a pagar.'),
+                            const SnackBar(
+                              content: Text('¡Solicitud de reserva creada! Espere la confirmación del anfitrión.'),
                               backgroundColor: Color(0xFF216A44),
                             ),
                           );
                         },
-                        child: const Text('Solicitar Reserva', style: TextStyle(fontWeight: FontWeight.bold, 
-                        fontSize: 16)),
+                        child: const Text('Solicitar Reserva', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       )
-                    ]
-                    else ...[
+                    ]else if (_reservaActual?.estado == EstadoReserva.COMPLETADA) ...[
+                      //RESEÑA
                       Center(
                         child: Container(width: double.infinity, padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.blue.shade300, width: 1.5),
+                          decoration: BoxDecoration(color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(15), 
+                            border: Border.all(color: Colors.green.shade300, width: 1.5),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.check_circle, color: Color(0xFF216A44), size: 50),
+                              const SizedBox(height: 12),
+                              const Text('¡Tu estadía ya está asegurada!', textAlign: TextAlign.center,
+                                style: TextStyle(color: Color(0xFF216A44), fontWeight: BorderRadius != null ? FontWeight.bold : FontWeight.w700, fontSize: 18),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Gracias por completar tu pago de \$${_reservaActual!.total.toStringAsFixed(2)}.',
+                                textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF216A44), foregroundColor: Colors.white,
+                                  minimumSize: const Size(double.infinity, 45),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), 
+                                  elevation: 0,
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(dialogoContext);
+                                  _mostrarDialogoComentario(pantallaContext);
+                                },
+                                icon: const Icon(Icons.rate_review),
+                                label: const Text('Dejar una Reseña', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ]
+                    else ...[
+                      //PAGO / RESTRICCIÓN DE ESPERA PENDIENTE
+                      Center(
+                        child: Container(width: double.infinity, padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: (_reservaActual!.estado == EstadoReserva.PENDIENTE) ? Colors.orange.shade50 : Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(15), border: Border.all(
+                              color: (_reservaActual!.estado == EstadoReserva.PENDIENTE) ? Colors.orange.shade300 : Colors.blue.shade300, 
+                              width: 1.5,
+                            ),
                           ),
                           child: Column(
                             children: [
@@ -354,9 +400,10 @@ Future<void> _obtenerEstadoReservaUsuario() async {
                                 children: [
                                   const Icon(Icons.paypal, color: Color(0xFF003087), size: 35),
                                   const SizedBox(width: 8),
-                                  Text('PayPal',
-                                    style: TextStyle(color: const Color(0xFF003087),
-                                      fontWeight: FontWeight.bold, fontSize: 22, fontStyle: FontStyle.italic),
+                                  Text(
+                                    'PayPal',style: TextStyle(color: const Color(0xFF003087),
+                                      fontWeight: FontWeight.bold, fontSize: 22, fontStyle: FontStyle.italic,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -364,60 +411,89 @@ Future<void> _obtenerEstadoReservaUsuario() async {
                               Text(
                                 'Total a transferir: \$${montoTotal.toStringAsFixed(2)} ($noches ${noches == 1 ? 'noche' : 'noches'})',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 16),
+                                style: TextStyle(
+                                  color: (_reservaActual!.estado == EstadoReserva.PENDIENTE) ? Colors.orange.shade900 : Colors.blue.shade900, 
+                                  fontWeight: FontWeight.bold, fontSize: 16,
+                                ),
                               ),
                               const SizedBox(height: 15),
                               
-                              ElevatedButton(style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFFC439), foregroundColor: Colors.black,
-                                disabledBackgroundColor: Colors.grey.shade300, minimumSize: const Size(double.infinity, 45),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,
+                              if (_reservaActual!.estado == EstadoReserva.PENDIENTE) ...[
+                                Container(padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.hourglass_empty, color: Colors.orange),
+                                      const SizedBox(width: 10),
+                                      const Expanded(
+                                        child: Text(
+                                          'Espera a que su reserva sea confirmada para realizar el pago',
+                                          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500, fontSize: 14),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                onPressed: () {
-                                  final idParaPagar = _idReservaCreada ?? 'res_mock_${Random().nextInt(100000)}';
-                                  paypalService.iniciarFlujoPaypal(
-                                    context: dialogoContext,
-                                    monto: montoTotal,
-                                    idReserva: idParaPagar,
-                                    tituloPublicacion: widget.publicacion.titulo,
-                                    onResultado: (exito) async {
-                                      if (exito) {
-                                        await _gestionReservacion.completarReserva(_reservaActual!.id);
-                                        
-                                        _reservaActual = Reserva(
-                                          id: _reservaActual!.id,
-                                          fechaInicio: _reservaActual!.fechaInicio,
-                                          fechaFin: _reservaActual!.fechaFin,
-                                          total: _reservaActual!.total,
-                                          cupos: _reservaActual!.cupos,
-                                          estado: EstadoReserva.COMPLETADA,
-                                        );
-                                        widget.viajero.historialReservas.add(_reservaActual!);
-                        
-                                        if (pantallaContext.mounted) {
-                                          setState(() {
-                                            _fechasSeleccionadas = null;
-                                          });
+                              ] else ...[
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFFC439), 
+                                    foregroundColor: Colors.black,
+                                    disabledBackgroundColor: Colors.grey.shade300, 
+                                    minimumSize: const Size(double.infinity, 45),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), 
+                                    elevation: 0,
+                                  ),
+                                  onPressed: () {
+                                    final idParaPagar = _reservaActual!.id;
+                                    paypalService.iniciarFlujoPaypal(
+                                      context: dialogoContext,
+                                      monto: montoTotal,
+                                      idReserva: idParaPagar,
+                                      tituloPublicacion: widget.publicacion.titulo,
+                                      onResultado: (exito) async {
+                                        if (exito) {
+                                          await _gestionReservacion.completarReserva(_reservaActual!.id);
+                                          
+                                          _reservaActual = Reserva(
+                                            id: _reservaActual!.id,
+                                            fechaInicio: _reservaActual!.fechaInicio,
+                                            fechaFin: _reservaActual!.fechaFin,
+                                            total: _reservaActual!.total,
+                                            cupos: _reservaActual!.cupos,
+                                            estado: EstadoReserva.COMPLETADA,
+                                          );
+                                          widget.viajero.historialReservas.add(_reservaActual!);
+                          
+                                          if (pantallaContext.mounted) {
+                                            setState(() { _fechasSeleccionadas = null;});
+                                          }
+
+                                          if (dialogoContext.mounted) { Navigator.pop(dialogoContext); }
+                          
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content: Text('¡Reserva completada con éxito por \$${montoTotal.toStringAsFixed(2)}!'),
+                                              backgroundColor: const Color(0xFF216A44),
+                                            ),
+                                          );
+                                        } else {
+                                          messenger.showSnackBar(
+                                            const SnackBar(
+                                              content: Text('El pago no se pudo completar.'),
+                                              backgroundColor: Colors.redAccent,
+                                            ),
+                                          );
                                         }
-                        
-                                        messenger.showSnackBar(
-                                          SnackBar(
-                                            content: Text('¡Reserva completada con éxito por \$${montoTotal.toStringAsFixed(2)}!'),
-                                            backgroundColor: const Color(0xFF216A44),
-                                          ),
-                                        );
-                                      } else {
-                                        messenger.showSnackBar(
-                                          const SnackBar(
-                                            content: Text('El pago no se pudo completar.'),
-                                            backgroundColor: Colors.redAccent,),);
-                                      }
-                                    },
-                                  );
-                                },
-                                child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, 
-                                fontSize: 16)),
-                              ),
+                                      },
+                                    );
+                                  },
+                                  child: const Text('Pagar Ahora', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -427,7 +503,8 @@ Future<void> _obtenerEstadoReservaUsuario() async {
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(dialogoContext),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogoContext),
                   child: const Text('Cancelar', style: TextStyle(color: Colors.red, fontSize: 16)),
                 ),
               ],
