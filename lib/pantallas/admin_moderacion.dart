@@ -1,28 +1,191 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecostay/models/administrador.dart';
 import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import '../controllers/moderacion_controller.dart';
+import 'package:ecostay/models/gestion_reportes.dart';
 
-class AdminModeracion extends StatelessWidget {
+class AdminModeracion extends StatefulWidget {
   final Administrador administrador;
-  final ModeracionController _controller = ModeracionController();
 
-  AdminModeracion({super.key, required this.administrador});
+  const AdminModeracion({super.key, required this.administrador});
+
+  @override
+  State<AdminModeracion> createState() => _AdminModeracionState();
+}
+
+class _AdminModeracionState extends State<AdminModeracion> {
+  final GestionReportes _gestionReportes = GestionReportes();
+  late Future<List<Map<String, dynamic>>> _futureReportes;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarReportes();
+  }
+
+  void _cargarReportes() {
+    setState(() {
+      _futureReportes = _gestionReportes.buscarTodosLosReportes();
+    });
+  }
+
+  void _mostrarConfirmacion({
+    required String accion,
+    required VoidCallback alConfirmar,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('¿Confirmar $accion?'),
+          content: const Text('Esta acción es permanente y no se puede deshacer. ¿Está seguro de realizarla?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                alConfirmar();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accion == 'Eliminar' ? const Color(0xFFB72E2E) : const Color(0xFF216A44),
+              ),
+              child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _ignorarReporte(Map<String, dynamic> reporte) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Procesando solicitud...'), duration: Duration(milliseconds: 500)),
+      );
+
+      TipoObjeto tipo = reporte['tipo'] == 'CALIFICACION' 
+          ? TipoObjeto.CALIFICACION 
+          : TipoObjeto.PUBLICACION;
+
+      await _gestionReportes.desestimarReporte(
+        objetoId: reporte['objetoId'] ?? '',
+        tipo: tipo,
+        publicacionId: reporte['publicacionId'],
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reporte desestimado correctamente.')),
+        );
+        _cargarReportes();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al desestimar: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _eliminarContenidoReportado(Map<String, dynamic> reporte) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Eliminando contenido...'), duration: Duration(milliseconds: 500)),
+      );
+
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final String objetoId = reporte['objetoId'] ?? '';
+      final String? publicacionId = reporte['publicacionId'];
+
+      if (reporte['tipo'] == 'CALIFICACION') {
+        if (publicacionId == null || publicacionId.isEmpty) {
+          throw ArgumentError('Falta el ID de la publicación asociada a esta calificación.');
+        }
+        await firestore
+            .collection('publications')
+            .doc(publicacionId)
+            .collection('ratings')
+            .doc(objetoId)
+            .delete();
+      } else {
+        await firestore.collection('publications').doc(objetoId).delete();
+      }
+
+      QuerySnapshot reportesAsociados = await firestore
+          .collection('reports')
+          .where('objetoId', isEqualTo: objetoId)
+          .get();
+
+      WriteBatch batch = firestore.batch();
+      for (var doc in reportesAsociados.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('El contenido ofensivo y sus reportes han sido eliminados.')),
+        );
+        _cargarReportes();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al eliminar contenido: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  String _formatearTiempo(dynamic fechaReporte) {
+    if (fechaReporte == null || fechaReporte is! Timestamp) return 'Hace un momento';
+    
+    final DateTime fecha = fechaReporte.toDate();
+    final duracion = DateTime.now().difference(fecha);
+    
+    if (duracion.inDays > 0) return 'Hace ${duracion.inDays} d';
+    if (duracion.inHours > 0) return 'Hace ${duracion.inHours} h';
+    if (duracion.inMinutes > 0) return 'Hace ${duracion.inMinutes} m';
+    return 'Hace un momento';
+  }
+
+  // Titulo dinamico
+  Future<String> _obtenerTituloContenido(Map<String, dynamic> reporte) async {
+    final firestore = FirebaseFirestore.instance;
+    try {
+      if (reporte['tipo'] == 'CALIFICACION') {
+        String publicacionId = reporte['publicacionId'] ?? '';
+        String objetoId = reporte['objetoId'] ?? '';
+        
+        var ratingDoc = await firestore.collection('publications').doc(publicacionId).collection('ratings').doc(objetoId).get();
+        String autor = ratingDoc.data()?['nombreUsuario'] ?? 'Usuario';
+        
+        var pubDoc = await firestore.collection('publications').doc(publicacionId).get();
+        String posada = pubDoc.data()?['nombre'] ?? 'Posada';
+        
+        return '$autor en $posada';
+      } else {
+        String objetoId = reporte['objetoId'] ?? '';
+        var pubDoc = await firestore.collection('publications').doc(objetoId).get();
+        return pubDoc.data()?['nombre'] ?? 'Publicación sin nombre';
+      }
+    } catch (e) {
+      return reporte['tipo'] == 'CALIFICACION' ? 'Comentario / Reseña' : 'Publicación';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColorPalette.bg,
+    return Scaffold(backgroundColor: ColorPalette.bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
-        toolbarHeight: 90,
-        leadingWidth: 120,
-        centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 40.0),
+        backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, centerTitle: true,
+        leading: Padding(padding: const EdgeInsets.only(left: 40.0),
           child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
         ),
         title: SearchBar(
@@ -32,18 +195,13 @@ class AdminModeracion extends StatelessWidget {
           backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
           elevation: const WidgetStatePropertyAll(0),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10.0),
-            child: Text(
-              administrador.nombre,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
+        actions: [Padding(padding: const EdgeInsets.only(right: 10.0),
+            child: Text(widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1,
               style: const TextStyle(fontSize: 20),
             ),
           ),
           const Padding(
-            padding: const EdgeInsets.only(right: 10.0),
+            padding: EdgeInsets.only(right: 10.0),
             child: CircleAvatar(
               backgroundColor: Color(0xFF216A44),
               child: Icon(Icons.person, color: Colors.white),
@@ -51,20 +209,16 @@ class AdminModeracion extends StatelessWidget {
           )
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // MENÚ DE NAVEGACIÓN SUPERIOR
-          Padding(
-            padding: const EdgeInsets.only(top: 15, bottom: 25),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          Padding(padding: const EdgeInsets.only(top: 15, bottom: 25),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 TextButton.icon(
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => HomeAdmin(administrador: administrador)),
+                      MaterialPageRoute(builder: (context) => HomeAdmin(administrador: widget.administrador)),
                     );
                   },
                   icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
@@ -74,7 +228,7 @@ class AdminModeracion extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: administrador)),
+                      MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: widget.administrador)),
                     );
                   },
                   icon: const Icon(Icons.person_add_outlined, color: Color(0xFF216A44), size: 28),
@@ -83,11 +237,7 @@ class AdminModeracion extends StatelessWidget {
                 TextButton.icon(
                   onPressed: null,
                   icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text(
-                    'Moderación',
-                    style: TextStyle(
-                      color: Color(0xFF216A44),
-                      fontSize: 25,
+                  label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -96,43 +246,60 @@ class AdminModeracion extends StatelessWidget {
             ),
           ),
 
-          // SECCIÓN DE REPORTES
+          // SECCIÓN DINÁMICA CON FUTUREBUILDER (Colección Principal)
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 10),
-              children: [
-                const Text(
-                  'Reportes',
-                  style: TextStyle(
-                    color: Colors.black, fontSize: 36, fontWeight: FontWeight.bold, fontFamily: 'Idiqlat'
-                  ),
-                ),
-                const SizedBox(height: 25),
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _futureReportes,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF216A44)),
+                  );
+                }
 
-                // Reporte 1: Pedro R.
-                _buildCardReporte(
-                  context: context,
-                  usuario: 'Pedro R.',
-                  destino: 'Posada Los Frailes',
-                  tiempo: 'Hace 2h',
-                  cantidadReportes: 1,
-                  comentario: 'Excelente servicio, volvería allí.',
-                ),
-                
-                const SizedBox(height: 25),
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Ocurrió un error al cargar reportes: ${snapshot.error}'),
+                  );
+                }
 
-                // Reporte 2: Luis P.
-                _buildCardReporte(
-                  context: context,
-                  usuario: 'Luis P.',
-                  destino: 'Posada Los Frailes',
-                  tiempo: 'Hace 15h',
-                  cantidadReportes: 3,
-                  comentario: 'Estupida posada',
-                ),
-                
-                const SizedBox(height: 25), // Espacio al final de la lista
-              ],
+                final listaReportes = snapshot.data ?? [];
+
+                if (listaReportes.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No hay reportes pendientes de revisión.',
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  );
+                }
+
+                return ListView.builder(padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 10),
+                  itemCount: listaReportes.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return const Padding(padding: EdgeInsets.only(bottom: 25),
+                        child: Text('Reportes', style: TextStyle(color: Colors.black, fontSize: 36,
+                            fontWeight: FontWeight.bold, fontFamily: 'Idiqlat',
+                          ),
+                        ),
+                      );
+                    }
+
+                    final reporte = listaReportes[index - 1];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 25),
+                      child: _buildCardReporte(
+                        context: context,
+                        reporte: reporte,
+                        onIgnorar: () => _mostrarConfirmacion(accion: 'Ignorar', alConfirmar: () => _ignorarReporte(reporte)),
+                        onEliminar: () => _mostrarConfirmacion(accion: 'Eliminar', alConfirmar: () => _eliminarContenidoReportado(reporte)),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
@@ -140,25 +307,17 @@ class AdminModeracion extends StatelessWidget {
     );
   }
 
-  // HELPER PARA CONSTRUIR TARJETAS DE REPORTE
+  // CARD ADAPTADA AL MAPA DE LA COLECCIÓN "REPORTS"
   Widget _buildCardReporte({
     required BuildContext context,
-    required String usuario,
-    required String destino,
-    required String tiempo,
-    required int cantidadReportes,
-    required String comentario,
+    required Map<String, dynamic> reporte,
+    required VoidCallback onIgnorar,
+    required VoidCallback onEliminar,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
+    return Container(padding: const EdgeInsets.all(25),
+      decoration: BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(25),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, 4),
+          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4),
           ),
         ],
       ),
@@ -166,36 +325,41 @@ class AdminModeracion extends StatelessWidget {
         children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text.rich(TextSpan(
-                      children: [
-                        TextSpan(text: '$usuario ', style: const TextStyle(color: Colors.black,
-                            fontSize: 20, fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FutureBuilder<String>(
+                      future: _obtenerTituloContenido(reporte),
+                      builder: (context, snapshot) {
+                        String titulo = snapshot.data ?? (reporte['tipo'] == 'CALIFICACION' ? 'Comentario / Reseña' : 'Publicación');
+                        return Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Reporte de: $titulo', 
+                                style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold, 
+                                fontFamily: 'Idiqlat'),
+                              ),
+                            ],
                           ),
-                        ),
-                        TextSpan(text: 'en $destino', style: const TextStyle(color: Colors.black,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ],
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(tiempo, style: const TextStyle(color: Colors.grey, fontSize: 14,
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatearTiempo(reporte['fechaReporte']),
+                      style: const TextStyle(color: Colors.grey, fontSize: 14),
                     ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFB72E2E), borderRadius: BorderRadius.circular(15),
+                  ],
                 ),
-                child: Text(
-                  'Reportes: $cantidadReportes',
-                  style: const TextStyle(
-                    color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(width: 10),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                decoration: BoxDecoration(color: const Color(0xFFB72E2E), borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Text('Pendiente', style: TextStyle(color: Colors.white, fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -204,16 +368,12 @@ class AdminModeracion extends StatelessWidget {
           
           const SizedBox(height: 20),
 
-          // Caja de Comentario Reportado
-          Container(width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F7F2), borderRadius: BorderRadius.circular(15),
+          // Motivo del Reporte 
+          Container(width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            decoration: BoxDecoration(color: const Color(0xFFF5F7F2), borderRadius: BorderRadius.circular(15),
             ),
-            child: Text(
-              comentario,
-              style: const TextStyle(color: Colors.black, fontSize: 18,
-              ),
+            child: Text('Motivo: ${reporte['motivo'] ?? 'Sin motivo especificado'}',
+              style: const TextStyle(color: Colors.black, fontSize: 18),
             ),
           ),
 
@@ -223,7 +383,7 @@ class AdminModeracion extends StatelessWidget {
           Row(
             children: [
               ElevatedButton.icon(
-                onPressed: () => _controller.ignorarReporte(),
+                onPressed: onIgnorar,
                 icon: const Icon(Icons.check, color: Colors.white),
                 label: const Text('Ignorar', style: TextStyle(fontSize: 18, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
@@ -235,9 +395,8 @@ class AdminModeracion extends StatelessWidget {
               ),
               const SizedBox(width: 15),
 
-              // Botón Eliminar
               ElevatedButton.icon(
-                onPressed: () => _controller.eliminarReporte(),
+                onPressed: onEliminar,
                 icon: const Icon(Icons.close, color: Colors.white),
                 label: const Text('Eliminar', style: TextStyle(fontSize: 18, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
@@ -249,9 +408,10 @@ class AdminModeracion extends StatelessWidget {
               ),
               const SizedBox(width: 15),
 
-              // Botón Ver Perfil
               OutlinedButton.icon(
-                onPressed: () => _controller.verPerfil(context),
+                onPressed: () {
+                  // Puedes usar reporte['autorObjetoId'] o reporte['usuarioReportoId'] si deseas inspeccionar perfiles
+                },
                 icon: const Icon(Icons.info_outline, color: Colors.black),
                 label: const Text('Ver Perfil', style: TextStyle(fontSize: 18, color: Colors.black)),
                 style: OutlinedButton.styleFrom(

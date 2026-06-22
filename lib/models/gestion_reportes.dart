@@ -204,4 +204,22 @@ class GestionReportes {
     }
     return false;
   }
+
+  Future<List<Map<String, dynamic>>> buscarTodosLosReportes() async {
+  try {
+    QuerySnapshot query = await _firestore
+        .collection('reports')
+        .orderBy('fechaReporte', descending: true)
+        .get();
+
+    return query.docs.map((doc) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      data['id'] = doc.id; // Guardamos el ID del reporte por si se necesita
+      return data;
+    }).toList();
+  } catch (e) {
+    print('Error al buscar reportes de la coleccion principal: $e');
+    return [];
+  }
+}
 }
