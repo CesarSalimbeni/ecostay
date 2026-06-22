@@ -189,6 +189,71 @@ class GestionCalificacion {
     }
   }
 
+  //Esta función sirve para editar una calificación existente en Firestore, utilizando el ID de la publicación, de la calificación
+  //y los datos actualizados.
+  Future<void> editarCalificacion(
+    String publicacionId,
+    String calificacionId,
+    Map<String, dynamic> datosActualizados,
+  ) async {
+    try {
+      await _firestore
+          .collection('publications')
+          .doc(publicacionId)
+          .collection('ratings')
+          .doc(calificacionId)
+          .update(datosActualizados);
+    } catch (e) {
+      throw Exception('Error al editar publicación: $e');
+    }
+  }
+
+  //Esta función busca la calificacion de un viajero específico, utilizando el ID del viajero y la publicacion.
+  //Si no hay calificación asociada devuelve null.
+  Future<Calificacion?> obtenerCalificacionPorViajero(
+    String viajeroId,
+    String publicacionId,
+  ) async {
+    try {
+      // Realizamos la consulta filtrando por el ID del viajero
+      QuerySnapshot snapshot = await _firestore
+          .collection('publications')
+          .doc(publicacionId)
+          .collection('ratings')
+          .where('viajeroId', isEqualTo: viajeroId)
+          .limit(1)
+          .get();
+
+      // Si no se encontró ninguna calificación, devolvemos null
+      if (snapshot.docs.isEmpty) {
+        return null;
+      }
+
+      // Tomamos el primer documento encontrado
+      var doc = snapshot.docs.first;
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+      // Manejo seguro de la fecha
+      DateTime fechaDoc = DateTime.now();
+      if (data['fecha'] != null && data['fecha'] is Timestamp) {
+        fechaDoc = (data['fecha'] as Timestamp).toDate();
+      }
+
+      // Retornamos la instancia de Calificacion mapeada
+      return Calificacion(
+        id: doc.id,
+        puntaje: (data['puntaje'] as num).toDouble(),
+        comentario: data['comentario'] ?? '',
+        fecha: fechaDoc,
+        nombreUsuario: data['nombreUsuario'] ?? '',
+        usuarioId: data['usuarioId'] ?? data['viajeroId'] ?? '',
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+
   //Esta función sirve para obtener todas las calificaciones de una publicación específica en Firestore.
   Future<List<Calificacion>> obtenerCalificaciones(String publicacionId) async {
     try {

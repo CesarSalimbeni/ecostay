@@ -7,7 +7,7 @@ import 'package:ecostay/pantallas/registro.dart';
 import 'package:ecostay/pantallas/anf_home.dart';
 import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:flutter/material.dart';
-import 'package:ecostay/models/gestion_usuario.dart'; 
+import 'package:ecostay/models/gestion_usuario.dart';
 
 class PantallaIniSesion extends StatefulWidget {
   const PantallaIniSesion({super.key});
@@ -51,27 +51,95 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
         passwordText,
       );
 
-      if (usuarioLogueado.rol == 'cliente') {
-        Navigator.pushReplacement(context, 
-          MaterialPageRoute(builder: (context) => HomeViajero(viajero: usuarioLogueado as Viajero),),
-        );
-        
-      } else if (usuarioLogueado.rol == 'host') {
-         Navigator.pushReplacement(context, MaterialPageRoute(
-          builder: (context) => HomeAnfitrion(prestador: usuarioLogueado as PrestadorServicio),
+      if (usuarioLogueado.suspendido) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Usted esta suspendido, no puede ingresar. Contacte con soporte técnico de ser un error.'),
+            backgroundColor: Colors.red,
           ),
         );
-        
+        return;
+      }
+
+      if (usuarioLogueado.rol == 'cliente') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                HomeViajero(viajero: usuarioLogueado as Viajero),
+          ),
+        );
+      } else if (usuarioLogueado.rol == 'host') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                HomeAnfitrion(prestador: usuarioLogueado as PrestadorServicio),
+          ),
+        );
       } else {
-        Navigator.pushReplacement(context, MaterialPageRoute(
-          builder: (context) => HomeAdmin(administrador: usuarioLogueado as Administrador),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                HomeAdmin(administrador: usuarioLogueado as Administrador),
           ),
         );
       }
-      
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // Método para recuperar la contraseña
+  //Nota: el correo llegará pero estará en Spam.
+  Future<void> _recuperarContrasena() async {
+    final emailText = _emailController.text.trim();
+
+    // 1. Validar que el usuario haya escrito un correo antes de presionar el botón
+    if (emailText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor, ingresa tu correo electrónico primero.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 2. Llamar al método de recuperarContraseña, validar, etc.
+      final resultado = await _gestionUsuario.recuperarContrasena(emailText);
+
+      if (resultado == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Se ha enviado un enlace de recuperación a tu correo.',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (resultado is String) {
+        // Si devolvió un string, significa que es un error controlado.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(resultado), backgroundColor: Colors.red),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(
+          content: Text('Ocurrió un error: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) {
@@ -84,7 +152,7 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
@@ -94,97 +162,151 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    const SizedBox(height: 20,),
+                    const SizedBox(height: 20),
                     const Row(
                       children: [
-                        SizedBox(width: 20,),
-                        CircleAvatar(backgroundImage: AssetImage('assets/images/logo.jpg'), radius: 40,),
-                        SizedBox(width: 10,),
-                        Text('Ecostay', style: TextStyle(fontFamily: 'Idiqlat', 
-                        color: Color(0xFF216A44), fontSize: 30),)
+                        SizedBox(width: 20),
+                        CircleAvatar(
+                          backgroundImage: AssetImage('assets/images/logo.jpg'),
+                          radius: 40,
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          'Ecostay',
+                          style: TextStyle(
+                            fontFamily: 'Idiqlat',
+                            color: Color(0xFF216A44),
+                            fontSize: 30,
+                          ),
+                        ),
                       ],
                     ),
                     Padding(
                       padding: const EdgeInsets.only(left: 60.0, right: 40.0),
-                      child: Column( 
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 20,),
-                          const Text("Bienvenido de Vuelta", style: TextStyle(color: Colors.black, fontSize: 20),),
-                          const Text("Inicia sesión para continuar tu gran viaje."),
-                          const SizedBox(height: 40,),
+                          const SizedBox(height: 20),
+                          const Text(
+                            "Bienvenido de Vuelta",
+                            style: TextStyle(color: Colors.black, fontSize: 20),
+                          ),
+                          const Text(
+                            "Inicia sesión para continuar tu gran viaje.",
+                          ),
+                          const SizedBox(height: 40),
                           const Text("Correo electrónico"),
                           TextField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              labelText: "tu@correo.com", 
+                              labelText: "tu@correo.com",
                               border: const OutlineInputBorder(),
-                              filled: true, 
-                              fillColor: ColorPalette.bg
+                              filled: true,
+                              fillColor: ColorPalette.bg,
                             ),
                           ),
-                          const SizedBox(height: 30,),
+                          const SizedBox(height: 30),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text("Contraseña"),
                               TextButton(
-                                onPressed: () {}, 
-                                child: const Text("¿Olvidaste tu contraseña?", 
-                                style: TextStyle(color: Color(0xFF216A44), fontFamily: 'Idiqlat'),),
-                              )
+                                onPressed: _isLoading
+                                    ? null
+                                    : _recuperarContrasena,
+                                child: const Text(
+                                  "¿Olvidaste tu contraseña?",
+                                  style: TextStyle(
+                                    color: Color(0xFF216A44),
+                                    fontFamily: 'Idiqlat',
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           TextField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
-                              labelText: "contraseña", 
-                              border: const OutlineInputBorder(), 
-                              filled: true, 
+                              labelText: "contraseña",
+                              border: const OutlineInputBorder(),
+                              filled: true,
                               fillColor: ColorPalette.bg,
-                              suffixIcon: IconButton(onPressed: () {
-                                setState(() {_obscurePassword = !_obscurePassword;});
-                              }, 
-                              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                  color: const Color(0xFF526F75)))
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: const Color(0xFF526F75),
+                                ),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 50,),
+                          const SizedBox(height: 50),
                           FilledButton(
                             onPressed: _isLoading ? null : _iniciarSesion,
                             style: FilledButton.styleFrom(
                               backgroundColor: const Color(0xFF216A44),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 20),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8),),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               minimumSize: const Size(double.infinity, 50),
                             ),
-                            child: _isLoading 
+                            child: _isLoading
                                 ? const SizedBox(
-                                    height: 20, 
-                                    width: 20, 
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2,)
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
-                                : const Text("Iniciar Sesión", style: TextStyle(fontSize: 16, fontFamily: 'Idiqlat'),),
+                                : const Text(
+                                    "Iniciar Sesión",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Idiqlat',
+                                    ),
+                                  ),
                           ),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.center, 
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("¿No tienes cuenta?", style: TextStyle(fontFamily: 'Idiqlat'),),
+                              const Text(
+                                "¿No tienes cuenta?",
+                                style: TextStyle(fontFamily: 'Idiqlat'),
+                              ),
                               TextButton(
-                                onPressed: () {Navigator.push(context,
-                                MaterialPageRoute(builder: (context) => const PantallaRegistro(), ),);
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PantallaRegistro(),
+                                    ),
+                                  );
                                 },
-                                child: const Text("Registrate aquí", 
-                                style: TextStyle(color: Color(0xFF216A44), fontFamily: 'Idiqlat'),)
-                              )
+                                child: const Text(
+                                  "Registrate aquí",
+                                  style: TextStyle(
+                                    color: Color(0xFF216A44),
+                                    fontFamily: 'Idiqlat',
+                                  ),
+                                ),
+                              ),
                             ],
-                          )
+                          ),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -200,7 +322,7 @@ class _PantallaIniSesionState extends State<PantallaIniSesion> {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
