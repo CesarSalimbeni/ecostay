@@ -49,7 +49,6 @@ class _PerfilViajeroState extends State<PerfilViajero> {
     _ciudadController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,7 +114,6 @@ class _PerfilViajeroState extends State<PerfilViajero> {
               ],
             ),
           ),
-
           Expanded(
             child: SingleChildScrollView(
               child: Center(
@@ -203,7 +201,8 @@ class _PerfilViajeroState extends State<PerfilViajero> {
                                   children: [
                                     _buildProfileInputField('Nombre', _nombreController),
                                     _buildDivider(),
-                                    _buildProfileInputField('Correo', _correoController),
+                                    // Se pasa 'isEditable: false' para congelar el campo de correo electrónico
+                                    _buildProfileInputField('Correo', _correoController, isEditable: false),
                                     _buildDivider(),
                                     _buildProfileInputField('Teléfono', _telefonoController),
                                     _buildDivider(),
@@ -278,8 +277,8 @@ class _PerfilViajeroState extends State<PerfilViajero> {
       )
     );
   }
-
-  Widget _buildProfileInputField(String label, TextEditingController controller) {
+  // Método constructor de los campos de texto con bandera opcional de control de edición
+  Widget _buildProfileInputField(String label, TextEditingController controller, {bool isEditable = true}) {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
@@ -288,8 +287,12 @@ class _PerfilViajeroState extends State<PerfilViajero> {
             fontWeight: FontWeight.w500)),
           ),
           Expanded(flex: 6, 
-            child: TextField(controller: controller,
-              style: const TextStyle(color: Colors.black, fontSize: 18),
+            child: TextField(
+              controller: controller,
+              // readOnly evita que el teclado del dispositivo se despliegue si es falso
+              readOnly: !isEditable,
+              // Convierte el texto a color gris si el campo está bloqueado para dar feedback visual
+              style: TextStyle(color: isEditable ? Colors.black : Colors.grey, fontSize: 18),
               decoration: const InputDecoration(border: InputBorder.none, isDense: true,
                 contentPadding: EdgeInsets.symmetric(vertical: 6),
               ),
