@@ -1,3 +1,5 @@
+import 'package:ecostay/models/publicacion.dart';
+import 'package:ecostay/models/gestion_publicacion.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecostay/models/administrador.dart';
@@ -18,6 +20,7 @@ class AdminModeracion extends StatefulWidget {
 class _AdminModeracionState extends State<AdminModeracion> {
   final GestionReportes _gestionReportes = GestionReportes();
   late Future<List<Map<String, dynamic>>> _futureReportes;
+  final GestionPublicacion _gestionPublicacion = GestionPublicacion();
 
   @override
   void initState() {
@@ -163,17 +166,23 @@ class _AdminModeracionState extends State<AdminModeracion> {
         String publicacionId = reporte['publicacionId'] ?? '';
         String objetoId = reporte['objetoId'] ?? '';
         
-        var ratingDoc = await firestore.collection('publications').doc(publicacionId).collection('ratings').doc(objetoId).get();
+        var ratingDoc = await firestore
+            .collection('publications')
+            .doc(publicacionId)
+            .collection('ratings')
+            .doc(objetoId)
+            .get();
         String autor = ratingDoc.data()?['nombreUsuario'] ?? 'Usuario';
         
-        var pubDoc = await firestore.collection('publications').doc(publicacionId).get();
-        String posada = pubDoc.data()?['nombre'] ?? 'Posada';
+        Publicacion? publicacion = await _gestionPublicacion.obtenerPublicacionPorId(publicacionId);
+        String posada = publicacion?.titulo ?? 'Posada';
         
         return '$autor en $posada';
       } else {
         String objetoId = reporte['objetoId'] ?? '';
-        var pubDoc = await firestore.collection('publications').doc(objetoId).get();
-        return pubDoc.data()?['nombre'] ?? 'Publicación sin nombre';
+        
+        Publicacion? publicacion = await _gestionPublicacion.obtenerPublicacionPorId(objetoId);
+        return publicacion?.titulo ?? 'Publicación sin nombre';
       }
     } catch (e) {
       return reporte['tipo'] == 'CALIFICACION' ? 'Comentario / Reseña' : 'Publicación';
@@ -376,6 +385,27 @@ class _AdminModeracionState extends State<AdminModeracion> {
               style: const TextStyle(color: Colors.black, fontSize: 18),
             ),
           ),
+
+          if (reporte['tipo'] == 'CALIFICACION') ...[
+            const SizedBox(height: 15),
+            Container(width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              decoration: BoxDecoration(color: const Color(0xFFFFF5F5),
+                borderRadius: BorderRadius.circular(15), border: Border.all(color: const Color(0xFFF5C6C6), width: 1),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Contenido del Comentario:',
+                    style: TextStyle(color: Color(0xFFB72E2E), fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  Text('"${reporte['comentario'] ?? 'Contenido no disponible'}"',
+                    style: const TextStyle(color: Colors.black87, fontSize: 18, fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           const SizedBox(height: 20),
 
