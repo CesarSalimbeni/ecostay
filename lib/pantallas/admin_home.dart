@@ -4,19 +4,38 @@ import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:ecostay/models/gestion_estadisticas.dart'; 
 
-class HomeAdmin extends StatelessWidget {
+class HomeAdmin extends StatefulWidget {
   final Administrador administrador;
 
   const HomeAdmin({super.key, required this.administrador});
 
   @override
+  State<HomeAdmin> createState() => _HomeAdminState();
+}
+
+class _HomeAdminState extends State<HomeAdmin> {
+  final GestionDashboard _dashboardService = GestionDashboard();
+  late Future<List<dynamic>> _adminDataFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    final ahora = DateTime.now();
+    final anoMesActual = "${ahora.year}-${ahora.month.toString().padLeft(2, '0')}";
+
+    _adminDataFuture = Future.wait([
+      _dashboardService.obtenerMetricasGenerales(),
+      _dashboardService.obtenerDestinosMasBuscados(anoMes: anoMesActual, limite: 5),
+    ]);
+  }
+
+  @override
   Widget build(BuildContext context) {
-
-    final size = MediaQuery.of(context).size;
-    final fontSize = min(size.width * 0.11, size.height * 0.11).clamp(28.0, 96.0) as double;
-
-    return Scaffold(backgroundColor: ColorPalette.bg,
+    return Scaffold(
+      backgroundColor: ColorPalette.bg,
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, centerTitle: true,
         leading: Padding(padding: const EdgeInsets.only(left: 40.0),
@@ -31,12 +50,12 @@ class HomeAdmin extends StatelessWidget {
         ),
         actions: [
           Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: Text(administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-            style: const TextStyle(fontSize: 20),
+            child: Text(widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+              style: const TextStyle(fontSize: 20),
             ),
           ),
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: const CircleAvatar(
+          const Padding(padding: const EdgeInsets.only(right: 10.0),
+            child: CircleAvatar(
               backgroundColor: Color(0xFF216A44),
               child: Icon(Icons.person, color: Colors.white),
             ),
@@ -46,30 +65,26 @@ class HomeAdmin extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start, 
         children: [
+          // Barra de navegación fija superior
           Padding(padding: const EdgeInsets.only(top: 15),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
               children: [
                 TextButton.icon(
                   onPressed: null, 
                   icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Dashboard', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
-                  fontWeight: FontWeight.w900)),
+                  label: const Text('Dashboard', style: TextStyle(color: Color(0xFF216A44), fontSize: 25, fontWeight: FontWeight.w900)),
                 ),
                 TextButton.icon(
-                  onPressed: () {Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: administrador)),
-                    );
+                  onPressed: () {
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: widget.administrador)));
                   }, 
                   icon: const Icon(Icons.person_add_outlined, color: Color(0xFF216A44), size: 28),
                   label: const Text('Usuarios', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                 ),
                 TextButton.icon(
                   onPressed:() {
-                      Navigator.pushReplacement(context,
-                        MaterialPageRoute(builder: (context) => AdminModeracion(administrador: administrador),
-                        ),
-                      );
-                    },
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminModeracion(administrador: widget.administrador)));
+                  },
                   icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
                   label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                 ),
@@ -77,117 +92,146 @@ class HomeAdmin extends StatelessWidget {
             ),
           ),
           
-          // --- NEW: Title Header Section ---
           Padding(
             padding: const EdgeInsets.only(left: 60.0, top: 40.0, bottom: 20.0),
             child: const Text(
-              'Resumen de la plataforma', style: TextStyle(fontSize: 32, fontFamily: 'Idiqlat',
-                color: Colors.black, fontWeight: FontWeight.w800,
-              ),
+              'Resumen de la plataforma', 
+              style: TextStyle(fontSize: 32, fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800),
             ),
           ),
 
-          
-          Center(
-            child: SizedBox(width: 1240, height: 400,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(width: 460,
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Expanded(child: _buildStatCard(Icons.people_outline, '23', 'Usuarios Activos')),
-                              const SizedBox(width: 20),
-                              Expanded(child: _buildStatCard(Icons.attach_money, '\$1004.3', 'Volumen de Reservas')),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Expanded(child: _buildStatCard(Icons.explore_outlined, '14', 'Destinos Totales')),
-                              const SizedBox(width: 20),
-                              Expanded(child: _buildStatCard(Icons.local_offer_outlined, '\$134', 'Reportes de Costos')),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 40),
+          Expanded(
+            child: FutureBuilder<List<dynamic>>(
+              future: _adminDataFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: Color(0xFF38664D)));
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error al cargar métricas: ${snapshot.error}'));
+                } else if (!snapshot.hasData) {
+                  return const Center(child: Text('Sin información disponible por el momento'));
+                }
 
+                final metricasGenerales = snapshot.data![0] as Map<String, dynamic>;
+                final destinosMasBuscados = snapshot.data![1] as List<Map<String, dynamic>>;
 
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(30.0),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: Column(
+                final totalUsuarios = metricasGenerales['usuariosActivos'].toString();
+                final volumenReservas = '\$${(metricasGenerales['volumenTransacciones'] as double).toStringAsFixed(1)}';
+                final destinosTotales = metricasGenerales['publicacionesActivas'].toString();
+
+                double maxValGrafico = 1400.0;
+                if (destinosMasBuscados.isNotEmpty) {
+                  final primerContador = (destinosMasBuscados.first['contador'] as num).toDouble();
+                  if (primerContador > maxValGrafico) {
+                    maxValGrafico = (primerContador / 350).ceil() * 350.0; 
+                  }
+                }
+
+                return SingleChildScrollView(
+                  child: Center(
+                    child: SizedBox(width: 1240, height: 400,
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Destinos más buscados',
-                            style: TextStyle(fontSize: 28, fontFamily: 'Idiqlat', fontWeight: FontWeight.bold, 
-                            color: Colors.black),
+                          SizedBox(width: 460,
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(child: _buildStatCard(Icons.people_outline, totalUsuarios, 'Usuarios Activos')),
+                                      const SizedBox(width: 20),
+                                      Expanded(child: _buildStatCard(Icons.attach_money, volumenReservas, 'Volumen de Reservas')),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(child: _buildStatCard(Icons.explore_outlined, destinosTotales, 'Destinos Totales')),
+                                      const SizedBox(width: 20),
+                                      // Tarjeta mock/estática conservada por diseño
+                                      Expanded(child: _buildStatCard(Icons.local_offer_outlined, '\$134', 'Reportes de Costos')),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'Por número de busquedas mensuales',
-                            style: TextStyle(fontSize: 14, color: Color(0xFF7A8E89)),
-                          ),
-                          const SizedBox(height: 20),
+                          const SizedBox(width: 40),
+
                           Expanded(
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                return Stack(
-                                  children: [
-                                    // Vertical dashed gridlines background
-                                    Positioned.fill(
-                                      child: Padding(padding: const EdgeInsets.only(left: 90.0, bottom: 25.0),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: List.generate(5, (index) => Container(
-                                            width: 1, color: Colors.grey.shade100,
-                                          )),
-                                        ),
-                                      ),
+                            child: Container(
+                              padding: const EdgeInsets.all(30.0),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25)),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Destinos más buscados',
+                                    style: TextStyle(fontSize: 28, fontFamily: 'Idiqlat', fontWeight: FontWeight.bold, color: Colors.black),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'Por número de búsquedas mensuales',
+                                    style: TextStyle(fontSize: 14, color: Color(0xFF7A8E89)),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Expanded(
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        return Stack(
+                                          children: [
+                                            Positioned.fill(
+                                              child: Padding(padding: const EdgeInsets.only(left: 90.0, bottom: 25.0),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: List.generate(5, (index) => Container(width: 1, color: Colors.grey.shade100)),
+                                                ),
+                                              ),
+                                            ),
+                                            Column(
+                                              children: [
+                                                ...destinosMasBuscados.map((item) {
+                                                  final nombreDestino = item['destino']?.toString() ?? 'Desconocido';
+                                                  final contadorBusquedas = (item['contador'] as num?)?.toDouble() ?? 0.0;
+                                                  return Expanded(child: _buildBarRow(nombreDestino, contadorBusquedas, maxValGrafico));
+                                                }),
+                                                if (destinosMasBuscados.length < 5)
+                                                  ...List.generate(5 - destinosMasBuscados.length, (index) => const Expanded(
+                                                    child: SizedBox())),
+                                                const SizedBox(height: 25), 
+                                              ],
+                                            ),
+                                            Positioned(left: 90.0, right: 0, bottom: 0,
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  '0', 
+                                                  (maxValGrafico * 0.25).toInt().toString(), 
+                                                  (maxValGrafico * 0.5).toInt().toString(), 
+                                                  (maxValGrafico * 0.75).toInt().toString(), 
+                                                  maxValGrafico.toInt().toString()
+                                                ].map((val) => Text(val, style: const TextStyle(fontSize: 12, 
+                                                color: Color(0xFF9CB0AA)))).toList(),
+                                              ),
+                                            )
+                                          ],
+                                        );
+                                      }
                                     ),
-                                    // Custom Bars Layer
-                                    Column(
-                                      children: [
-                                        Expanded(child: _buildBarRow('Mérida', 1250, 1400)),
-                                        Expanded(child: _buildBarRow('Los Roques', 950, 1400)),
-                                        Expanded(child: _buildBarRow('Canaima', 850, 1400)),
-                                        Expanded(child: _buildBarRow('Choroní', 600, 1400)),
-                                        Expanded(child: _buildBarRow('Margarita', 450, 1400)),
-                                        const SizedBox(height: 25), 
-                                      ],
-                                    ),
-                                    // X-Axis numerical metrics baseline
-                                    Positioned(left: 90.0, right: 0, bottom: 0,
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: ['0', '350', '700', '1050', '1400'].map((val) => Text(
-                                          val,
-                                          style: const TextStyle(fontSize: 12, color: Color(0xFF9CB0AA)),
-                                        )).toList(),
-                                      ),
-                                    )
-                                  ],
-                                );
-                              }
+                                  )
+                                ],
+                              ),
                             ),
                           )
                         ],
                       ),
                     ),
-                  )
-                ],
-              ),
+                  ),
+                );
+              },
             ),
           )
         ]
@@ -195,24 +239,21 @@ class HomeAdmin extends StatelessWidget {
     );
   }
 
-  // --- NEW: Helper Builder Row Method for the Chart Bars ---
   Widget _buildBarRow(String label, double value, double maxVal) {
     return Row(
       children: [
         SizedBox(width: 80,
-          child: Text(label,
-            textAlign: TextAlign.end,
+          child: Text(label, textAlign: TextAlign.end, overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 13, color: Color(0xFF526F75)),
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Align(alignment: Alignment.centerLeft,
-            child: FractionallySizedBox(widthFactor: value / maxVal,
+            child: FractionallySizedBox(
+              widthFactor: maxVal > 0 ? (value / maxVal).clamp(0.0, 1.0) : 0.0,
               child: Container(height: 26,
-                decoration: BoxDecoration(color: const Color(0xFF4C8A64), 
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFF4C8A64), borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ),
@@ -220,16 +261,14 @@ class HomeAdmin extends StatelessWidget {
       ],
     );
   }
-}
 
-Widget _buildStatCard(IconData icon, String value, String label) {
+  Widget _buildStatCard(IconData icon, String value, String label) {
     return Container(padding: const EdgeInsets.all(19.2), 
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), 
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(padding: const EdgeInsets.all(8), 
-            decoration: BoxDecoration(color: const Color(0xFF38664D), borderRadius: BorderRadius.circular(9.6),), 
+            decoration: BoxDecoration(color: const Color(0xFF38664D), borderRadius: BorderRadius.circular(9.6)), 
             child: Icon(icon, color: Colors.white, size: 25.6), 
           ),
           const SizedBox(height: 12.8), 
@@ -240,3 +279,4 @@ Widget _buildStatCard(IconData icon, String value, String label) {
       ),
     );
   }
+}
