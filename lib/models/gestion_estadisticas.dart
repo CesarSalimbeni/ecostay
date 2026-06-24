@@ -142,4 +142,103 @@ class GestionDashboard {
       throw('Error al obtener destinos más buscados: $e');
     }
   }
+
+  /// Recopila todas las métricas clave de un Host en una sola consulta estructurada.
+  Future<Map<String, dynamic>> obtenerDashboardHost(String hostId) async {
+    try {
+      DateTime ahora = DateTime.now();
+      DateTime inicioMes = DateTime(ahora.year, ahora.month, 1);
+      DateTime finMes = DateTime(ahora.year, ahora.month + 1, 0, 23, 59, 59);
+
+      // 1. Obtener las publicaciones propiedad de este host
+      QuerySnapshot pubSnapshot = await _firestore
+          .collection('publications')
+          .where('providerId', isEqualTo: hostId)
+          .get();
+
+      int publicacionesActivas = pubSnapshot.docs.length;
+
+      // Si el host no tiene publicaciones, devolvemos todo en cero inmediatamente
+      if (publicacionesActivas == 0) {
+        return {
+          'publicacionesActivas': 0,
+          'reservasDelMes': 0,
+          'ingresosMesActual': 0.0,
+          'calificacionPromedioGeneral': 0.0,
+          'ingresosMensualesHistoricos': <int, double>{},
+        };
+      }
+
+      // Extraemos los IDs de las publicaciones para cruzar la información con las reservas
+      List<String> publicacionIds = pubSnapshot.docs.map((doc) => doc.id).toList();
+
+      // Calcular la calificación promedio general del host en base a sus publicaciones
+      double sumaCalificaciones = 0.0;
+      for (var doc in pubSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        sumaCalificaciones += (data['calificacionPromedio'] as num?)?.toDouble() ?? 0.0;
+      }
+      double calificacionPromedioGeneral = sumaCalificaciones / publicacionesActivas;
+
+      // 2. Obtener TODAS las reservas asociadas a las publicaciones de este host
+      // Nota: Si la lista 'publicacionIds' es mayor a 10, Firebase limita el operador 'whereIn'.
+      // Para este diseño estándar, asumimos un flujo controlado.
+      QuerySnapshot resSnapshot = await _firestore
+          .collection('reservations')
+          .where('publicacionId', whereIn: publicacionIds)
+          .get();
+
+      int reservasDelMes = 0;
+      double ingresosMesActual = 0.0;
+      
+      // Inicializamos el mapa de los 12 meses en 0.0 para el histórico
+      Map<int, double> ingresosMensualesHistoricos = {
+        for (int i = 1; i <= 12; i++) i: 0.0
+      };
+
+      for (var doc in resSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        
+        // Convertir estado de Firestore a String seguro
+        String estadoStr = (data['estado'] ?? '').toString().toUpperCase().trim();
+        
+        // Solo contabilizamos ingresos de reservas CONFIRMADAS o COMPLETADAS
+        if (estadoStr == EstadoReserva.CONFIRMADA.name || estadoStr == EstadoReserva.COMPLETADA.name) {
+          double totalReserva = (data['total'] as num?)?.toDouble() ?? 0.0;
+          
+          // Procesar la fecha de inicio de la reserva
+          DateTime fechaInicio = DateTime.now();
+          if (data['fechaInicio'] is Timestamp) {
+            fechaInicio = (data['fechaInicio'] as Timestamp).toDate();
+          } else if (data['fechaInicio'] is String) {
+            fechaInicio = DateTime.parse(data['fechaInicio']);
+          }
+
+          // A) Acumular en el histórico mensual del año actual
+          if (fechaInicio.year == ahora.year) {
+            ingresosMensualesHistoricos[fechaInicio.month] = 
+                (ingresosMensualesHistoricos[fechaInicio.month] ?? 0.0) + totalReserva;
+          }
+
+          // B) Filtrar métricas específicas del mes en curso
+          if (fechaInicio.isAfter(inicioMes) && fechaInicio.isBefore(finMes)) {
+            reservasDelMes++;
+            ingresosMesActual += totalReserva;
+          }
+        }
+      }
+
+      return {
+        'publicacionesActivas': publicacionesActivas,
+        'reservasDelMes': reservasDelMes,
+        'ingresosMesActual': ingresosMesActual,
+        'calificacionPromedioGeneral': double.parse(calificacionPromedioGeneral.toStringAsFixed(2)),
+        'ingresosMensualesHistoricos': ingresosMensualesHistoricos, // Mapa de 1 a 12
+      };
+
+    } catch (e) {
+      print('Error al calcular estadísticas: $e');
+      throw Exception('Error al generar el panel de estadísticas: $e');
+    }
+  }
 }
