@@ -1,13 +1,15 @@
 import 'package:ecostay/models/administrador.dart';
 import 'package:ecostay/models/usuario.dart';
+import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/models/prestador_servicio.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
+import 'package:ecostay/pantallas/admin_perfil_usuario.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-// Cambiado a StatefulWidget para poder manejar la carga de datos reales
 class AdminUsuarios extends StatefulWidget {
   final Administrador administrador;
 
@@ -18,7 +20,6 @@ class AdminUsuarios extends StatefulWidget {
 }
 
 class _AdminUsuariosState extends State<AdminUsuarios> {
-  // Instanciamos la clase de gestión que creaste previamente
   final GestionUsuario _gestionUsuario = GestionUsuario();
   List<Usuario> _usuariosReales = [];
   bool _cargando = true;
@@ -29,9 +30,10 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
     _cargarUsuarios();
   }
 
-  Future<void> _cargarUsuarios() async {
+  Future<void> _cargarUsuarios({String? nombre}) async {
+    setState(() => _cargando = true);
     try {
-      List<Usuario> todos = await _gestionUsuario.buscarUsuariosPorNombre(null);
+      List<Usuario> todos = await _gestionUsuario.buscarUsuariosPorNombre(nombre);
       
       setState(() {
         _usuariosReales = todos.where((u) => u.id != widget.administrador.id).toList();
@@ -40,16 +42,13 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
     } catch (e) {
       setState(() => _cargando = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar usuarios: $e')),
+        SnackBar(content: Text('Error al buscar usuarios: $e')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final fontSize = min(size.width * 0.11, size.height * 0.11).clamp(28.0, 96.0) as double;
-
     return Scaffold(
       backgroundColor: ColorPalette.bg,
       appBar: AppBar(
@@ -63,6 +62,9 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
           leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
           backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
           elevation: const WidgetStatePropertyAll(0),
+          onChanged: (value) {
+            _cargarUsuarios(nombre: value.isEmpty ? null : value);
+          },
         ),
         actions: [
           Padding(padding: const EdgeInsets.only(right: 10.0),
@@ -130,26 +132,43 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
                               Expanded(
                                 child: _cargando 
                                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF216A44)))
-                                : ListView.separated(
-                                  itemCount: _usuariosReales.length,
-                                  separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
-                                  itemBuilder: (context, index) {
-                                    final user = _usuariosReales[index];
-                                    
-                                    String rolFormateado = user is Administrador ? 'Admin' : (user.runtimeType.toString() == 'Viajero' ? 'Viajero' : 'Anfitrión');
-                                    String estadoFormateado = user.suspendido ? 'Suspendido' : 'Activo';
+                                : _usuariosReales.isEmpty 
+                                  ? const Center(child: Text('No se encontraron usuarios.', style: TextStyle(fontSize: 18, color: Colors.grey)))
+                                  : ListView.separated(
+                                    itemCount: _usuariosReales.length,
+                                    separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+                                    itemBuilder: (context, index) {
+                                      final user = _usuariosReales[index];
+                                      
+                                      String rolFormateado = user is Administrador ? 'Admin' : (user is Viajero ? 'Viajero' : 'Anfitrión');
+                                      String estadoFormateado = user.suspendido ? 'Suspendido' : 'Activo';
 
-                                    return _buildUsuarioRowItem(
-                                      id: user.id.substring(0, min(5, user.id.length)),
-                                      nombre: user.nombre,
-                                      email: user.email,
-                                      rol: rolFormateado,
-                                      estado: estadoFormateado,
-                                      brandGreen: const Color(0xFF216A44),
-                                      darkRed: const Color(0xFF7A1C1C),
-                                    );
-                                  },
-                                ),
+                                      return _buildUsuarioRowItem(
+                                        id: user.id.substring(0, min(5, user.id.length)),
+                                        nombre: user.nombre,
+                                        email: user.email,
+                                        rol: rolFormateado,
+                                        estado: estadoFormateado,
+                                        brandGreen: const Color(0xFF216A44),
+                                        darkRed: const Color(0xFF7A1C1C),
+                                        onVerPerfil: () {
+                                          if (user is Viajero || user is PrestadorServicio) {
+                                            Navigator.pushReplacement(
+                                              context, MaterialPageRoute(
+                                                builder: (context) => PerfilUsuario(
+                                                  usuarioSeleccionado: user, administrador: widget.administrador,
+                                                ),
+                                              ),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('No es posible visualizar este perfil.')),
+                                            );
+                                          }
+                                        },
+                                      );
+                                    },
+                                  ),
                               ),
                               const SizedBox(height: 15), 
                             ],
@@ -199,6 +218,7 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
     required String estado,
     required Color brandGreen,
     required Color darkRed,
+    required VoidCallback onVerPerfil,
   }) {
     bool isSuspended = estado == 'Suspendido';
 
@@ -235,7 +255,7 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: onVerPerfil,
                   icon: const Icon(Icons.visibility_outlined, color: Colors.black87, size: 28),
                 ),
               ],
