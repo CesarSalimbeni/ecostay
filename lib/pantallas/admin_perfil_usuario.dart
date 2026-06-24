@@ -3,12 +3,10 @@ import 'package:ecostay/models/administrador.dart';
 import 'package:ecostay/models/usuario.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
-import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/pag_inicio.dart';
 import 'package:flutter/material.dart';
 
 class PerfilUsuario extends StatefulWidget {
@@ -26,7 +24,6 @@ class PerfilUsuario extends StatefulWidget {
 }
 
 class _PerfilUsuarioState extends State<PerfilUsuario> {
-  final GestionUsuario _gestionUsuario = GestionUsuario();
   late String _rolFormateado;
 
   @override

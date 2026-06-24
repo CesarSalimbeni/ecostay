@@ -23,6 +23,7 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
   final GestionUsuario _gestionUsuario = GestionUsuario();
   List<Usuario> _usuariosReales = [];
   bool _cargando = true;
+  String? _busquedaActual;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
 
   Future<void> _cargarUsuarios({String? nombre}) async {
     setState(() => _cargando = true);
+    _busquedaActual = nombre;
     try {
       List<Usuario> todos = await _gestionUsuario.buscarUsuariosPorNombre(nombre);
       
@@ -43,6 +45,25 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
       setState(() => _cargando = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al buscar usuarios: $e')),
+      );
+    }
+  }
+
+  // Método intermedio para procesar el cambio en Firebase Firestore
+  Future<void> _procesarSuspension(String uid, bool nuevoEstado) async {
+    final resultado = await _gestionUsuario.cambiarEstadoSuspension(uid, nuevoEstado);
+    
+    if (resultado == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(nuevoEstado ? 'Usuario suspendido con éxito.' : 'Usuario activado con éxito.'),
+          backgroundColor: nuevoEstado ? const Color(0xFF7A1C1C) : const Color(0xFF216A44),
+        ),
+      );
+      _cargarUsuarios(nombre: _busquedaActual);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $resultado')),
       );
     }
   }
@@ -151,6 +172,9 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
                                         estado: estadoFormateado,
                                         brandGreen: const Color(0xFF216A44),
                                         darkRed: const Color(0xFF7A1C1C),
+                                        onCambiarEstado: () {
+                                          _procesarSuspension(user.id, !user.suspendido);
+                                        },
                                         onVerPerfil: () {
                                           if (user is Viajero || user is PrestadorServicio) {
                                             Navigator.pushReplacement(
@@ -218,6 +242,7 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
     required String estado,
     required Color brandGreen,
     required Color darkRed,
+    required VoidCallback onCambiarEstado,
     required VoidCallback onVerPerfil,
   }) {
     bool isSuspended = estado == 'Suspendido';
@@ -248,7 +273,7 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
             child: Row(mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  onPressed: () {},
+                  onPressed: onCambiarEstado,
                   icon: Icon(isSuspended ? Icons.check_circle : Icons.cancel,
                     color: isSuspended ? brandGreen : darkRed, size: 28,
                   ),
