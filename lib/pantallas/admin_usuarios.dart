@@ -1,29 +1,57 @@
 import 'package:ecostay/models/administrador.dart';
+import 'package:ecostay/models/usuario.dart';
+import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-class AdminUsuarios extends StatelessWidget {
+// Cambiado a StatefulWidget para poder manejar la carga de datos reales
+class AdminUsuarios extends StatefulWidget {
   final Administrador administrador;
 
   const AdminUsuarios({super.key, required this.administrador});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> usuariosMock = [
-      {'id': 'U-001', 'nombre': 'María Gónzales', 'email': 'maria@correo.com', 'rol': 'Viajero', 'estado': 'Activo'},
-      {'id': 'U-002', 'nombre': 'Carlos Méndez', 'email': 'carlos@correo.com', 'rol': 'Anfitrión', 'estado': 'Activo'},
-      {'id': 'U-003', 'nombre': 'Miguel Angle', 'email': 'miguelangle@correo.com', 'rol': 'Anfitrión', 'estado': 'Activo'},
-      {'id': 'U-004', 'nombre': 'Pedro Ruiz', 'email': 'pedro@correo.com', 'rol': 'Viajero', 'estado': 'Suspendido'},
-      {'id': 'U-005', 'nombre': 'Luis Pérez', 'email': 'luis@correo.com', 'rol': 'Anfitrión', 'estado': 'Activo'},
-    ];
+  State<AdminUsuarios> createState() => _AdminUsuariosState();
+}
 
+class _AdminUsuariosState extends State<AdminUsuarios> {
+  // Instanciamos la clase de gestión que creaste previamente
+  final GestionUsuario _gestionUsuario = GestionUsuario();
+  List<Usuario> _usuariosReales = [];
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarUsuarios();
+  }
+
+  Future<void> _cargarUsuarios() async {
+    try {
+      List<Usuario> todos = await _gestionUsuario.buscarUsuariosPorNombre(null);
+      
+      setState(() {
+        _usuariosReales = todos.where((u) => u.id != widget.administrador.id).toList();
+        _cargando = false;
+      });
+    } catch (e) {
+      setState(() => _cargando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar usuarios: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final fontSize = min(size.width * 0.11, size.height * 0.11).clamp(28.0, 96.0) as double;
 
-    return Scaffold(backgroundColor: ColorPalette.bg,
+    return Scaffold(
+      backgroundColor: ColorPalette.bg,
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, centerTitle: true,
         leading: Padding(padding: const EdgeInsets.only(left: 40.0),
@@ -38,7 +66,7 @@ class AdminUsuarios extends StatelessWidget {
         ),
         actions: [
           Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: Text(administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+            child: Text(widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
             style: const TextStyle(fontSize: 20),
             ),
           ),
@@ -50,16 +78,14 @@ class AdminUsuarios extends StatelessWidget {
           )
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, 
-        children: [
-          Padding(padding: const EdgeInsets.only(top: 15),
+      body: Column(crossAxisAlignment: CrossAxisAlignment.start, 
+        children: [Padding(padding: const EdgeInsets.only(top: 15),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
               children: [
                 TextButton.icon(
                   onPressed: () {
                     Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => HomeAdmin(administrador: administrador)),
+                      MaterialPageRoute(builder: (context) => HomeAdmin(administrador: widget.administrador)),
                     );
                   }, 
                   icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
@@ -73,11 +99,11 @@ class AdminUsuarios extends StatelessWidget {
                 ),
                 TextButton.icon(
                   onPressed:() {
-                      Navigator.pushReplacement(context,
-                        MaterialPageRoute(builder: (context) => AdminModeracion(administrador: administrador),
-                        ),
-                      );
-                    },
+                    Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => AdminModeracion(administrador: widget.administrador),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
                   label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                 ),
@@ -85,8 +111,7 @@ class AdminUsuarios extends StatelessWidget {
             ),
           ),
           Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 50),
+              child: Padding(padding: const EdgeInsets.only(top: 50),
                 child: SizedBox(width: 1240, height: 520, 
                   child: Padding(padding: const EdgeInsets.all(30.0),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,24 +128,30 @@ class AdminUsuarios extends StatelessWidget {
                             child: Column(
                             children: [_buildTableHeader(const Color(0xFFF4F6F4), const Color(0xFF526F75)),
                               Expanded(
-                                child: ListView.separated(
-                                  itemCount: usuariosMock.length,
+                                child: _cargando 
+                                ? const Center(child: CircularProgressIndicator(color: Color(0xFF216A44)))
+                                : ListView.separated(
+                                  itemCount: _usuariosReales.length,
                                   separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
                                   itemBuilder: (context, index) {
-                                    final user = usuariosMock[index];
+                                    final user = _usuariosReales[index];
+                                    
+                                    String rolFormateado = user is Administrador ? 'Admin' : (user.runtimeType.toString() == 'Viajero' ? 'Viajero' : 'Anfitrión');
+                                    String estadoFormateado = user.suspendido ? 'Suspendido' : 'Activo';
+
                                     return _buildUsuarioRowItem(
-                                      id: user['id'],
-                                      nombre: user['nombre'],
-                                      email: user['email'],
-                                      rol: user['rol'],
-                                      estado: user['estado'],
+                                      id: user.id.substring(0, min(5, user.id.length)),
+                                      nombre: user.nombre,
+                                      email: user.email,
+                                      rol: rolFormateado,
+                                      estado: estadoFormateado,
                                       brandGreen: const Color(0xFF216A44),
                                       darkRed: const Color(0xFF7A1C1C),
                                     );
                                   },
                                 ),
                               ),
-                              const SizedBox(height: 15), // Spacing base baseline
+                              const SizedBox(height: 15), 
                             ],
                           ),
                         ),
@@ -136,25 +167,25 @@ class AdminUsuarios extends StatelessWidget {
     );
   }
 
-  // --- NEW: Added missing table header widget method ---
   Widget _buildTableHeader(Color bgColor, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+    return Container(padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+      decoration: BoxDecoration(color: bgColor,
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24),
         ),
       ),
       child: Row(
         children: [
           Expanded(flex: 1, child: Text('ID', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18))),
-          Expanded(flex: 2, child: Text('Nombre', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18))),
-          Expanded(flex: 3, child: Text('Email', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18))),
-          Expanded(flex: 2, child: Text('Rol', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18))),
-          Expanded(flex: 2, child: Center(child: Text('Estado', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18)))),
-          Expanded(flex: 2, child: Center(child: Text('Acciones', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 18)))),
+          Expanded(flex: 2, child: Text('Nombre', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, 
+            fontSize: 18))),
+          Expanded(flex: 3, child: Text('Email', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, 
+            fontSize: 18))),
+          Expanded(flex: 2, child: Text('Rol', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, 
+            fontSize: 18))),
+          Expanded(flex: 2, child: Center(child: Text('Estado', style: TextStyle(color: textColor, 
+            fontWeight: FontWeight.bold, fontSize: 18)))),
+          Expanded(flex: 2, child: Center(child: Text('Acciones', style: TextStyle(color: textColor, 
+            fontWeight: FontWeight.bold, fontSize: 18)))),
         ],
       ),
     );
@@ -171,8 +202,7 @@ class AdminUsuarios extends StatelessWidget {
   }) {
     bool isSuspended = estado == 'Suspendido';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+    return Padding(padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
       child: Row(
         children: [
           Expanded(flex: 1, child: Text(id, style: const TextStyle(fontSize: 16, color: Colors.black87))),
@@ -182,13 +212,11 @@ class AdminUsuarios extends StatelessWidget {
           Expanded(flex: 2, child: Text(rol, style: const TextStyle(fontSize: 16, color: Colors.black87))),
           
           Expanded(flex: 2,
-            child: Center(child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+            child: Center(child: Container(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
                 decoration: BoxDecoration(color: isSuspended ? darkRed : const Color(0xFFE2E6E2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(estado,style: TextStyle(
-                    color: isSuspended ? Colors.white : Colors.black87,
+                child: Text(estado,style: TextStyle(color: isSuspended ? Colors.white : Colors.black87,
                     fontWeight: FontWeight.w500, fontSize: 15,
                   ),
                 ),
@@ -196,14 +224,12 @@ class AdminUsuarios extends StatelessWidget {
             ),
           ),
           
-          // Acciones Icons (Toggle Block Status & View Profile Details)
           Expanded(flex: 2,
             child: Row(mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
                   onPressed: () {},
-                  icon: Icon(
-                    isSuspended ? Icons.check_circle : Icons.cancel,
+                  icon: Icon(isSuspended ? Icons.check_circle : Icons.cancel,
                     color: isSuspended ? brandGreen : darkRed, size: 28,
                   ),
                 ),

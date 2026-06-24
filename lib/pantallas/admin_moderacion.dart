@@ -50,9 +50,7 @@ class _AdminModeracionState extends State<AdminModeracion> {
               child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                alConfirmar();
+              onPressed: () {Navigator.of(context).pop();alConfirmar();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: accion == 'Eliminar' ? const Color(0xFFB72E2E) : const Color(0xFF216A44),
@@ -110,20 +108,13 @@ class _AdminModeracionState extends State<AdminModeracion> {
         if (publicacionId == null || publicacionId.isEmpty) {
           throw ArgumentError('Falta el ID de la publicación asociada a esta calificación.');
         }
-        await firestore
-            .collection('publications')
-            .doc(publicacionId)
-            .collection('ratings')
-            .doc(objetoId)
-            .delete();
+        await firestore.collection('publications').doc(publicacionId).collection('ratings').doc(objetoId).delete();
       } else {
         await firestore.collection('publications').doc(objetoId).delete();
       }
 
       QuerySnapshot reportesAsociados = await firestore
-          .collection('reports')
-          .where('objetoId', isEqualTo: objetoId)
-          .get();
+          .collection('reports').where('objetoId', isEqualTo: objetoId).get();
 
       WriteBatch batch = firestore.batch();
       for (var doc in reportesAsociados.docs) {
@@ -158,7 +149,29 @@ class _AdminModeracionState extends State<AdminModeracion> {
     return 'Hace un momento';
   }
 
-  // Titulo dinamico
+  Future<String> _obtenerComentarioReportado(Map<String, dynamic> reporte) async {
+    try {
+      final String publicacionId = reporte['publicacionId'] ?? '';
+      final String objetoId = reporte['objetoId'] ?? '';
+
+      if (publicacionId.isEmpty || objetoId.isEmpty) {
+        return 'Contenido no disponible (IDs inválidos)';
+      }
+
+      var ratingDoc = await FirebaseFirestore.instance
+          .collection('publications').doc(publicacionId).collection('ratings').doc(objetoId).get();
+
+      if (ratingDoc.exists) {
+        return ratingDoc.data()?['comentario'] ?? 'Calificación sin comentario escrito';
+      } else {
+        return 'El comentario ya no existe o fue eliminado.';
+      }
+    } catch (e) {
+      print('Error al buscar comentario: $e');
+      return 'Error al cargar el contenido del comentario';
+    }
+  }
+
   Future<String> _obtenerTituloContenido(Map<String, dynamic> reporte) async {
     final firestore = FirebaseFirestore.instance;
     try {
@@ -167,11 +180,7 @@ class _AdminModeracionState extends State<AdminModeracion> {
         String objetoId = reporte['objetoId'] ?? '';
         
         var ratingDoc = await firestore
-            .collection('publications')
-            .doc(publicacionId)
-            .collection('ratings')
-            .doc(objetoId)
-            .get();
+            .collection('publications').doc(publicacionId).collection('ratings').doc(objetoId).get();
         String autor = ratingDoc.data()?['nombreUsuario'] ?? 'Usuario';
         
         Publicacion? publicacion = await _gestionPublicacion.obtenerPublicacionPorId(publicacionId);
@@ -180,7 +189,6 @@ class _AdminModeracionState extends State<AdminModeracion> {
         return '$autor en $posada';
       } else {
         String objetoId = reporte['objetoId'] ?? '';
-        
         Publicacion? publicacion = await _gestionPublicacion.obtenerPublicacionPorId(objetoId);
         return publicacion?.titulo ?? 'Publicación sin nombre';
       }
@@ -390,8 +398,8 @@ class _AdminModeracionState extends State<AdminModeracion> {
             const SizedBox(height: 15),
             Container(width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-              decoration: BoxDecoration(color: const Color(0xFFFFF5F5),
-                borderRadius: BorderRadius.circular(15), border: Border.all(color: const Color(0xFFF5C6C6), width: 1),
+              decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(15), 
+                border: Border.all(color: const Color(0xFFF5C6C6), width: 1),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -399,8 +407,20 @@ class _AdminModeracionState extends State<AdminModeracion> {
                     style: TextStyle(color: Color(0xFFB72E2E), fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 6),
-                  Text('"${reporte['comentario'] ?? 'Contenido no disponible'}"',
-                    style: const TextStyle(color: Colors.black87, fontSize: 18, fontStyle: FontStyle.italic),
+                  FutureBuilder<String>(
+                    future: _obtenerComentarioReportado(reporte),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const SizedBox(height: 20, width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFB72E2E)),
+                        );
+                      }
+                      
+                      final comentarioReal = snapshot.data ?? 'Contenido no disponible';
+                      return Text('"$comentarioReal"',
+                        style: const TextStyle(color: Colors.black87, fontSize: 18, fontStyle: FontStyle.italic),
+                      );
+                    },
                   ),
                 ],
               ),
