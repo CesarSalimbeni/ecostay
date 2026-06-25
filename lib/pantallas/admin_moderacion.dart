@@ -1,6 +1,10 @@
 import 'package:ecostay/models/gestion_usuario.dart';
+import 'package:ecostay/models/prestador_Servicio.dart';
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
+import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/pantallas/admin_perfil_usuario.dart';
+import 'package:ecostay/pantallas/admin_pub.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +13,7 @@ import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/models/gestion_reportes.dart';
+import 'package:ecostay/models/usuario.dart';
 
 class AdminModeracion extends StatefulWidget {
   final Administrador administrador;
@@ -300,7 +305,6 @@ class _AdminModeracionState extends State<AdminModeracion> {
             ),
           ),
 
-          // SECCIÓN DINÁMICA CON FUTUREBUILDER (Colección Principal)
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _futureReportes,
@@ -361,18 +365,20 @@ class _AdminModeracionState extends State<AdminModeracion> {
     );
   }
 
-  // CARD ADAPTADA AL MAPA DE LA COLECCIÓN "REPORTS"
   Widget _buildCardReporte({
     required BuildContext context,
     required Map<String, dynamic> reporte,
     required VoidCallback onIgnorar,
     required VoidCallback onEliminar,
   }) {
+    final bool esDePublicacion = reporte['tipo'] == 'PUBLICACION' || reporte['tipo'] == 'CALIFICACION';
+    final String textoBotonDinamico = esDePublicacion ? 'Ver Publicación' : 'Ver Perfil';
+    final IconData iconoBotonDinamico = esDePublicacion ? Icons.article_outlined : Icons.account_circle_outlined;
+
     return Container(padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(25),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
         ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,7 +391,7 @@ class _AdminModeracionState extends State<AdminModeracion> {
                     FutureBuilder<String>(
                       future: _obtenerTituloContenido(reporte),
                       builder: (context, snapshot) {
-                        String titulo = snapshot.data ?? (reporte['tipo'] == 'CALIFICACION' ? 'Comentario / Reseña' : 'Publicación');
+                        String titulo = snapshot.data ?? (esDePublicacion ? 'Comentario / Reseña' : 'Usuario');
                         return Text.rich(
                           TextSpan(
                             children: [
@@ -422,7 +428,6 @@ class _AdminModeracionState extends State<AdminModeracion> {
           
           const SizedBox(height: 20),
 
-          // Motivo del Reporte 
           Container(width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(color: const Color(0xFFF5F7F2), borderRadius: BorderRadius.circular(15),
             ),
@@ -496,11 +501,76 @@ class _AdminModeracionState extends State<AdminModeracion> {
               const SizedBox(width: 15),
 
               OutlinedButton.icon(
-                onPressed: () {
-                  // Puedes usar reporte['autorObjetoId'] o reporte['usuarioReportoId'] si deseas inspeccionar perfiles
+                onPressed: () async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Cargando elemento solicitado...'), duration: Duration(milliseconds: 700)),
+                  );
+
+                  try {
+                    final String objetoId = reporte['objetoId'] ?? '';
+                    
+                    if (esDePublicacion) {
+                      final String idABuscar = reporte['tipo'] == 'CALIFICACION' 
+                          ? (reporte['publicacionId'] ?? '') 
+                          : objetoId;
+
+                      Publicacion? pub = await _gestionPublicacion.obtenerPublicacionPorId(idABuscar);
+                      if (pub != null && context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PantallaPubAdmin(
+                              publicacion: pub,
+                              administrador: widget.administrador,
+                            ),
+                          ),
+                        );
+                      } else {
+                        throw Exception('La publicación no existe o fue dada de baja.');
+                      }
+                    } else {
+                      final docUser = await FirebaseFirestore.instance.collection('users').doc(objetoId).get();
+
+                      if (docUser.exists && context.mounted) {
+                        final datos = docUser.data()!;
+                        
+                        final viajero = Viajero(
+                          id: docUser.id,
+                          nombre: datos['nombre'] ?? '',
+                          email: datos['email'] ?? '',
+                          suspendido: datos['suspendido'] ?? false, 
+                          fechaRegistro: datos['fechaRegistro'],
+                          telefono: datos['telefono'] ?? '', 
+                          cedula: datos['cedula'] ?? '', 
+                          ciudad: datos['ciudad'] ?? '', 
+                          historialReservas: datos['historialReservas'] != null 
+                              ? List<String>.from(datos['historialReservas']) 
+                              : [],
+                        );
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PerfilUsuario(
+                              usuarioSeleccionado: viajero,
+                              administrador: widget.administrador,
+                            ),
+                          ),
+                        );
+                      } else {
+                        throw Exception('El usuario no existe o fue eliminado.');
+                      }
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al redirigir: $e'), backgroundColor: Colors.red),
+                      );
+                    }
+                  }
                 },
-                icon: const Icon(Icons.info_outline, color: Colors.black),
-                label: const Text('Ver Perfil', style: TextStyle(fontSize: 18, color: Colors.black)),
+                icon: Icon(iconoBotonDinamico, color: Colors.black),
+                label: Text(textoBotonDinamico, style: const TextStyle(fontSize: 18, color: Colors.black)),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
                   side: const BorderSide(color: Colors.black, width: 1),
