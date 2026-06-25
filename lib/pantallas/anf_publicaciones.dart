@@ -1,10 +1,13 @@
+import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
+import 'package:ecostay/pantallas/anf_pub.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/anf_reservas.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
 import 'package:ecostay/pantallas/anf_home.dart';
-import 'package:ecostay/pantallas/anf_perfil.dart'; 
+import 'package:ecostay/pantallas/anf_perfil.dart';
+import 'package:ecostay/pantallas/pag_inicio.dart'; 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
@@ -13,7 +16,9 @@ import 'package:image_picker/image_picker.dart';
 
 class PantallaPublicaciones extends StatelessWidget {
   final PrestadorServicio prestador;
-  const PantallaPublicaciones({super.key, required this.prestador});
+  final GestionUsuario _gestionUsuario = GestionUsuario();
+  
+   PantallaPublicaciones({super.key, required this.prestador});
 
   void _mostrarDialogoPublicacion(BuildContext context, {Publicacion? publicacionAEditar}) {
 
@@ -29,12 +34,18 @@ class PantallaPublicaciones extends StatelessWidget {
       text: esEdicion ? publicacionAEditar.descripcion : '');
     final TextEditingController policancelacionController = TextEditingController(
       text: esEdicion ? publicacionAEditar.politicaCancelacion : '');
+    
+    final TextEditingController cuposController = TextEditingController(
+      text: esEdicion ? (publicacionAEditar.cuposMax?.toString() ?? '1') : '1');
+    final TextEditingController estiloController = TextEditingController(
+      text: esEdicion ? (publicacionAEditar.estilo ?? '') : '');
+
     bool transporteDisponible = esEdicion ? publicacionAEditar.disponibilidadtransporte : false;
     XFile? imagenSeleccionada;
     final ImagePicker picker = ImagePicker();
 
     showDialog(
-      context: context,barrierDismissible: false, 
+      context: context, barrierDismissible: false, 
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, setState) {
           Future<void> seleccionarImagen() async {
@@ -46,11 +57,11 @@ class PantallaPublicaciones extends StatelessWidget {
             }
           }
           return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), backgroundColor: ColorPalette.bg,
           title: Text(esEdicion ? 'Editar Publicación' : 'Crear Nueva Publicación',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF216A44)),
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF216A44), fontFamily: 'Idiqlat'),
           ),
-          content: SizedBox(width: 400,
+          content: SizedBox(width: 450,
             child: SingleChildScrollView(
               child: Column(mainAxisSize: MainAxisSize.min,
                 children: [
@@ -85,11 +96,23 @@ class PantallaPublicaciones extends StatelessWidget {
                         borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
                   ),
                   const SizedBox(height: 15),
-                  TextField(controller: descripcionController,maxLines: 3,
+                  TextField(controller: descripcionController, maxLines: 3,
                     decoration: InputDecoration(labelText: 'Descripción',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       focusedBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(controller: estiloController,
+                    decoration: InputDecoration(
+                      labelText: 'Estilo de hospedaje',
+                      hintText: 'Ej. montaña, playa, bosque',
+                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 15),
                   TextField(controller: ubicacionController,
@@ -106,22 +129,76 @@ class PantallaPublicaciones extends StatelessWidget {
                         borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
                   ),
                   const SizedBox(height: 15),
-                  SwitchListTile(title: const Text('¿Ofrece transporte?'), activeThumbColor: const Color(0xFF216A44),
-                    value: transporteDisponible,onChanged: (bool value) {
-                      setState(() {transporteDisponible = value;});
-                    },
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: Colors.grey.shade300)
-                    ),
+                  
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: cuposController, 
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Cupos Max',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            focusedBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      
+                      Expanded(
+                        child: TextField(
+                          controller: precioController, 
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Precio (\$)',
+                            prefixIcon: const Icon(Icons.attach_money, color: Color(0xFF216A44), size: 18),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            focusedBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              transporteDisponible = !transporteDisponible;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade400),
+                              color: transporteDisponible ? const Color(0xFFE2ECE7) : Colors.transparent,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.directions_bus,
+                                  color: transporteDisponible ? const Color(0xFF216A44) : Colors.grey.shade400,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 4),
+                                const Text('¿Transporte?', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 15),
-                  TextField(controller: precioController,keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Precio por noche (\$)',
-                      prefixIcon: const Icon(Icons.attach_money, color: Color(0xFF216A44)),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
-                  ),
+                  const SizedBox(height: 10),
                 ],
               ),
             ),
@@ -135,7 +212,7 @@ class PantallaPublicaciones extends StatelessWidget {
               ),
               onPressed: () async {
                 if (tituloController.text.isEmpty || ubicacionController.text.isEmpty || 
-                    precioController.text.isEmpty ||descripcionController.text.isEmpty) { 
+                    precioController.text.isEmpty || descripcionController.text.isEmpty || cuposController.text.isEmpty) { 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Por favor, llena todos los campos.')),
                   );
@@ -146,15 +223,21 @@ class PantallaPublicaciones extends StatelessWidget {
                   GestionPublicacion gestionPub = GestionPublicacion();
                   GestionImagenPublicacion gestionImg = GestionImagenPublicacion();
                   
+                  int cuposMax = int.tryParse(cuposController.text) ?? 1;
+                  String estiloFinal = estiloController.text.trim().isEmpty ? 'Otros' : estiloController.text.trim();
+
                   if (esEdicion) {
                     await gestionPub.editarPublicacion(
                       publicacionAEditar.id, 
-                      {'titulo': tituloController.text,
+                      {
+                        'titulo': tituloController.text,
                         'descripcion': descripcionController.text,
                         'precio': double.parse(precioController.text),
                         'ubicacion': ubicacionController.text,
                         'politicaCancelacion': policancelacionController.text,
                         'transporte': transporteDisponible,
+                        'estilo': estiloFinal,
+                        'cuposMax': cuposMax,
                       }
                     );
                     if (imagenSeleccionada != null) {
@@ -171,8 +254,8 @@ class PantallaPublicaciones extends StatelessWidget {
                       'disponibilidadtransporte': transporteDisponible,
                       'politicaCancelacion': policancelacionController.text,
                       'nombreAnfitrion': prestador.nombre,
-                      'estilo': 'Otros',
-                      'cuposMax': 1,
+                      'estilo': estiloFinal,
+                      'cuposMax': cuposMax,
                       'cuposActual': 0,
                       'calificacionPromedio': 0.0,
                     });
@@ -187,7 +270,7 @@ class PantallaPublicaciones extends StatelessWidget {
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(esEdicion ? '¡Publicación actualizada exitosamente!' 
-                      : '¡Publicación creada exitosamente!'),backgroundColor: const Color(0xFF216A44),
+                      : '¡Publicación creada exitosamente!'), backgroundColor: const Color(0xFF216A44),
                     ),
                   );
 
@@ -276,17 +359,51 @@ class PantallaPublicaciones extends StatelessWidget {
           elevation: const WidgetStatePropertyAll(0),
         ),
         actions: [
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: Text(prestador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-            style: const TextStyle(fontSize: 20),
+          Padding(padding: const EdgeInsets.only(right: 20.0),
+            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
+              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () async {
+                  try {
+                    await _gestionUsuario.cerrarSesion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada con éxito')),
+                      );
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                        (route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al cerrar sesión: $e')),
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text( prestador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                        style: const TextStyle(fontSize: 20, color: Colors.black),
+                      ),
+                      const SizedBox(width: 10),
+                      const CircleAvatar(
+                        backgroundColor: Color(0xFF216A44),
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: const CircleAvatar(
-              backgroundColor: Color(0xFF216A44),
-              child: Icon(Icons.person, color: Colors.white),
-            ),
-          )
         ],
       ),
       
@@ -362,6 +479,8 @@ class PantallaPublicaciones extends StatelessWidget {
                               child: Wrap(alignment: WrapAlignment.center, spacing: 30.0, runSpacing: 30.0,
                                 children: prestador.publicaciones.map((pub) {
                                   return _buildPublicacionCard(
+                                    context: context,
+                                    pub: pub,
                                     titulo: pub.titulo,
                                     subtitulo: pub.ubicacion,
                                     precio: pub.precio,
@@ -398,8 +517,9 @@ class PantallaPublicaciones extends StatelessWidget {
     );
   }
 
-
   Widget _buildPublicacionCard({
+    required BuildContext context,
+    required Publicacion pub,
     required String titulo,
     required String subtitulo,
     required double precio,
@@ -468,7 +588,11 @@ class PantallaPublicaciones extends StatelessWidget {
           Padding(padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildActionBtn(Icons.visibility_outlined, const Color(0xFF216A44), () { /* Read view action */ }),
+                _buildActionBtn(Icons.visibility_outlined, const Color(0xFF216A44), () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => PantallaPubReserv(
+                        publicacion: pub, prestador: prestador,),),
+                  );
+                }),
                 _buildActionBtn(Icons.edit_outlined, const Color(0xFF216A44), onEdit), 
                 _buildActionBtn(Icons.delete_outline, const Color(0xFF903030), onDelete), 
               ],

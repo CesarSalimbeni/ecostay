@@ -1,3 +1,4 @@
+import 'package:ecostay/pantallas/estilo.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/reserva.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
@@ -31,9 +32,9 @@ class _DialogoComentarioState extends State<DialogoComentario> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text( _mostrarFormulario ? 'Escribir Reseña' : 'Estadía Confirmada', 
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+    return AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), 
+      backgroundColor: ColorPalette.bg, title: Text( _mostrarFormulario ? 'Escribir Reseña' : 'Estadía Confirmada', 
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24, fontFamily: 'Idiqlat'),
       ),
       content: SizedBox(width: 450,
         child: AnimatedSwitcher(
@@ -82,7 +83,7 @@ class _DialogoComentarioState extends State<DialogoComentario> {
   }
 
   Widget _buildFormulario() {
-    return Container(key: const ValueKey('Formulario'), width: double.infinity,
+    return Container(key: const ValueKey('Formulario'), width: double.infinity, color: ColorPalette.bg,
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('¿Cómo fue tu experiencia?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),

@@ -1,4 +1,5 @@
 import 'package:ecostay/models/gestion_publicacion.dart';
+import 'package:ecostay/pantallas/estilo.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/reserva.dart';
 import 'package:ecostay/models/gestion_reservacion.dart';
@@ -41,13 +42,12 @@ class _DialogoReportarState extends State<DialogoReportar> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(
+    return AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), 
+      backgroundColor: ColorPalette.bg, title: Text(
         _mostrarFormulario 
             ? (_esReporteComentario ? 'Reportar Comentario' : 'Reportar Publicación')
             : 'Asistencia de Estadía',
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24, fontFamily: 'Idiqlat'),
       ),
       content: SizedBox(width: 450,
         child: AnimatedSwitcher(duration: const Duration(milliseconds: 300),

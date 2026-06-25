@@ -1,18 +1,22 @@
 import 'package:ecostay/models/estadoreserva.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
+import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/models/reserva.dart'; 
 import 'package:ecostay/pantallas/estilo.dart';
+import 'package:ecostay/pantallas/pag_inicio.dart';
 import 'package:ecostay/pantallas/reserva_viaj_main.dart';
 import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:ecostay/pantallas/viaj_perfil.dart';
-import 'package:ecostay/models/gestion_reservacion.dart'; 
+import 'package:ecostay/models/gestion_reservacion.dart';
+import 'package:ecostay/widgets/detalles_contacto.dart'; 
 import 'package:flutter/material.dart';
 import 'dart:math';
 
 class PantallaMisReservas extends StatelessWidget {
   final Viajero viajero; 
   final GestionReservacion _gestionReservacion = GestionReservacion();
+  final GestionUsuario _gestionUsuario = GestionUsuario();
 
   PantallaMisReservas({super.key, required this.viajero});
 
@@ -37,12 +41,51 @@ class PantallaMisReservas extends StatelessWidget {
           elevation: const WidgetStatePropertyAll(0),
         ),
         actions: [
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: Text(viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, style: const TextStyle(fontSize: 20)),
+          Padding(padding: const EdgeInsets.only(right: 20.0),
+            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
+              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () async {
+                  try {
+                    await _gestionUsuario.cerrarSesion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada con éxito')),
+                      );
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                        (route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al cerrar sesión: $e')),
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text( viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                        style: const TextStyle(fontSize: 20, color: Colors.black),
+                      ),
+                      const SizedBox(width: 10),
+                      const CircleAvatar(
+                        backgroundColor: Color(0xFF216A44),
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-          const Padding(padding: EdgeInsets.only(right: 10.0),
-            child: CircleAvatar(),
-          )
         ],
       ),
       body: Center(
@@ -195,8 +238,15 @@ class _CardReservaItemState extends State<CardReservaItem> {
 
   @override
   Widget build(BuildContext context) {
-    final String fechaStr = "${widget.reserva.fechaInicio.day}/${widget.reserva.fechaInicio.month}/${widget.reserva.fechaInicio.year}";
-    
+    final String inicioCompletoStr = "${widget.reserva.fechaInicio.day}/${widget.reserva.fechaInicio.month}/${widget.reserva.fechaInicio.year}";
+    final String finCompletoStr = "${widget.reserva.fechaFin.day}/${widget.reserva.fechaFin.month}/${widget.reserva.fechaFin.year}";
+    final String rangoCompletoHint = "$inicioCompletoStr - $finCompletoStr";
+    String rangoFechasVisible = "";
+    if (widget.reserva.fechaInicio.year == widget.reserva.fechaFin.year) {
+      rangoFechasVisible = "${widget.reserva.fechaInicio.day}/${widget.reserva.fechaInicio.month} - ${widget.reserva.fechaFin.day}/${widget.reserva.fechaFin.month}/${widget.reserva.fechaFin.year}";
+    } else {
+      rangoFechasVisible = rangoCompletoHint;
+    }  
     String tituloPosada = 'Cargando posada...';
     String ubicacionPosada = 'Cargando...';
     String nombreAnfitrion = 'Cargando...';
@@ -218,9 +268,7 @@ class _CardReservaItemState extends State<CardReservaItem> {
           decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25)),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.center, 
             children: [
-              // IMAGEN REAL DE LA PUBLICACIÓN
-              Padding(
-                padding: const EdgeInsets.only(left: 20), 
+              Padding(padding: const EdgeInsets.only(left: 20), 
                 child: Container(width: 200, height: 110, 
                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), 
                     image: DecorationImage(image: imagenProvider, fit: BoxFit.cover),
@@ -228,7 +276,6 @@ class _CardReservaItemState extends State<CardReservaItem> {
                 ),
               ),
               
-              // DETALLES REALES DE LA RESERVA
               Expanded(
                 child: Column(mainAxisAlignment: MainAxisAlignment.spaceAround, crossAxisAlignment: CrossAxisAlignment.start, 
                   children: [
@@ -237,7 +284,6 @@ class _CardReservaItemState extends State<CardReservaItem> {
                     ),
                     Row(mainAxisAlignment: MainAxisAlignment.start, 
                       children: [
-                        // LUGAR
                         Padding(padding: const EdgeInsets.only(left: 20),
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
                             children: [
@@ -249,24 +295,26 @@ class _CardReservaItemState extends State<CardReservaItem> {
                             ]
                           ),
                         ),
-                        
-                        // FECHA
                         Expanded(
                           child: Padding(padding: const EdgeInsets.only(left: 20),
-                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
-                              children: [
-                                const Padding(padding: EdgeInsets.only(bottom: 10), child: Text('Fecha', style: TextStyle(
-                                  fontSize: 20))),
-                                Padding(padding: const EdgeInsets.only(bottom: 10), 
-                                  child: Text(fechaStr, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700), 
-                                  overflow: TextOverflow.ellipsis, maxLines: 1),
-                                ),
-                              ]
+                            child: Tooltip(message: rangoCompletoHint,
+                              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF216A44).withOpacity(0.95), borderRadius: BorderRadius.circular(8),
+                              ),
+                              preferBelow: true,
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
+                                children: [
+                                  const Padding(padding: EdgeInsets.only(bottom: 10), child: Text('Fecha', style: TextStyle(fontSize: 20))),
+                                  Padding(padding: const EdgeInsets.only(bottom: 10), 
+                                    child: Text(rangoFechasVisible, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700), 
+                                    overflow: TextOverflow.ellipsis, maxLines: 1),
+                                  ),
+                                ]
+                              ),
                             ),
                           ),
                         ),
-                        
-                        // ANFITRIÓN 
                         Expanded(
                           child: Padding(padding: const EdgeInsets.only(left: 20),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
@@ -281,8 +329,6 @@ class _CardReservaItemState extends State<CardReservaItem> {
                             ),
                           ),
                         ),
-                        
-                        // TOTAL
                         Expanded(
                           child: Padding(padding: const EdgeInsets.only(left: 20),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
@@ -303,7 +349,6 @@ class _CardReservaItemState extends State<CardReservaItem> {
                 ),
               ),
               
-              // ESTATUS DINÁMICO
               Container(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 decoration: BoxDecoration(color: _obtenerColorEstado(widget.reserva.estado), borderRadius: BorderRadius.circular(50)),
                 child: Text(_obtenerTextoEstado(widget.reserva.estado), style: const TextStyle(color: Colors.white, 
@@ -316,7 +361,17 @@ class _CardReservaItemState extends State<CardReservaItem> {
                 child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
                   children: [
                     OutlinedButton.icon(
-                      onPressed: () {}, 
+                      onPressed: _cargandoDatos || _publicacionCompleta == null 
+                          ? null 
+                          : () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => InfoContactoPrestadorDialog(
+                                  publicacionId: _publicacionCompleta.id,
+                                  nombreAnfitrion: nombreAnfitrion,
+                                ),
+                              );
+                            }, 
                       icon: const Icon(Icons.chat_bubble_outline, color: Colors.black),
                       label: const Text('Contactar', style: TextStyle(fontSize: 25, color: Colors.black)), 
                       style: OutlinedButton.styleFrom(fixedSize: const Size(180, 40), side: const BorderSide(color: Colors.black)),

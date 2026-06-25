@@ -1,7 +1,9 @@
 import 'package:ecostay/models/administrador.dart';
+import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
+import 'package:ecostay/pantallas/pag_inicio.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:ecostay/models/gestion_estadisticas.dart'; 
@@ -18,6 +20,7 @@ class HomeAdmin extends StatefulWidget {
 class _HomeAdminState extends State<HomeAdmin> {
   final GestionDashboard _dashboardService = GestionDashboard();
   late Future<List<dynamic>> _adminDataFuture;
+  final GestionUsuario _gestionUsuario = GestionUsuario();
 
   @override
   void initState() {
@@ -49,17 +52,51 @@ class _HomeAdminState extends State<HomeAdmin> {
           elevation: const WidgetStatePropertyAll(0),
         ),
         actions: [
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: Text(widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-              style: const TextStyle(fontSize: 20),
+          Padding(padding: const EdgeInsets.only(right: 20.0),
+            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
+              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () async {
+                  try {
+                    await _gestionUsuario.cerrarSesion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada con éxito')),
+                      );
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                        (route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al cerrar sesión: $e')),
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text( widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                        style: const TextStyle(fontSize: 20, color: Colors.black),
+                      ),
+                      const SizedBox(width: 10),
+                      const CircleAvatar(
+                        backgroundColor: Color(0xFF216A44),
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-          const Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: CircleAvatar(
-              backgroundColor: Color(0xFF216A44),
-              child: Icon(Icons.person, color: Colors.white),
-            ),
-          )
         ],
       ),
       body: Column(

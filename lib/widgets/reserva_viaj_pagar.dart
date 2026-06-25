@@ -1,3 +1,4 @@
+import 'package:ecostay/pantallas/estilo.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/reserva.dart';
 import 'package:ecostay/models/publicacion.dart';
@@ -30,8 +31,9 @@ class DialogoPagoReserva extends StatelessWidget {
     if (noches == 0) noches = 1;
 
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Finalizar Pago con PayPal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), backgroundColor: ColorPalette.bg,
+      title: const Text('Finalizar Pago con PayPal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24,
+      fontFamily: 'Idiqlat')),
       content: SizedBox(
         width: 450,
         child: Container(

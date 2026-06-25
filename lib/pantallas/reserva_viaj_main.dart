@@ -1,3 +1,5 @@
+import 'package:ecostay/models/gestion_usuario.dart';
+import 'package:ecostay/pantallas/pag_inicio.dart';
 import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:ecostay/pantallas/viaj_perfil.dart';
 import 'package:ecostay/widgets/reserva_viaj_reportar.dart';
@@ -30,6 +32,7 @@ class _PantallaReservaState extends State<PantallaReserva> {
   bool _cargandoCalificaciones = true;
   Reserva? _reservaActual; 
   final GestionReservacion _gestionReservacion = GestionReservacion();
+  final GestionUsuario _gestionUsuario = GestionUsuario();
 
   @override
   void initState() {
@@ -42,7 +45,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
     }
   }
 
-  // REVISA SI EXISTE RESERVA PREVIA
   Future<void> _obtenerEstadoReservaUsuario() async {
     try {
       final listaReservasGenerales = await _gestionReservacion.obtenerReservasPorViajero(widget.viajero.id);
@@ -67,7 +69,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
     }
   }
 
-  // CARGA DE RESEÑAS PREVIAS
   Future<void> _cargarResenas() async {
     try {
       final gestionCalificacion = GestionCalificacion();
@@ -89,7 +90,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
     }
   }
 
-  // MÉTODO AUXILIAR PARA MOSTRAR EL DIÁLOGO CORRECONTE
   void _mostrarDialogoComentario(BuildContext ctx) {
     if (_reservaActual == null) return;
     
@@ -105,7 +105,6 @@ class _PantallaReservaState extends State<PantallaReserva> {
     );
   }
 
-  // MÉTODO PARA MANEJAR EL LANZAMIENTO DEL DIÁLOGO DE REPORTES
   void _abrirDialogoReportar({String? calificacionId, String? autorCalificacionId}) {
     showDialog(
       context: context,
@@ -144,13 +143,51 @@ class _PantallaReservaState extends State<PantallaReserva> {
           elevation: const WidgetStatePropertyAll(0),
         ),
         actions: [
-          Padding(padding: EdgeInsets.only(right: 10.0),
-            child: Text(widget.viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-            style: TextStyle(fontSize: 20)),
+          Padding(padding: const EdgeInsets.only(right: 20.0),
+            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
+              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () async {
+                  try {
+                    await _gestionUsuario.cerrarSesion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada con éxito')),
+                      );
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                        (route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al cerrar sesión: $e')),
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(widget.viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                        style: const TextStyle(fontSize: 20, color: Colors.black),
+                      ),
+                      const SizedBox(width: 10),
+                      const CircleAvatar(
+                        backgroundColor: Color(0xFF216A44),
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-          Padding(padding: EdgeInsets.only(right: 10.0),
-            child: CircleAvatar(),
-          )
         ],
       ),
       body: Center(
@@ -236,39 +273,52 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                             ),
                                         ],
                                       ),
+                                      const SizedBox(height: 10),
                                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, 
                                         children: [
-                                          Column(crossAxisAlignment: CrossAxisAlignment.start, 
-                                            children: [
-                                              Padding(padding: const EdgeInsets.only(top: 10),
-                                                child: Text('Lugar: ${widget.publicacion.ubicacion}', 
-                                                style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
-                                                maxLines: 1),
-                                              ),
-                                              Padding(padding: const EdgeInsets.only(top: 10),
-                                                child: Row(mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  const Text('Rating: ', style: TextStyle(fontSize: 30)),
-                                                  const Icon(Icons.star, color: Colors.amber, size: 32),
-                                                  Text(' ${widget.publicacion.calificacionPromedio.toStringAsFixed(1)}', 
-                                                  style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-                                                ],),
-                                              ),
-                                            ],
-                                          ),
-                                          Padding(padding: const EdgeInsets.only(left: 10),
+                                          Expanded(
                                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
                                               children: [
-                                                Padding(padding: const EdgeInsets.only(top: 10),
-                                                  child: Text('Anfitrión: ${widget.publicacion.nombreAnfitrion}', 
-                                                  style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
-                                                  maxLines: 1),
+                                                Text('Lugar: ${widget.publicacion.ubicacion}', 
+                                                style: const TextStyle(fontSize: 26), overflow: TextOverflow.ellipsis, 
+                                                maxLines: 1),
+                                                const SizedBox(height: 15),
+                                                Text('Estilo: ${widget.publicacion.estilo ?? 'No especificado'}', 
+                                                style: const TextStyle(fontSize: 26), overflow: TextOverflow.ellipsis, 
+                                                maxLines: 1),
+                                              ],
+                                            ),
+                                          ),
+                                          
+                                          Expanded(
+                                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
+                                              children: [
+                                                Text('Anfitrión: ${widget.publicacion.nombreAnfitrion}', 
+                                                style: const TextStyle(fontSize: 26), overflow: TextOverflow.ellipsis, 
+                                                maxLines: 1),
+                                                const SizedBox(height: 15),
+                                                Row(mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Text('Rating: ', style: TextStyle(fontSize: 26)),
+                                                    const Icon(Icons.star, color: Colors.amber, size: 28),
+                                                    Text(' ${widget.publicacion.calificacionPromedio.toStringAsFixed(1)}', 
+                                                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                                                  ],
                                                 ),
-                                                Padding(padding: const EdgeInsets.only(top: 10),
-                                                  child: Text('Precio: \$${widget.publicacion.precio.toStringAsFixed(0)}', 
-                                                  style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
-                                                  maxLines: 1),
-                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          Expanded(
+                                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
+                                              children: [
+                                                Text('Cupos: ${widget.publicacion.cuposActual ?? 0} / ${widget.publicacion.cuposMax ?? 0}', 
+                                                style: const TextStyle(fontSize: 26), overflow: TextOverflow.ellipsis, 
+                                                maxLines: 1),
+                                                const SizedBox(height: 15),
+                                                Text('Precio: \$${widget.publicacion.precio.toStringAsFixed(0)}', 
+                                                style: const TextStyle(fontSize: 26), overflow: TextOverflow.ellipsis, 
+                                                maxLines: 1),
                                               ],
                                             ),
                                           ),
@@ -304,7 +354,7 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                               _reservaActual == null 
                                                   ? 'Solicitar' 
                                                   : (_reservaActual!.estado == EstadoReserva.COMPLETADA ? 'Reseñar' : 'Pagar'),
-                                              style: const TextStyle(fontSize: 30),
+                                              style: const TextStyle(fontSize: 28),
                                             ),
                                           )
                                         ],
@@ -352,7 +402,8 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                                   
                                                   Expanded(
                                                     child: Text(calificacion.comentario, style: const TextStyle(
-                                                      fontSize: 25, color: Colors.black), overflow: TextOverflow.ellipsis, maxLines: 2),
+                                                      fontSize: 25, color: Colors.black), overflow: TextOverflow.ellipsis,
+                                                      maxLines: 2),
                                                   ),
                                                   
                                                   // ESTRELLAS DINÁMICAS BASADAS EN EL PUNTAJE
