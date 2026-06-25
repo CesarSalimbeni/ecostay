@@ -12,6 +12,7 @@ class Viajero extends Usuario {
     required super.email,
     required super.fechaRegistro,
     required super.suspendido,
+    super.imagenUrl,
     required this.telefono,
     required this.cedula,
     required this.ciudad,

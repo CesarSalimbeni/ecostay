@@ -5,6 +5,7 @@ abstract class Usuario {
   String email;
   DateTime fechaRegistro; // Equivalente a Date
   bool suspendido;
+  String? imagenUrl;
 
   Usuario({
     required this.rol,
@@ -12,6 +13,7 @@ abstract class Usuario {
     required this.nombre,
     required this.email,
     required this.fechaRegistro,
-    required this.suspendido //Poner false para cuando se registre.
+    required this.suspendido, //Poner false para cuando se registre.
+    this.imagenUrl,
   });
 }

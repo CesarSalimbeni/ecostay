@@ -156,19 +156,15 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     return Scaffold(
       backgroundColor: ColorPalette.bg, 
       body: Center(
-        child: Container(
-          width: 775,
-          height: 775,
+        child: Container(width: 775, height: 775,
           decoration: BoxDecoration(
               color: const Color(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(30)),
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 45.0, vertical: 30.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Row(mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
                     Text(
                       'Crea tu cuenta de Ecostay',
@@ -196,7 +192,8 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Icon(Icons.air, color: Color(0xFF216A44), size: 40),
-                            Text('Soy Viajero', style: TextStyle(color: Colors.black, fontFamily: 'Idiqlat', fontWeight: isViajero ? FontWeight.bold : FontWeight.normal)),
+                            Text('Soy Viajero', style: TextStyle(color: Colors.black, fontFamily: 'Idiqlat', 
+                            fontWeight: isViajero ? FontWeight.bold : FontWeight.normal)),
                             const Text('Quiero descubrir destinos.', style: TextStyle(color: Color(0xFF8E8E93)))
                           ],
                         ),
@@ -213,8 +210,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
                           alignment: AlignmentDirectional.centerStart,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Icon(Icons.home_outlined, color: Color(0xFF216A44), size: 40),
                             Text('Soy Anfitrión', style: TextStyle(color: Colors.black, fontFamily: 'Idiqlat', fontWeight: !isViajero ? FontWeight.bold : FontWeight.normal)),
@@ -226,32 +222,33 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                   ],
                 ),
                 const SizedBox(height: 25),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text("Nombre"),
                           const SizedBox(height: 6),
                           TextField(
-                            controller: _nombreCtrl,
-                            decoration: InputDecoration(labelText: "Nombre", border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg),
+                            controller: _nombreCtrl, keyboardType: TextInputType.name,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ ]')),
+                            ],
+                            decoration: InputDecoration(labelText: "Nombre", border: const OutlineInputBorder(), 
+                              filled: true, fillColor: ColorPalette.bg,
+                            ),
                           )
                         ],
                       ),
                     ),
                     const SizedBox(width: 30),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text("Teléfono"),
                           const SizedBox(height: 6),
                           TextField(
-                            controller: _telefonoCtrl,
-                            keyboardType: TextInputType.phone,
+                            controller: _telefonoCtrl, keyboardType: TextInputType.phone,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                             decoration: InputDecoration(labelText: "Teléfono", border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg),
                           )
@@ -268,19 +265,16 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                     const Text("Correo electrónico"),
                     const SizedBox(height: 6),
                     TextField(
-                      controller: _correoCtrl,
-                      keyboardType: TextInputType.emailAddress,
+                      controller: _correoCtrl, keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(labelText: "tu@correo.com", border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg),
                     )
                   ],
                 ),
                 const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(isViajero ? "Ciudad" : "Dirección Fiscal"),
                           const SizedBox(height: 6),
@@ -288,9 +282,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                             controller: _direccionCtrl,
                             decoration: InputDecoration(
                               labelText: isViajero ? "Ciudad Real, País" : "Calle Real, Estado, País",
-                              border: const OutlineInputBorder(),
-                              filled: true,
-                              fillColor: ColorPalette.bg,
+                              border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg,
                             ),
                           )
                         ],
@@ -298,15 +290,14 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                     ),
                     const SizedBox(width: 30),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text("Contraseña"),
                           const SizedBox(height: 6),
                           TextField(
-                            controller: _passCtrl,
-                            obscureText: true,
-                            decoration: InputDecoration(labelText: "Contraseña", border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg),
+                            controller: _passCtrl, obscureText: true, decoration: InputDecoration(
+                              labelText: "Contraseña", border: const OutlineInputBorder(), 
+                            filled: true, fillColor: ColorPalette.bg),
                           )
                         ],
                       ),
@@ -315,8 +306,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                 ),
                 const SizedBox(height: 20),
                 if (isViajero)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Column(crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text("Cédula"),
                       const SizedBox(height: 6),
@@ -329,12 +319,10 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                     ],
                   )
                 else
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text("Rif"),
                             const SizedBox(height: 6),
@@ -347,8 +335,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                       ),
                       const SizedBox(width: 30),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text("Cuenta PayPal"),
                             const SizedBox(height: 6),
@@ -362,21 +349,17 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                     ],
                   ),
                 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
                   child: FilledButton(
                     onPressed: _isLoading ? null : _crearCuenta,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF216A44),
-                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFF216A44), foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       minimumSize: const Size(double.infinity, 50),
                     ),
                     child: _isLoading 
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
+                        ? const SizedBox(height: 20, width: 20,
                             child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                           )
                         : const Text("Crea tu cuenta de Ecostay", style: TextStyle(fontSize: 16, fontFamily: 'Idiqlat')),

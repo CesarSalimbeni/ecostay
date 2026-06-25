@@ -21,6 +21,7 @@ class PrestadorServicio extends Usuario {
     required super.email,
     required super.fechaRegistro,
     required super.suspendido,
+    super.imagenUrl,
     required this.rif,
     required this.telefono,
     required this.direccion,

@@ -189,8 +189,8 @@ class GestionUsuario {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     String uid = doc.id;
     String rol = data['rol'] ?? 'cliente';
+    String? imagenUrl = data['imagenUrl'];
     
-    // Validamos la fecha de registro de forma segura por si viene nula temporalmente
     DateTime fecha = data['fechaRegistro'] != null 
         ? (data['fechaRegistro'] as Timestamp).toDate() 
         : DateTime.now();
@@ -201,7 +201,8 @@ class GestionUsuario {
           id: uid, nombre: data['nombre'] ?? 'Sin nombre', email: data['email'] ?? '', 
           fechaRegistro: fecha, telefono: data['telefono'] ?? '',
           cedula: data['cedula'] ?? '', ciudad: data['ciudad'] ?? '', historialReservas: [],
-          suspendido: data['suspendido'] ?? false
+          suspendido: data['suspendido'] ?? false,
+          imagenUrl: imagenUrl,
         );
       case 'host':
         return PrestadorServicio(
@@ -209,13 +210,15 @@ class GestionUsuario {
           fechaRegistro: fecha, rif: data['rif'] ?? '',
           telefono: data['telefono'] ?? '', direccion: data['direccion'] ?? '',
           cuentaPayPal: data['cuentaPayPal'] ?? '', estadisticas: [],
-          suspendido: data['suspendido'] ?? false
+          suspendido: data['suspendido'] ?? false,
+          imagenUrl: imagenUrl,
         );
       case 'admin':
         return Administrador(
           id: uid, nombre: data['nombre'] ?? 'Sin nombre', email: data['email'] ?? '',
           fechaRegistro: fecha, nivelAcceso: data['nivelAcceso'] ?? 0,
-          suspendido: data['suspendido'] ?? false
+          suspendido: data['suspendido'] ?? false,
+          imagenUrl: imagenUrl,
         );
       default:
         throw Exception('Rol desconocido: $rol');
@@ -247,22 +250,22 @@ class GestionImagenPerfil {
   //Esta función sirve para subir una imagen a Firebase Storage y asociarla a una publicación 
   //específica en Firestore, utilizando el ID de la publicación y el archivo de la imagen.
   Future<String?> subirImagen(String usuarioId, XFile imagen) async { // <-- Cambiado a XFile
-    try {
-      String filePath = 'usuarios/$usuarioId/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final bytes = await imagen.readAsBytes(); 
-      
-      UploadTask uploadTask = _storage.ref().child(filePath).putData(bytes); 
-      
-      TaskSnapshot snapshot = await uploadTask;
-      String downloadUrl = await snapshot.ref.getDownloadURL();
-      await _firestore.collection('users').doc(usuarioId).update({'imagenUrl': downloadUrl});
-      print('Imagen subida exitosamente');
-      return downloadUrl;
-    } catch (e) {
-      print('Error al subir imagen: $e');
-      return null;
-    }
+  try {
+    String filePath = 'usuarios/$usuarioId/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final bytes = await imagen.readAsBytes(); 
+    
+    UploadTask uploadTask = _storage.ref().child(filePath).putData(bytes); 
+    
+    TaskSnapshot snapshot = await uploadTask;
+    String downloadUrl = await snapshot.ref.getDownloadURL();
+    
+    await _firestore.collection('users').doc(usuarioId).update({'imagenUrl': downloadUrl});
+    return downloadUrl;
+  } catch (e) {
+    print('Error crítico al subir imagen: $e');
+    throw Exception('Error al subir la imagen en Storage: $e');
   }
+}
 
   //Esta función sirve para eliminar la imagen asociada a una publicación específica en Firestore, 
   //utilizando el ID de la publicación.

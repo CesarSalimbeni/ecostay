@@ -76,9 +76,14 @@ class PantallaMisReservas extends StatelessWidget {
                         style: const TextStyle(fontSize: 20, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      const CircleAvatar(
-                        backgroundColor: Color(0xFF216A44),
-                        child: Icon(Icons.person, color: Colors.white),
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF216A44),
+                        backgroundImage: viajero.imagenUrl != null && viajero.imagenUrl!.isNotEmpty
+                            ? NetworkImage(viajero.imagenUrl!)
+                            : null,
+                        child: viajero.imagenUrl == null || viajero.imagenUrl!.isEmpty
+                            ? const Icon(Icons.person, color: Colors.white)
+                            : null,
                       ),
                     ],
                   ),

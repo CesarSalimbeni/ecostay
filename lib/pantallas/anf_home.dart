@@ -43,7 +43,6 @@ class _HomeAnfitrionState extends State<HomeAnfitrion> {
     });
   }
 
-  // --- LÓGICA IDÉNTICA A LA PRIMERA PANTALLA ADAPTADA A SOLO PENDIENTES ---
   Future<List<ReservaUIWrapper>> _obtenerSolicitudesPendientes() async {
     List<ReservaUIWrapper> solicitudesPendientes = [];
     try {
@@ -156,9 +155,14 @@ class _HomeAnfitrionState extends State<HomeAnfitrion> {
                         style: const TextStyle(fontSize: 20, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      const CircleAvatar(
-                        backgroundColor: Color(0xFF216A44),
-                        child: Icon(Icons.person, color: Colors.white),
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF216A44),
+                        backgroundImage: (widget.prestador.imagenUrl != null && widget.prestador.imagenUrl!.isNotEmpty)
+                            ? NetworkImage(widget.prestador.imagenUrl!)
+                            : null,
+                        child: (widget.prestador.imagenUrl == null || widget.prestador.imagenUrl!.isEmpty)
+                            ? const Icon(Icons.person, color: Colors.white)
+                            : null,
                       ),
                     ],
                   ),

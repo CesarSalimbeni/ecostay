@@ -308,9 +308,14 @@ class _HomeViajeroState extends State<HomeViajero> {
                         style: const TextStyle(fontSize: 20, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      const CircleAvatar(
-                        backgroundColor: Color(0xFF216A44),
-                        child: Icon(Icons.person, color: Colors.white),
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF216A44),
+                        backgroundImage: widget.viajero.imagenUrl != null && widget.viajero.imagenUrl!.isNotEmpty
+                            ? NetworkImage(widget.viajero.imagenUrl!)
+                            : null,
+                        child: widget.viajero.imagenUrl == null || widget.viajero.imagenUrl!.isEmpty
+                            ? const Icon(Icons.person, color: Colors.white)
+                            : null,
                       ),
                     ],
                   ),

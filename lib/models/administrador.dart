@@ -9,6 +9,7 @@ class Administrador extends Usuario {
     required super.email,
     required super.fechaRegistro,
     required super.suspendido,
+    super.imagenUrl,
     required this.nivelAcceso,
   }) : super(rol: 'administrador');
 }

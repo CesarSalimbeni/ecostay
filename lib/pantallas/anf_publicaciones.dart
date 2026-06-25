@@ -394,10 +394,15 @@ class PantallaPublicaciones extends StatelessWidget {
                         style: const TextStyle(fontSize: 20, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      const CircleAvatar(
-                        backgroundColor: Color(0xFF216A44),
-                        child: Icon(Icons.person, color: Colors.white),
-                      ),
+                      CircleAvatar(
+                      backgroundColor: const Color(0xFF216A44),
+                      backgroundImage: (prestador.imagenUrl != null && prestador.imagenUrl!.isNotEmpty)
+                          ? NetworkImage(prestador.imagenUrl!)
+                          : null,
+                      child: (prestador.imagenUrl == null || prestador.imagenUrl!.isEmpty)
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
+                    ),
                     ],
                   ),
                 ),
