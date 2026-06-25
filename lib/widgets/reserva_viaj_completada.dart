@@ -232,13 +232,23 @@ class _DialogoComentarioState extends State<DialogoComentario> {
         final gestionReservacion = GestionReservacion();
         final (_, viajeroId, publicacionId) = await gestionReservacion.obtenerInformacion(widget.reservaActual.id);
 
+        String nombreRealUsuario = 'Huésped Ecostay';
+        try {
+          final docUsuario = await FirebaseFirestore.instance.collection('users').doc(viajeroId).get();
+          if (docUsuario.exists && docUsuario.data() != null) {
+            nombreRealUsuario = docUsuario.data()!['nombre'] ?? 'Huésped Ecostay';
+          }
+        } catch (e) {
+          debugPrint('No se pudo obtener el nombre del usuario de Firestore, usando valor predeterminado: $e');
+        }
+
         await gestionCalificacion.agregarCalificacion(
           publicacionId: publicacionId, 
           viajeroId: viajeroId,
           reservacionId: widget.reservaActual.id,
           comentario: _comentarioController.text.trim(),
           puntaje: _puntajeSeleccionado.toDouble(),
-          nombreUsuario: 'Huésped Ecostay', 
+          nombreUsuario: nombreRealUsuario,
         );
       }
 
