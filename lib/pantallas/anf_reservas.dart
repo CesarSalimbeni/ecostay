@@ -51,6 +51,22 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
     });
   }
 
+  bool _verificarSuspensionYAlertar() {
+    if (widget.prestador.suspendido) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Acción bloqueada: Tu cuenta se encuentra suspendida por la administración.'),
+          backgroundColor: Color(0xFF903030),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return true;
+    }
+    return false;
+  }
+
   Future<List<ReservaUIWrapper>> _obtenerReservasDelAnfitrion() async {
     List<ReservaUIWrapper> reservasCompletas = [];
     try {
@@ -110,8 +126,7 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
     final size = MediaQuery.of(context).size;
     final fontSize = min(size.width * 0.11, size.height * 0.11).clamp(28.0, 96.0) as double;
 
-    return Scaffold(
-      backgroundColor: ColorPalette.bg,
+    return Scaffold(backgroundColor: ColorPalette.bg,
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, centerTitle: true,
         leading: Padding(
@@ -264,7 +279,6 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
                         ),
                         const SizedBox(height: 25),
                         
-                        // --- TABLA DINÁMICA ---
                         Expanded(
                           child: FutureBuilder<List<ReservaUIWrapper>>(future: _futureReservas,
                             builder: (context, snapshot) {
@@ -309,7 +323,6 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
                                             fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
                                           Expanded(flex: 2, child: Text('Destino', style: TextStyle(
                                             fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
-                                          // MODIFICADO: Cambiado el título para reflejar el rango de fechas
                                           Expanded(flex: 2, child: Text('Estadía (In - Fin)', style: TextStyle(
                                             fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
                                           Expanded(flex: 1, child: Text('Cupos', style: TextStyle(
@@ -351,7 +364,6 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
     );
   }
 
-  // --- COMPONENT: ROW CUSTOM RENDERER ---
   Widget _buildFilaReservaWeb(ReservaUIWrapper item) {
     final reserva = item.reserva;
 
@@ -377,8 +389,7 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
     
     String stringFecha = "${reserva.fechaInicio.day} ${meses[reserva.fechaInicio.month - 1]} - ${reserva.fechaFin.day} ${meses[reserva.fechaFin.month - 1]} ${reserva.fechaFin.year}";
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+    return Container(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200)),),
       child: Row(
         children: [
@@ -392,10 +403,8 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
           
           Expanded(flex: 1, child: Text('${reserva.total.toInt()}\$', style: const TextStyle(
             fontWeight: FontWeight.bold, fontSize: 15))),
-          Expanded(
-            flex: 2,
-            child: Align(
-              alignment: Alignment.centerLeft,
+          Expanded(flex: 2,
+            child: Align(alignment: Alignment.centerLeft,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(12)),
@@ -411,6 +420,8 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
                   IconButton(
                     icon: const Icon(Icons.check_circle, color: Color(0xFF387653), size: 24),
                     onPressed: () async {
+                      if (_verificarSuspensionYAlertar()) return;
+                      
                       await _gestionReservacion.confirmarReserva(reserva.id);
                       _cargarReservas();
                     },
@@ -418,6 +429,8 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
                   IconButton(
                     icon: const Icon(Icons.cancel, color: Color(0xFF8A1C14), size: 24),
                     onPressed: () async {
+                      if (_verificarSuspensionYAlertar()) return;
+                      
                       await _gestionReservacion.cancelarReserva(reserva.id);
                       _cargarReservas();
                     },

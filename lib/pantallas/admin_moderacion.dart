@@ -3,6 +3,7 @@ import 'package:ecostay/models/prestador_Servicio.dart';
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
 import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/pantallas/admin_explorar.dart';
 import 'package:ecostay/pantallas/admin_perfil_usuario.dart';
 import 'package:ecostay/pantallas/admin_pub.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
@@ -282,6 +283,19 @@ class _AdminModeracionState extends State<AdminModeracion> {
                   },
                   icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
                   label: const Text('Dashboard', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => AdminExplorar(administrador: widget.administrador)),
+                    );
+                  },
+                  icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () {

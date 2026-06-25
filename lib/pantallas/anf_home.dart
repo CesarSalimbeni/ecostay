@@ -43,6 +43,22 @@ class _HomeAnfitrionState extends State<HomeAnfitrion> {
     });
   }
 
+  bool _verificarSuspensionYAlertar() {
+    if (widget.prestador.suspendido) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Acción bloqueada: Tu cuenta se encuentra suspendida por la administración.'),
+          backgroundColor: Color(0xFF903030),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return true;
+    }
+    return false;
+  }
+
   Future<List<ReservaUIWrapper>> _obtenerSolicitudesPendientes() async {
     List<ReservaUIWrapper> solicitudesPendientes = [];
     try {
@@ -365,6 +381,8 @@ class _HomeAnfitrionState extends State<HomeAnfitrion> {
                             children: [
                               ElevatedButton(
                                 onPressed: () async {
+                                  if (_verificarSuspensionYAlertar()) return;
+
                                   await _gestionReservacion.confirmarReserva(reserva.id);
                                   _refrescarDashboard();
                                 },
@@ -379,6 +397,8 @@ class _HomeAnfitrionState extends State<HomeAnfitrion> {
                               const SizedBox(width: 8), 
                               ElevatedButton(
                                 onPressed: () async {
+                                  if (_verificarSuspensionYAlertar()) return;
+
                                   await _gestionReservacion.cancelarReserva(reserva.id);
                                   _refrescarDashboard();
                                 },

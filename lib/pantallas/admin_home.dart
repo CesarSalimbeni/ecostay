@@ -1,5 +1,6 @@
 import 'package:ecostay/models/administrador.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
+import 'package:ecostay/pantallas/admin_explorar.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
@@ -110,6 +111,19 @@ class _HomeAdminState extends State<HomeAdmin> {
                   onPressed: null, 
                   icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
                   label: const Text('Dashboard', style: TextStyle(color: Color(0xFF216A44), fontSize: 25, fontWeight: FontWeight.w900)),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => AdminExplorar(administrador: widget.administrador)),
+                    );
+                  },
+                  icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () {

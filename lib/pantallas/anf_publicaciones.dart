@@ -43,7 +43,25 @@ class _PantallaPublicacionesState extends State<PantallaPublicaciones> {
     super.dispose();
   }
 
+  bool _verificarSuspensionYAlertar() {
+    if (widget.prestador.suspendido) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Acción bloqueada: Tu cuenta se encuentra suspendida por la administración.'),
+          backgroundColor: Color(0xFF903030),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return true;
+    }
+    return false;
+  }
+
   void _mostrarDialogoPublicacion(BuildContext context, {Publicacion? publicacionAEditar}) {
+    if (_verificarSuspensionYAlertar()) return;
+
     final bool esEdicion = publicacionAEditar != null;
 
     final TextEditingController tituloController = TextEditingController(
@@ -229,6 +247,11 @@ class _PantallaPublicacionesState extends State<PantallaPublicaciones> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () async {
+                if (_verificarSuspensionYAlertar()) {
+                  Navigator.pop(context);
+                  return;
+                }
+
                 if (tituloController.text.isEmpty || ubicacionController.text.isEmpty || 
                     precioController.text.isEmpty || descripcionController.text.isEmpty || cuposController.text.isEmpty) { 
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -314,6 +337,9 @@ class _PantallaPublicacionesState extends State<PantallaPublicaciones> {
   }
 
   void _eliminarPublicacion(BuildContext context, String publicacionId) {
+    // Si está suspendido, se bloquea por completo el acceso a borrar
+    if (_verificarSuspensionYAlertar()) return;
+
     showDialog(context: context,
       builder: (BuildContext context) {
         return AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
