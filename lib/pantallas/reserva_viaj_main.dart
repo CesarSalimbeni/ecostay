@@ -332,6 +332,15 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                           FilledButton(
                                             onPressed: () {
                                               if (_reservaActual == null) {
+                                                if (widget.viajero.suspendido == true) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text('Tu cuenta se encuentra suspendida. No puedes realizar nuevas solicitudes de reserva.'),
+                                                      backgroundColor: Colors.redAccent,
+                                                    ),
+                                                  );
+                                                  return;
+                                                }
                                                 showDialog(
                                                   context: context,
                                                   builder: (context) => DialogoSolicitarReserva(

@@ -220,8 +220,7 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
 
             // --- MAIN CONTENT CONTAINER ---
             Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 30),
+              child: Padding(padding: const EdgeInsets.only(top: 30),
                 child: Container(width: 1240,height: 560, decoration: BoxDecoration(
                     color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25),
                   ), 
@@ -246,8 +245,7 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
                               final esActivo = _filtroSeleccionado == filtro;
                               return GestureDetector(
                                 onTap: () => setState(() => _filtroSeleccionado = filtro),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                child: Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: esActivo ? Colors.white : Colors.transparent,
                                     borderRadius: BorderRadius.circular(15),
@@ -299,15 +297,11 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
                               }
 
                               return Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade200),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                                decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), 
+                                  borderRadius: BorderRadius.circular(12),),
                                 child: Column(
                                   children: [
-                                    // Fila de Encabezado Estática
-                                    Container(
-                                      color: const Color(0xFFF4F7F6),
+                                    Container(color: const Color(0xFFF4F7F6),
                                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                                       child: Row(
                                         children: const [
@@ -315,7 +309,8 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
                                             fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
                                           Expanded(flex: 2, child: Text('Destino', style: TextStyle(
                                             fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
-                                          Expanded(flex: 2, child: Text('Fecha', style: TextStyle(
+                                          // MODIFICADO: Cambiado el título para reflejar el rango de fechas
+                                          Expanded(flex: 2, child: Text('Estadía (In - Fin)', style: TextStyle(
                                             fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
                                           Expanded(flex: 1, child: Text('Cupos', style: TextStyle(
                                             fontWeight: FontWeight.bold, color: Color(0xFF526F75)))),
@@ -379,7 +374,8 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
     }
 
     List<String> meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    String stringFecha = "${reserva.fechaInicio.day}-${meses[reserva.fechaInicio.month - 1]} ${reserva.fechaInicio.year}";
+    
+    String stringFecha = "${reserva.fechaInicio.day} ${meses[reserva.fechaInicio.month - 1]} - ${reserva.fechaFin.day} ${meses[reserva.fechaFin.month - 1]} ${reserva.fechaFin.year}";
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
@@ -391,7 +387,9 @@ class _PantallaReservasHState extends State<PantallaReservasH> {
           Expanded(flex: 2, child: Text(item.tituloPublicacion, style: const TextStyle(
             color: Colors.black87, fontSize: 15))),
           Expanded(flex: 2, child: Text(stringFecha, style: const TextStyle(fontSize: 15))),
-          Expanded(flex: 1, child: Text('${reserva.cupos}', style: const TextStyle(fontSize: 15))),
+          
+          Expanded(flex: 1, child: Text('${reserva.cupos} solic.', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500))),
+          
           Expanded(flex: 1, child: Text('${reserva.total.toInt()}\$', style: const TextStyle(
             fontWeight: FontWeight.bold, fontSize: 15))),
           Expanded(

@@ -1,3 +1,4 @@
+import 'package:ecostay/models/buscador_exploracion.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
@@ -14,14 +15,35 @@ import 'dart:math';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
-class PantallaPublicaciones extends StatelessWidget {
+class PantallaPublicaciones extends StatefulWidget {
   final PrestadorServicio prestador;
-  final GestionUsuario _gestionUsuario = GestionUsuario();
   
-   PantallaPublicaciones({super.key, required this.prestador});
+  const PantallaPublicaciones({super.key, required this.prestador});
+
+  @override
+  State<PantallaPublicaciones> createState() => _PantallaPublicacionesState();
+}
+
+class _PantallaPublicacionesState extends State<PantallaPublicaciones> {
+  final GestionUsuario _gestionUsuario = GestionUsuario();
+  final TextEditingController _searchController = TextEditingController();
+  
+  String _textoBusqueda = '';
+  late Future<void> _cargarDatosFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatosFuture = widget.prestador.cargarMisDatos();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _mostrarDialogoPublicacion(BuildContext context, {Publicacion? publicacionAEditar}) {
-
     final bool esEdicion = publicacionAEditar != null;
 
     final TextEditingController tituloController = TextEditingController(
@@ -135,8 +157,7 @@ class PantallaPublicaciones extends StatelessWidget {
                     children: [
                       Expanded(
                         child: TextField(
-                          controller: cuposController, 
-                          keyboardType: TextInputType.number,
+                          controller: cuposController, keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: 'Cupos Max',
                             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -151,8 +172,7 @@ class PantallaPublicaciones extends StatelessWidget {
                       
                       Expanded(
                         child: TextField(
-                          controller: precioController, 
-                          keyboardType: TextInputType.number,
+                          controller: precioController, keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: 'Precio (\$)',
                             prefixIcon: const Icon(Icons.attach_money, color: Color(0xFF216A44), size: 18),
@@ -176,16 +196,14 @@ class PantallaPublicaciones extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
+                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: Colors.grey.shade400),
                               color: transporteDisponible ? const Color(0xFFE2ECE7) : Colors.transparent,
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.directions_bus,
+                                Icon(Icons.directions_bus,
                                   color: transporteDisponible ? const Color(0xFF216A44) : Colors.grey.shade400,
                                   size: 20,
                                 ),
@@ -249,11 +267,11 @@ class PantallaPublicaciones extends StatelessWidget {
                       'descripcion': descripcionController.text,
                       'precio': double.parse(precioController.text),
                       'ubicacion': ubicacionController.text,
-                      'providerId': prestador.id,
-                      'autoruid': prestador.id, 
+                      'providerId': widget.prestador.id,
+                      'autoruid': widget.prestador.id, 
                       'disponibilidadtransporte': transporteDisponible,
                       'politicaCancelacion': policancelacionController.text,
-                      'nombreAnfitrion': prestador.nombre,
+                      'nombreAnfitrion': widget.prestador.nombre,
                       'estilo': estiloFinal,
                       'cuposMax': cuposMax,
                       'cuposActual': 0,
@@ -275,7 +293,7 @@ class PantallaPublicaciones extends StatelessWidget {
                   );
 
                   Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: prestador)),
+                    MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: widget.prestador)),
                   );
                 } catch (e) {
                   if (!context.mounted) return;
@@ -323,7 +341,7 @@ class PantallaPublicaciones extends StatelessWidget {
                   );
 
                   Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: prestador)),
+                    MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: widget.prestador)),
                   );
                 } catch (e) {
                   if (!context.mounted) return;
@@ -352,11 +370,17 @@ class PantallaPublicaciones extends StatelessWidget {
           child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
         ),
         title: SearchBar(
-          hintText: 'Buscar...', 
+          controller: _searchController,
+          hintText: 'Buscar por título...', 
           hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
           leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
           backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
           elevation: const WidgetStatePropertyAll(0),
+          onChanged: (value) {
+            setState(() {
+              _textoBusqueda = value;
+            });
+          }, 
         ),
         actions: [
           Padding(padding: const EdgeInsets.only(right: 20.0),
@@ -390,16 +414,16 @@ class PantallaPublicaciones extends StatelessWidget {
                 child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                   child: Row(mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text( prestador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                      Text( widget.prestador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
                         style: const TextStyle(fontSize: 20, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
                       CircleAvatar(
                       backgroundColor: const Color(0xFF216A44),
-                      backgroundImage: (prestador.imagenUrl != null && prestador.imagenUrl!.isNotEmpty)
-                          ? NetworkImage(prestador.imagenUrl!)
+                      backgroundImage: (widget.prestador.imagenUrl != null && widget.prestador.imagenUrl!.isNotEmpty)
+                          ? NetworkImage(widget.prestador.imagenUrl!)
                           : null,
-                      child: (prestador.imagenUrl == null || prestador.imagenUrl!.isEmpty)
+                      child: (widget.prestador.imagenUrl == null || widget.prestador.imagenUrl!.isEmpty)
                           ? const Icon(Icons.person, color: Colors.white)
                           : null,
                     ),
@@ -413,7 +437,7 @@ class PantallaPublicaciones extends StatelessWidget {
       ),
       
       body: FutureBuilder<void>(
-        future: prestador.cargarMisDatos(),
+        future: _cargarDatosFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -427,6 +451,10 @@ class PantallaPublicaciones extends StatelessWidget {
             );
           }
 
+          final publicacionesFiltradas = widget.prestador.publicaciones.where((pub) {
+            return pub.titulo.toLowerCase().contains(_textoBusqueda.toLowerCase());
+          }).toList();
+
           return Column(crossAxisAlignment: CrossAxisAlignment.start, 
             children: [
               Padding(padding: const EdgeInsets.only(top: 15),
@@ -434,7 +462,7 @@ class PantallaPublicaciones extends StatelessWidget {
                   children: [
                     TextButton.icon(
                       onPressed: () {Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => HomeAnfitrion(prestador: prestador)),
+                      MaterialPageRoute(builder: (context) => HomeAnfitrion(prestador: widget.prestador)),
                       );
                     },  
                       icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
@@ -449,7 +477,7 @@ class PantallaPublicaciones extends StatelessWidget {
                     TextButton.icon(
                       onPressed: () {
                         Navigator.pushReplacement(context,
-                          MaterialPageRoute(builder: (context) => PantallaReservasH(prestador: prestador),
+                          MaterialPageRoute(builder: (context) => PantallaReservasH(prestador: widget.prestador),
                           ),
                         );
                       }, 
@@ -458,7 +486,7 @@ class PantallaPublicaciones extends StatelessWidget {
                     ),
                     TextButton.icon(
                       onPressed: () {Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => PerfilAnfitrion(prestador: prestador)),
+                      MaterialPageRoute(builder: (context) => PerfilAnfitrion(prestador: widget.prestador)),
                       );
                     }, 
                       icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
@@ -472,17 +500,19 @@ class PantallaPublicaciones extends StatelessWidget {
                 child: Stack(
                   children: [
                     SizedBox(width: double.infinity,
-                      child: prestador.publicaciones.isEmpty
-                          ? const Center(
+                      child: publicacionesFiltradas.isEmpty
+                          ? Center(
                               child: Text(
-                                'Aún no tienes publicaciones creadas.',
-                                style: TextStyle(fontSize: 18, color: Colors.grey),
+                                _textoBusqueda.isEmpty 
+                                    ? 'Aún no tienes publicaciones creadas.'
+                                    : 'No se encontraron resultados para "$_textoBusqueda"',
+                                style: const TextStyle(fontSize: 18, color: Colors.grey),
                               ),
                             )
                           : SingleChildScrollView(
                               padding: const EdgeInsets.only(left: 40.0, top: 40.0, bottom: 40.0, right: 120.0),
                               child: Wrap(alignment: WrapAlignment.center, spacing: 30.0, runSpacing: 30.0,
-                                children: prestador.publicaciones.map((pub) {
+                                children: publicacionesFiltradas.map((pub) {
                                   return _buildPublicacionCard(
                                     context: context,
                                     pub: pub,
@@ -595,7 +625,7 @@ class PantallaPublicaciones extends StatelessWidget {
               children: [
                 _buildActionBtn(Icons.visibility_outlined, const Color(0xFF216A44), () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => PantallaPubReserv(
-                        publicacion: pub, prestador: prestador,),),
+                        publicacion: pub, prestador: widget.prestador,),),
                   );
                 }),
                 _buildActionBtn(Icons.edit_outlined, const Color(0xFF216A44), onEdit), 

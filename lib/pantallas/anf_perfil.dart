@@ -73,7 +73,7 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
         setState(() => _cargandoDatos = false);
       }
     }
-}
+  }
 
   @override
   void dispose() {
@@ -225,22 +225,16 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                         ),
                         const SizedBox(height: 30),
                         
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(flex: 4,
                               child: Container(padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                                decoration: BoxDecoration(color: Colors.white, 
-                                borderRadius: BorderRadius.circular(25),
+                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25),
                                 ),
                                 child: Column(
                                   children: [
-                                    Container(
-                                      width: 130,
-                                      height: 130,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF38664D), 
-                                        shape: BoxShape.circle,
+                                    Container(width: 130, height: 130,
+                                      decoration: const BoxDecoration(color: Color(0xFF38664D), shape: BoxShape.circle,
                                       ),
                                       child: ClipOval(
                                         child: _imagenSeleccionada != null
@@ -305,8 +299,7 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                             const SizedBox(width: 40),
                             
                             Expanded(flex: 6,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                              child: Container(padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
                                 decoration: BoxDecoration(color: Colors.white,
                                   borderRadius: BorderRadius.circular(25),
                                 ),
@@ -314,19 +307,21 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                                   children: [
                                     _buildEditableProfileItem('Responsable', _nombreController, 'No especificado'),
                                     _buildDivider(),
+                                    // MODIFICADO: Correo deshabilitado
                                     _buildEditableProfileItem('Correo', _emailController, 'No especificado', 
-                                    keyboardType: TextInputType.emailAddress),
+                                        keyboardType: TextInputType.emailAddress),
                                     _buildDivider(),
                                     _buildEditableProfileItem('Teléfono', _telefonoController, 'No especificado', 
-                                    keyboardType: TextInputType.phone),
+                                        keyboardType: TextInputType.phone),
                                     _buildDivider(),
-                                    _buildEditableProfileItem('Rif', _rifController, 'No especificado'),
+                                    // MODIFICADO: RIF deshabilitado
+                                    _buildEditableProfileItem('Rif', _rifController, 'No especificado', enabled: false),
                                     _buildDivider(),
                                     _buildEditableProfileItem('Dirección Fiscal', _direccionController, 
-                                    'No especificado'),
+                                        'No especificado'),
                                     _buildDivider(),
                                     _buildEditableProfileItem('Cuenta PayPal', _paypalController, 'No especificado', 
-                                    keyboardType: TextInputType.emailAddress),
+                                        keyboardType: TextInputType.emailAddress),
                                     const SizedBox(height: 20),
                                     ElevatedButton(
                                       onPressed: () async {
@@ -335,11 +330,10 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                                             if (_imagenSeleccionada != null) {
                                               GestionImagenPerfil gestionImgPerfil = GestionImagenPerfil();
                                               
-                                              // Esperamos la subida segura
                                               final urlSubida = await gestionImgPerfil.subirImagen(_prestadorActual.id, _imagenSeleccionada!);
                                               
                                               if (urlSubida != null && urlSubida.isNotEmpty) {
-                                                nuevaUrl = urlSubida; // Solo si es válida, actualizamos la variable
+                                                nuevaUrl = urlSubida;
                                                 
                                                 final usuarioAuth = FirebaseAuth.instance.currentUser;
                                                 if (usuarioAuth != null) {
@@ -418,8 +412,9 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
     );
   }
 
+  // MODIFICADO: Agregado el parámetro opcional `enabled` (por defecto true)
   Widget _buildEditableProfileItem(String label, TextEditingController controller, String hint, 
-  {TextInputType keyboardType = TextInputType.text}) {
+  {TextInputType keyboardType = TextInputType.text, bool enabled = true}) {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 1),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -427,9 +422,8 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
             fontSize: 18, fontWeight: FontWeight.w500)),
           ),
           Expanded(flex: 6, child: TextFormField(
-              controller: controller,
-              keyboardType: keyboardType,
-              style: const TextStyle(color: Colors.black, fontSize: 18),
+              controller: controller, keyboardType: keyboardType, enabled: enabled,
+              style: TextStyle(color: enabled ? Colors.black : Colors.grey.shade500, fontSize: 18),
               decoration: InputDecoration(isDense: true, hintText: hint,
                 hintStyle: const TextStyle(color: Colors.grey, fontSize: 18),
                 border: InputBorder.none, focusedBorder: InputBorder.none,
