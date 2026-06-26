@@ -47,12 +47,14 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   Future<void> _crearCuenta() async {
     final isViajero = _selectedRole == UserRole.viajero;
     final emailText = _correoCtrl.text.trim();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
 
     // Validación estricta del dominio @correo.unimet.edu.ve solo para viajeros
     if (isViajero) {
       final unimetRegex = RegExp(r'^[\w-\.]+@correo\.unimet\.edu\.ve$');
       if (!unimetRegex.hasMatch(emailText.toLowerCase())) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Acceso denegado: Los viajeros deben usar un correo institucional @correo.unimet.edu.ve'),
             backgroundColor: Colors.redAccent,
@@ -66,20 +68,20 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     try {
       final String rolBackend = isViajero ? 'cliente' : 'host';
 
-      Map<String, dynamic> extras = isViajero 
-        ? {
-            'telefono': _telefonoCtrl.text.trim(),
-            'cedula': _cedulaCtrl.text.trim(),
-            'direccion': _direccionCtrl.text.trim(), // Se usa para Ciudad
-            'suspendido': false
-          }
-        : {
-            'telefono': _telefonoCtrl.text.trim(),
-            'direccion': _direccionCtrl.text.trim(),
-            'rif': _rifCtrl.text.trim(),
-            'cuentaPayPal': _paypalCtrl.text.trim(),
-            'suspendido': false
-          };
+      Map<String, dynamic> extras = isViajero
+          ? {
+              'telefono': _telefonoCtrl.text.trim(),
+              'cedula': _cedulaCtrl.text.trim(),
+              'direccion': _direccionCtrl.text.trim(), // Se usa para Ciudad
+              'suspendido': false,
+            }
+          : {
+              'telefono': _telefonoCtrl.text.trim(),
+              'direccion': _direccionCtrl.text.trim(),
+              'rif': _rifCtrl.text.trim(),
+              'cuentaPayPal': _paypalCtrl.text.trim(),
+              'suspendido': false,
+            };
 
       await _gestionUsuario.registrarUsuario(
         email: emailText,
@@ -89,12 +91,14 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         datosAdicionales: extras,
       );
 
+      if (!mounted) return;
+
       String uid = FirebaseAuth.instance.currentUser!.uid;
       Usuario usuarioCreado;
 
       if (isViajero) {
         usuarioCreado = Viajero(
-          id: uid, 
+          id: uid,
           nombre: _nombreCtrl.text.trim(),
           email: emailText,
           fechaRegistro: DateTime.now(),
@@ -106,9 +110,9 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         );
       } else {
         usuarioCreado = PrestadorServicio(
-          id: uid, 
+          id: uid,
           nombre: _nombreCtrl.text.trim(),
-          email: emailText,      
+          email: emailText,
           fechaRegistro: DateTime.now(),
           rif: _rifCtrl.text.trim(),
           telefono: _telefonoCtrl.text.trim(),
@@ -118,29 +122,30 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
           estadisticas: [],
         );
       }
-      
-      if (mounted) {
-        if (usuarioCreado is Viajero) {
-          Navigator.pushReplacement(context, MaterialPageRoute(
-              builder: (context) => HomeViajero(viajero: usuarioCreado as Viajero),
-            ),
-          );
-        } else if (usuarioCreado is PrestadorServicio) {
-          Navigator.pushReplacement(context, MaterialPageRoute(
-              builder: (context) => HomeAnfitrion(prestador: usuarioCreado as PrestadorServicio),
-            ),
-          );
-        }
+
+      if (usuarioCreado is Viajero) {
+        navigator.pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => HomeViajero(viajero: usuarioCreado as Viajero),
+          ),
+        );
+      } else if (usuarioCreado is PrestadorServicio) {
+        navigator.pushReplacement(
+          MaterialPageRoute(
+            builder: (context) =>
+                HomeAnfitrion(prestador: usuarioCreado as PrestadorServicio),
+          ),
+        );
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text('¡Cuenta creada con éxito!')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
@@ -152,224 +157,425 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   @override
   Widget build(BuildContext context) {
     final isViajero = _selectedRole == UserRole.viajero;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 700;
+
+    Widget buildRoleButton({
+      required bool selected,
+      required VoidCallback onPressed,
+      required IconData icon,
+      required String title,
+      required String subtitle,
+    }) {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.all(20.0),
+            backgroundColor: selected
+                ? const Color(0xFF216A44).withValues(alpha: 0.1)
+                : Colors.transparent,
+            side: BorderSide(
+              color: selected ? const Color(0xFF216A44) : Colors.grey.shade400,
+              width: selected ? 2.0 : 1.0,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            alignment: AlignmentDirectional.centerStart,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: const Color(0xFF216A44), size: 40),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontFamily: 'Idiqlat',
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(color: Color(0xFF8E8E93)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
-      backgroundColor: ColorPalette.bg, 
+      backgroundColor: ColorPalette.bg,
       body: Center(
-        child: Container(width: 775, height: 775,
-          decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(30)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 980),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 45.0, vertical: 30.0),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text(
-                      'Crea tu cuenta de Ecostay',
-                      style: TextStyle(fontFamily: 'Idiqlat', color: Colors.black, fontSize: 30),
-                    ),
-                    SizedBox(width: 10),
-                    CircleAvatar(backgroundImage: AssetImage('assets/images/logo.jpg'), radius: 40)
-                  ],
-                ),
-                const SizedBox(height: 25),
-            
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () { setState(() { _selectedRole = UserRole.viajero; }); },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.all(20.0),
-                          backgroundColor: isViajero ? const Color(0xFF216A44).withOpacity(0.1) : Colors.transparent,
-                          side: BorderSide(color: isViajero ? const Color(0xFF216A44) : Colors.grey.shade400, width: isViajero ? 2.0 : 1.0),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-                          alignment: AlignmentDirectional.centerStart,
+            padding: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 32, vertical: 20),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: isCompact ? 24 : 45, vertical: 30),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFFFF),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Crea tu cuenta de Ecostay',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Idiqlat',
+                              color: Colors.black,
+                              fontSize: isCompact ? 24 : 30,
+                            ),
+                          ),
                         ),
-                        child: Column(
+                        const CircleAvatar(
+                          backgroundImage: AssetImage('assets/images/logo.jpg'),
+                          radius: 34,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  isCompact
+                      ? Column(
+                          children: [
+                            buildRoleButton(
+                              selected: isViajero,
+                              onPressed: () => setState(() => _selectedRole = UserRole.viajero),
+                              icon: Icons.air,
+                              title: 'Soy Viajero',
+                              subtitle: 'Quiero descubrir destinos.',
+                            ),
+                            const SizedBox(height: 12),
+                            buildRoleButton(
+                              selected: !isViajero,
+                              onPressed: () => setState(() => _selectedRole = UserRole.anfitrion),
+                              icon: Icons.home_outlined,
+                              title: 'Soy Anfitrión',
+                              subtitle: 'Ofrezco servicios turísticos',
+                            ),
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: buildRoleButton(
+                                selected: isViajero,
+                                onPressed: () => setState(() => _selectedRole = UserRole.viajero),
+                                icon: Icons.air,
+                                title: 'Soy Viajero',
+                                subtitle: 'Quiero descubrir destinos.',
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: buildRoleButton(
+                                selected: !isViajero,
+                                onPressed: () => setState(() => _selectedRole = UserRole.anfitrion),
+                                icon: Icons.home_outlined,
+                                title: 'Soy Anfitrión',
+                                subtitle: 'Ofrezco servicios turísticos',
+                              ),
+                            ),
+                          ],
+                        ),
+                  const SizedBox(height: 24),
+                  isCompact
+                      ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.air, color: Color(0xFF216A44), size: 40),
-                            Text('Soy Viajero', style: TextStyle(color: Colors.black, fontFamily: 'Idiqlat', 
-                            fontWeight: isViajero ? FontWeight.bold : FontWeight.normal)),
-                            const Text('Quiero descubrir destinos.', style: TextStyle(color: Color(0xFF8E8E93)))
+                            _buildFieldColumn(
+                              label: 'Nombre',
+                              child: TextField(
+                                controller: _nombreCtrl,
+                                keyboardType: TextInputType.name,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ ]')),
+                                ],
+                                decoration: InputDecoration(
+                                  labelText: 'Nombre',
+                                  border: const OutlineInputBorder(),
+                                  filled: true,
+                                  fillColor: ColorPalette.bg,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildFieldColumn(
+                              label: 'Teléfono',
+                              child: TextField(
+                                controller: _telefonoCtrl,
+                                keyboardType: TextInputType.phone,
+                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                decoration: InputDecoration(
+                                  labelText: 'Teléfono',
+                                  border: const OutlineInputBorder(),
+                                  filled: true,
+                                  fillColor: ColorPalette.bg,
+                                ),
+                              ),
+                            ),
                           ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 30),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () { setState(() { _selectedRole = UserRole.anfitrion; }); },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.all(20.0),
-                          backgroundColor: !isViajero ? const Color(0xFF216A44).withOpacity(0.1) : Colors.transparent,
-                          side: BorderSide(color: !isViajero ? const Color(0xFF216A44) : Colors.grey.shade400, width: !isViajero ? 2.0 : 1.0),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-                          alignment: AlignmentDirectional.centerStart,
-                        ),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                        )
+                      : Row(
                           children: [
-                            const Icon(Icons.home_outlined, color: Color(0xFF216A44), size: 40),
-                            Text('Soy Anfitrión', style: TextStyle(color: Colors.black, fontFamily: 'Idiqlat', fontWeight: !isViajero ? FontWeight.bold : FontWeight.normal)),
-                            const Text('Ofrezco servicios turísticos', style: TextStyle(color: Color(0xFF8E8E93)))
+                            Expanded(
+                              child: _buildFieldColumn(
+                                label: 'Nombre',
+                                child: TextField(
+                                  controller: _nombreCtrl,
+                                  keyboardType: TextInputType.name,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ ]')),
+                                  ],
+                                  decoration: InputDecoration(
+                                    labelText: 'Nombre',
+                                    border: const OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: ColorPalette.bg,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: _buildFieldColumn(
+                                label: 'Teléfono',
+                                child: TextField(
+                                  controller: _telefonoCtrl,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                  decoration: InputDecoration(
+                                    labelText: 'Teléfono',
+                                    border: const OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: ColorPalette.bg,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
+                  const SizedBox(height: 20),
+                  _buildFieldColumn(
+                    label: 'Correo electrónico',
+                    child: TextField(
+                      controller: _correoCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: 'tu@correo.com',
+                        border: const OutlineInputBorder(),
+                        filled: true,
+                        fillColor: ColorPalette.bg,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 25),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Nombre"),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _nombreCtrl, keyboardType: TextInputType.name,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ ]')),
-                            ],
-                            decoration: InputDecoration(labelText: "Nombre", border: const OutlineInputBorder(), 
-                              filled: true, fillColor: ColorPalette.bg,
+                  ),
+                  const SizedBox(height: 20),
+                  isCompact
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildFieldColumn(
+                              label: isViajero ? 'Ciudad' : 'Dirección Fiscal',
+                              child: TextField(
+                                controller: _direccionCtrl,
+                                decoration: InputDecoration(
+                                  labelText: isViajero ? 'Ciudad Real, País' : 'Calle Real, Estado, País',
+                                  border: const OutlineInputBorder(),
+                                  filled: true,
+                                  fillColor: ColorPalette.bg,
+                                ),
+                              ),
                             ),
-                          )
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 30),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Teléfono"),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _telefonoCtrl, keyboardType: TextInputType.phone,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            decoration: InputDecoration(labelText: "Teléfono", border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg),
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 20),
-            
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Correo electrónico"),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: _correoCtrl, keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(labelText: "tu@correo.com", border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(isViajero ? "Ciudad" : "Dirección Fiscal"),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _direccionCtrl,
-                            decoration: InputDecoration(
-                              labelText: isViajero ? "Ciudad Real, País" : "Calle Real, Estado, País",
-                              border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg,
+                            const SizedBox(height: 16),
+                            _buildFieldColumn(
+                              label: 'Contraseña',
+                              child: TextField(
+                                controller: _passCtrl,
+                                obscureText: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Contraseña',
+                                  border: const OutlineInputBorder(),
+                                  filled: true,
+                                  fillColor: ColorPalette.bg,
+                                ),
+                              ),
                             ),
-                          )
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 30),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Contraseña"),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _passCtrl, obscureText: true, decoration: InputDecoration(
-                              labelText: "Contraseña", border: const OutlineInputBorder(), 
-                            filled: true, fillColor: ColorPalette.bg),
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 20),
-                if (isViajero)
-                  Column(crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("Cédula"),
-                      const SizedBox(height: 6),
-                      TextField(
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: _buildFieldColumn(
+                                label: isViajero ? 'Ciudad' : 'Dirección Fiscal',
+                                child: TextField(
+                                  controller: _direccionCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: isViajero ? 'Ciudad Real, País' : 'Calle Real, Estado, País',
+                                    border: const OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: ColorPalette.bg,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: _buildFieldColumn(
+                                label: 'Contraseña',
+                                child: TextField(
+                                  controller: _passCtrl,
+                                  obscureText: true,
+                                  decoration: InputDecoration(
+                                    labelText: 'Contraseña',
+                                    border: const OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: ColorPalette.bg,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                  const SizedBox(height: 20),
+                  if (isViajero)
+                    _buildFieldColumn(
+                      label: 'Cédula',
+                      child: TextField(
                         controller: _cedulaCtrl,
                         keyboardType: TextInputType.number,
                         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: InputDecoration(labelText: "55555555", border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg),
-                      )
-                    ],
-                  )
-                else
-                  Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Rif"),
-                            const SizedBox(height: 6),
-                            TextField(
-                              controller: _rifCtrl,
-                              decoration: InputDecoration(labelText: "J-555555-5", border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg),
-                            )
-                          ],
+                        decoration: InputDecoration(
+                          labelText: '55555555',
+                          border: const OutlineInputBorder(),
+                          filled: true,
+                          fillColor: ColorPalette.bg,
                         ),
                       ),
-                      const SizedBox(width: 30),
-                      Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Cuenta PayPal"),
-                            const SizedBox(height: 6),
-                            TextField(
-                              controller: _paypalCtrl,
-                              decoration: InputDecoration(labelText: "tu.cuenta@paypal.com", border: const OutlineInputBorder(), filled: true, fillColor: ColorPalette.bg),
-                            )
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                
-                Padding(padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                  child: FilledButton(
+                    )
+                  else
+                    isCompact
+                        ? Column(
+                            children: [
+                              _buildFieldColumn(
+                                label: 'Rif',
+                                child: TextField(
+                                  controller: _rifCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: 'J-555555-5',
+                                    border: const OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: ColorPalette.bg,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildFieldColumn(
+                                label: 'Cuenta PayPal',
+                                child: TextField(
+                                  controller: _paypalCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: 'tu.cuenta@paypal.com',
+                                    border: const OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: ColorPalette.bg,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: _buildFieldColumn(
+                                  label: 'Rif',
+                                  child: TextField(
+                                    controller: _rifCtrl,
+                                    decoration: InputDecoration(
+                                      labelText: 'J-555555-5',
+                                      border: const OutlineInputBorder(),
+                                      filled: true,
+                                      fillColor: ColorPalette.bg,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: _buildFieldColumn(
+                                  label: 'Cuenta PayPal',
+                                  child: TextField(
+                                    controller: _paypalCtrl,
+                                    decoration: InputDecoration(
+                                      labelText: 'tu.cuenta@paypal.com',
+                                      border: const OutlineInputBorder(),
+                                      filled: true,
+                                      fillColor: ColorPalette.bg,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                  const SizedBox(height: 24),
+                  FilledButton(
                     onPressed: _isLoading ? null : _crearCuenta,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF216A44), foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFF216A44),
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       minimumSize: const Size(double.infinity, 50),
                     ),
-                    child: _isLoading 
-                        ? const SizedBox(height: 20, width: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           )
-                        : const Text("Crea tu cuenta de Ecostay", style: TextStyle(fontSize: 16, fontFamily: 'Idiqlat')),
+                        : const Text(
+                            'Crea tu cuenta de Ecostay',
+                            style: TextStyle(fontSize: 16, fontFamily: 'Idiqlat'),
+                          ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFieldColumn({required String label, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
+        const SizedBox(height: 6),
+        child,
+      ],
     );
   }
 }

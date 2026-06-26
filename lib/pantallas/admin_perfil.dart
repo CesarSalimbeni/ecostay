@@ -1,6 +1,5 @@
 import 'package:ecostay/models/administrador.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
-import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/admin_explorar.dart';
 import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
@@ -45,325 +44,361 @@ class _PerfilAdministradorState extends State<PerfilAdministrador> {
     super.dispose();
   }
 
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await _gestionUsuario.cerrarSesion();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sesión cerrada con éxito')),
+        );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const PantallaInicio()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cerrar sesión: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _cambiarImagenPerfil() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image == null) return;
+
+    setState(() {
+      _subiendoImagen = true;
+    });
+
+    try {
+      String? nuevaUrl = await _gestionImagen.subirImagen(_adminActual.id, image,
+      );
+
+      if (nuevaUrl != null) {
+        setState(() {
+          _adminActual.imagenUrl = nuevaUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Imagen de perfil actualizada correctamente.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al subir la imagen: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() {
+        _subiendoImagen = false;
+      });
+    }
+  }
+
+  Future<void> _actualizarDatosPerfil() async {
+    final nuevoNombre = _nombreController.text.trim();
+
+    if (nuevoNombre.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El nombre no puede estar vacío.'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
+    try {
+      await _gestionUsuario.editarInformacion(_adminActual.id, {'nombre' : nuevoNombre});
+      setState(() {
+        _adminActual.nombre = nuevoNombre;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Perfil actualizado con éxito.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al actualizar datos: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  List<Widget> _buildNavItems(BuildContext context, {bool isVertical = false}) {
+    final double fontSize = isVertical ? 18 : 22;
+    return [
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeAdmin(administrador: _adminActual)));
+        },
+        icon: Icon(Icons.dns, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Dashboard', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminExplorar(administrador: _adminActual)));
+        },
+        icon: Icon(Icons.search, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Explorar', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: _adminActual)));
+        },
+        icon: Icon(Icons.person_add_outlined, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Usuarios', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminModeracion(administrador: _adminActual)));
+        },
+        icon: Icon(Icons.shield_outlined, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Moderación', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: null,
+        icon: Icon(Icons.person_outline, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Perfil', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize, fontWeight: FontWeight.w900)),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
+    double anchoPantalla = MediaQuery.of(context).size.width;
+    bool esDesktop = anchoPantalla > 950;
+
     return Scaffold(
       backgroundColor: ColorPalette.bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, 
-        centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 40.0),
-          child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain,),
-        ),
-        title: SearchBar(
-          hintText: 'Buscar...', 
-          hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
-          leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
-          backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
-          elevation: const WidgetStatePropertyAll(0),
-        ),
-        actions: [
-          Padding(padding: const EdgeInsets.only(right: 20.0),
-            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
-              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
-              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
-                borderRadius: BorderRadius.circular(8),
+        backgroundColor: const Color(0xFFFFFFFF), 
+        toolbarHeight: esDesktop ? 90 : 70, 
+        centerTitle: esDesktop ? true : false,
+        leading: esDesktop 
+          ? Padding(
+              padding: const EdgeInsets.only(left: 40.0),
+              child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
+            )
+          : null,
+        title: esDesktop 
+          ? SizedBox(
+              width: 400,
+              child: SearchBar(
+                hintText: 'Buscar...', 
+                hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
+                leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
+                backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
+                elevation: const WidgetStatePropertyAll(0),
               ),
-              child: InkWell(
-                onTap: () async {
-                  try {
-                    await _gestionUsuario.cerrarSesion();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sesión cerrada con éxito')),
-                      );
-                      Navigator.pushAndRemoveUntil(context,
-                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
-                        (route) => false,
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error al cerrar sesión: $e')),
-                      );
-                    }
-                  }
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                  child: Row(mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_adminActual.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-                        style: const TextStyle(fontSize: 20, color: Colors.black),
+            )
+          : const Text('Mi Perfil', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: esDesktop ? 20.0 : 10.0),
+            child: InkWell(
+              onTap: () => _logout(context),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (esDesktop) ...[
+                      Text(
+                        _adminActual.nombre, 
+                        overflow: TextOverflow.ellipsis, 
+                        maxLines: 1, 
+                        style: const TextStyle(fontSize: 16, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      CircleAvatar(
-                        backgroundColor: const Color(0xFF216A44),
-                        backgroundImage: _adminActual.imagenUrl != null && _adminActual.imagenUrl!.isNotEmpty
-                            ? NetworkImage(_adminActual.imagenUrl!)
-                            : null,
-                        child: _adminActual.imagenUrl == null || _adminActual.imagenUrl!.isEmpty
-                            ? const Icon(Icons.person, color: Colors.white)
-                            : null,
-                      ),
                     ],
-                  ),
+                    CircleAvatar(
+                      backgroundColor: const Color(0xFF216A44),
+                      backgroundImage: _adminActual.imagenUrl != null && _adminActual.imagenUrl!.isNotEmpty
+                          ? NetworkImage(_adminActual.imagenUrl!)
+                          : null,
+                      child: _adminActual.imagenUrl == null || _adminActual.imagenUrl!.isEmpty
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ],
       ),
-      body: Column(crossAxisAlignment: CrossAxisAlignment.start, 
-        children: [
-          Padding(padding: const EdgeInsets.only(top: 15),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
+      drawer: !esDesktop 
+        ? Drawer(
+            child: ListView(
+              padding: EdgeInsets.zero,
               children: [
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomeAdmin(administrador: widget.administrador)),
-                    );
-                  },
-                  icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Dashboard', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => AdminExplorar(administrador: widget.administrador)),
-                    );
-                  },
-                  icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
-                      fontWeight: FontWeight.w900,
-                    ),
+                UserAccountsDrawerHeader(
+                  decoration: const BoxDecoration(color: Color(0xFF216A44)),
+                  accountName: Text(_adminActual.nombre),
+                  accountEmail: Text(_adminActual.email),
+                  currentAccountPicture: CircleAvatar(
+                    backgroundImage: _adminActual.imagenUrl != null && _adminActual.imagenUrl!.isNotEmpty
+                        ? NetworkImage(_adminActual.imagenUrl!)
+                        : null,
+                    child: _adminActual.imagenUrl == null || _adminActual.imagenUrl!.isEmpty
+                        ? const Icon(Icons.person, size: 40)
+                        : null,
                   ),
                 ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: widget.administrador)),
-                    );
-                  },
-                  icon: const Icon(Icons.person_add_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Usuarios', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
-                ),
-                TextButton.icon(
-                  onPressed:() {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminModeracion(administrador: widget.administrador)));
-                  },
-                  icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
-                ),
-                TextButton.icon(onPressed: null,
-                  icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
-                  fontWeight: FontWeight.w900)),
-                ),
+                ..._buildNavItems(context, isVertical: true),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
+                  onTap: () => _logout(context),
+                )
               ],
             ),
-          ),
+          )
+        : null,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, 
+        children: [
+          if (esDesktop)
+            Padding(
+              padding: const EdgeInsets.only(top: 15, bottom: 25),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
+                children: _buildNavItems(context),
+              ),
+            ),
+
           Expanded(
             child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: esDesktop ? 40.0 : 16.0, 
+                vertical: 20.0
+              ),
               child: Center(
-                child: Padding(padding: const EdgeInsets.only(top: 40, bottom: 40),
-                  child: SizedBox(width: 992, 
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: Container(
+                    padding: EdgeInsets.all(anchoPantalla > 600 ? 40.0 : 20.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white, 
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05), 
+                          blurRadius: 15, 
+                          offset: const Offset(0, 5)
+                        )
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Perfil de Administrador', style: TextStyle(color: Colors.black, fontFamily: 'Idiqlat', 
-                        fontWeight: FontWeight.w800, fontSize: 30),
+                        Text(
+                          'Configuración del Perfil', 
+                          style: TextStyle(
+                            fontSize: esDesktop ? 36 : 28, 
+                            fontFamily: 'Idiqlat', 
+                            color: Colors.black, 
+                            fontWeight: FontWeight.bold
+                          ),
                         ),
-                        const SizedBox(height: 24),
-                        Row(crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 30),
+
+                        // ENCABEZADO DE PERFIL (FLEX DINÁMICO)
+                        Flex(
+                          direction: anchoPantalla > 600 ? Axis.horizontal : Axis.vertical,
+                          crossAxisAlignment: anchoPantalla > 600 ? CrossAxisAlignment.center : CrossAxisAlignment.start,
                           children: [
-                            Expanded(flex: 4,
-                              child: Container(padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                                decoration: BoxDecoration(color: Colors.white,
-                                  borderRadius: BorderRadius.circular(24),
+                            Stack(
+                              children: [
+                                CircleAvatar(
+                                  radius: 60,
+                                  backgroundColor: const Color(0xFF38664D),
+                                  backgroundImage: _adminActual.imagenUrl != null && _adminActual.imagenUrl!.isNotEmpty
+                                      ? NetworkImage(_adminActual.imagenUrl!)
+                                      : null,
+                                  child: _adminActual.imagenUrl == null || _adminActual.imagenUrl!.isEmpty
+                                      ? const Icon(Icons.person, size: 60, color: Colors.white)
+                                      : null,
                                 ),
-                                child: Column(
-                                  children: [
-                                    Container(width: 130, height: 130, 
+                                if (_subiendoImagen)
+                                  Positioned.fill(
+                                    child: Container(
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF38664D), 
-                                        shape: BoxShape.circle,
-                                        image: _adminActual.imagenUrl != null && _adminActual.imagenUrl!.isNotEmpty
-                                            ? DecorationImage(
-                                                image: NetworkImage(_adminActual.imagenUrl!),
-                                                fit: BoxFit.cover,
-                                              )
-                                            : null,
+                                        color: Colors.black45,
+                                        borderRadius: BorderRadius.circular(60),
                                       ),
-                                      child: _adminActual.imagenUrl == null || _adminActual.imagenUrl!.isEmpty
-                                          ? const Icon(Icons.person, size: 65, color: Colors.white)
-                                          : null,
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Text(
-                                      _adminActual.nombre,
-                                      textAlign: TextAlign.center, style: const TextStyle(fontSize: 32, 
-                                      fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800),
-                                    ),
-                                    const Text('Administrador', style: TextStyle(color: Color(0xFF6E867A), fontSize: 18)),
-                                    const SizedBox(height: 25),
-                                    
-                                    // BOTÓN CAMBIAR FOTO 
-                                    OutlinedButton(
-                                      onPressed: _subiendoImagen ? null : () async {
-                                        final ImagePicker picker = ImagePicker();
-                                        final XFile? imagenSeleccionada = await picker.pickImage(
-                                          source: ImageSource.gallery,
-                                          imageQuality: 80,
-                                        );
-
-                                        if (imagenSeleccionada != null) {
-                                          setState(() => _subiendoImagen = true);
-                                          try {
-                                            String? urlDescarga = await _gestionImagen.subirImagen(
-                                              _adminActual.id, 
-                                              imagenSeleccionada
-                                            );
-
-                                            if (urlDescarga != null && context.mounted) {
-                                              setState(() {
-                                                _adminActual = Administrador(
-                                                  id: _adminActual.id,
-                                                  nombre: _adminActual.nombre,
-                                                  email: _adminActual.email,
-                                                  fechaRegistro: _adminActual.fechaRegistro,
-                                                  suspendido: _adminActual.suspendido,
-                                                  imagenUrl: urlDescarga, 
-                                                  nivelAcceso: _adminActual.nivelAcceso, 
-                                                );
-                                              });
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('¡Foto de perfil actualizada con éxito!')),
-                                              );
-                                            }
-                                          } catch (e) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text('Error al subir imagen: $e')),
-                                              );
-                                            }
-                                          } finally {
-                                            if (context.mounted) {
-                                              setState(() => _subiendoImagen = false);
-                                            }
-                                          }
-                                        }
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(color: Color(0xFFCCCCCC)),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                                        minimumSize: const Size(200, 50),
-                                        backgroundColor: const Color(0xFFF5F7F2),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(color: Colors.white),
                                       ),
-                                      child: _subiendoImagen 
-                                          ? const SizedBox(width: 20, height: 20, 
-                                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF38664D)),
-                                            )
-                                          : const Text('Cambiar Foto', style: TextStyle(color: Colors.black, fontSize: 16)),
                                     ),
-                                    const SizedBox(height: 35),
-                                    TextButton(
-                                      onPressed: () async {
-                                        try {
-                                          await _gestionUsuario.cerrarSesion();
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Sesión cerrada con éxito')),
-                                            );
-                                            Navigator.pushAndRemoveUntil(context,
-                                              MaterialPageRoute(builder: (context) => const PantallaInicio(), 
-                                              ),
-                                              (route) => false,
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Error al cerrar sesión: $e')),
-                                            );
-                                          }
-                                        }
-                                      },
-                                      child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.black, 
-                                      fontSize: 18, fontWeight: FontWeight.w500)),
+                                  ),
+                                Positioned(
+                                  bottom: 0, right: 0,
+                                  child: CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: const Color(0xFF216A44),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                                      onPressed: _subiendoImagen ? null : _cambiarImagenPerfil,
                                     ),
-                                  ],
+                                  ),
                                 ),
+                              ],
+                            ),
+                            SizedBox(width: anchoPantalla > 600 ? 30 : 0, height: anchoPantalla > 600 ? 0 : 20),
+                            Expanded(
+                              flex: anchoPantalla > 600 ? 1 : 0,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _adminActual.nombre, 
+                                    style: TextStyle(
+                                      fontSize: anchoPantalla > 600 ? 28 : 22, 
+                                      fontWeight: FontWeight.bold, 
+                                      color: Colors.black, 
+                                      fontFamily: 'Idiqlat'
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Administrador Principal', 
+                                    style: TextStyle(fontSize: 16, color: Color(0xFF6E867A)),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 32),
-                            Expanded(flex: 6,
-                              child: Container(padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                                decoration: BoxDecoration(color: Colors.white,
-                                  borderRadius: BorderRadius.circular(24),
+                            SizedBox(width: anchoPantalla > 600 ? 15 : 0, height: anchoPantalla > 600 ? 0 : 25),
+                            SizedBox(
+                              width: anchoPantalla > 600 ? null : double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF216A44),
+                                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                  elevation: 0,
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildProfileInputField('Nombre', _nombreController),
-                                    _buildDivider(),
-                                    _buildProfileInputField('Correo electrónico', _correoController, isEditable: false),
-                                    const SizedBox(height: 30),
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        try {
-                                          Map<String, dynamic> datosActualizados = {
-                                            'nombre': _nombreController.text,
-                                            'email': _correoController.text,
-                                          };
-
-                                          await _gestionUsuario.editarInformacion(_adminActual.id, datosActualizados);
-
-                                          if (context.mounted) {
-                                            setState(() {
-                                              _adminActual = Administrador(
-                                                  id: _adminActual.id,
-                                                  nombre: _adminActual.nombre,
-                                                  email: _adminActual.email,
-                                                  fechaRegistro: _adminActual.fechaRegistro,
-                                                  suspendido: _adminActual.suspendido,
-                                                  imagenUrl: _adminActual.imagenUrl, 
-                                                  nivelAcceso: _adminActual.nivelAcceso, 
-                                                );
-                                            });
-
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Cambios guardados con éxito')),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Error al guardar cambios: $e')),
-                                            );
-                                          }
-                                        }
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF38664D), foregroundColor: Colors.white,
-                                        elevation: 0, shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12)),
-                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                      ),
-                                      child: const Text('Guardar Cambios', style: TextStyle(fontSize: 16, 
-                                      fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
+                                onPressed: _actualizarDatosPerfil,
+                                child: const Text(
+                                  'Guardar Cambios', 
+                                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ),
                           ],
                         ),
+
+                        const SizedBox(height: 40),
+                        const Divider(color: Color(0xFFEBEBEB), thickness: 1.5),
+                        const SizedBox(height: 20),
+
+                        // FORMULARIO DE CAMPOS DE EDICIÓN
+                        _buildProfileInputField('Nombre Completo', _nombreController, anchoPantalla, isEditable: true),
+                        _buildDivider(),
+                        _buildProfileInputField('Correo Electrónico', _correoController, anchoPantalla, isEditable: false),
+                        _buildDivider(),
                       ],
                     ),
                   ),
@@ -371,23 +406,37 @@ class _PerfilAdministradorState extends State<PerfilAdministrador> {
               ),
             ),
           ),
-        ]
-      )
+        ],
+      ),
     );
   }
 
-  Widget _buildProfileInputField(String label, TextEditingController controller, {bool isEditable = true}) {
-    return Padding(padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
+  Widget _buildProfileInputField(String label, TextEditingController controller, double anchoPantalla, {bool isEditable = true}) {
+    bool usarLayoutHorizontal = anchoPantalla > 550;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Flex(
+        direction: usarLayoutHorizontal ? Axis.horizontal : Axis.vertical,
+        crossAxisAlignment: usarLayoutHorizontal ? CrossAxisAlignment.center : CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 4, 
-            child: Text(label, style: const TextStyle(color: Color(0xFF38664D), fontSize: 18, 
-            fontWeight: FontWeight.w500)),
+          SizedBox(
+            width: usarLayoutHorizontal ? 260 : double.infinity,
+            child: Text(
+              label, 
+              style: const TextStyle(color: Color(0xFF38664D), fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
-          Expanded(flex: 6, 
-            child: TextField(controller: controller, readOnly: !isEditable,
-              style: TextStyle(color: isEditable ? Colors.black : Colors.grey, fontSize: 18),
-              decoration: const InputDecoration(border: InputBorder.none, isDense: true,
+          if (!usarLayoutHorizontal) const SizedBox(height: 6),
+          Expanded(
+            flex: usarLayoutHorizontal ? 1 : 0,
+            child: TextField(
+              controller: controller, 
+              readOnly: !isEditable,
+              style: TextStyle(color: isEditable ? Colors.black : Colors.grey.shade600, fontSize: 18),
+              decoration: const InputDecoration(
+                border: InputBorder.none, 
+                isDense: true,
                 contentPadding: EdgeInsets.symmetric(vertical: 6),
               ),
             ),
@@ -399,8 +448,8 @@ class _PerfilAdministradorState extends State<PerfilAdministrador> {
 
   Widget _buildDivider() {
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 1),
-      child: Divider(color: Color(0xFFEBEBEB), thickness: 1.5),
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Divider(color: Color(0xFFF0F2EE), thickness: 1.0),
     );
   }
 }

@@ -1,5 +1,4 @@
 import 'package:ecostay/models/gestion_usuario.dart';
-import 'package:ecostay/models/prestador_Servicio.dart';
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
 import 'package:ecostay/models/viajero.dart';
@@ -15,7 +14,6 @@ import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/models/gestion_reportes.dart';
-import 'package:ecostay/models/usuario.dart';
 
 class AdminModeracion extends StatefulWidget {
   final Administrador administrador;
@@ -44,6 +42,81 @@ class _AdminModeracionState extends State<AdminModeracion> {
     });
   }
 
+  // Helper para cerrar sesión
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await _gestionUsuario.cerrarSesion();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sesión cerrada con éxito')),
+        );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const PantallaInicio()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cerrar sesión: $e')),
+        );
+      }
+    }
+  }
+
+  // Lista centralizada de items de navegación para reusar en Barra Superior o Drawer
+  List<Widget> _buildNavItems(BuildContext context, {bool isVertical = false}) {
+    final double fontSize = isVertical ? 18 : 22;
+    return [
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomeAdmin(administrador: widget.administrador)),
+          );
+        },
+        icon: Icon(Icons.dns, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Dashboard', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => AdminExplorar(administrador: widget.administrador)),
+          );
+        },
+        icon: Icon(Icons.search, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Explorar', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: widget.administrador)),
+          );
+        },
+        icon: Icon(Icons.person_add_outlined, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Usuarios', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: null,
+        icon: Icon(Icons.shield_outlined, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Moderación', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize, fontWeight: FontWeight.w900)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => PerfilAdministrador(administrador: widget.administrador)),
+          );
+        },
+        icon: Icon(Icons.person_outline, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Perfil', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+    ];
+  }
+
   void _mostrarConfirmacion({
     required String accion,
     required VoidCallback alConfirmar,
@@ -60,7 +133,9 @@ class _AdminModeracionState extends State<AdminModeracion> {
               child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              onPressed: () {Navigator.of(context).pop();alConfirmar();
+              onPressed: () {
+                Navigator.of(context).pop();
+                alConfirmar();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: accion == 'Eliminar' ? const Color(0xFFB72E2E) : const Color(0xFF216A44),
@@ -209,131 +284,111 @@ class _AdminModeracionState extends State<AdminModeracion> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: ColorPalette.bg,
+    double anchoPantalla = MediaQuery.of(context).size.width;
+    bool esDesktop = anchoPantalla > 950;
+
+    return Scaffold(
+      backgroundColor: ColorPalette.bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, centerTitle: true,
-        leading: Padding(padding: const EdgeInsets.only(left: 40.0),
-          child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
-        ),
-        title: SearchBar(
-          hintText: 'Buscar...',
-          hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
-          leading: const Icon(Icons.search, color: Color(0xFF526F75)),
-          backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
-          elevation: const WidgetStatePropertyAll(0),
-        ),
-        actions: [
-          Padding(padding: const EdgeInsets.only(right: 20.0),
-            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
-              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
-              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
-                borderRadius: BorderRadius.circular(8),
+        backgroundColor: const Color(0xFFFFFFFF), 
+        toolbarHeight: esDesktop ? 90 : 70, 
+        centerTitle: esDesktop ? true : false,
+        leading: esDesktop 
+          ? Padding(
+              padding: const EdgeInsets.only(left: 40.0),
+              child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
+            )
+          : null, // Muestra el botón de menú Hamburguesa en móviles automáticamente si hay drawer
+        title: esDesktop 
+          ? SizedBox(
+              width: 400,
+              child: SearchBar(
+                hintText: 'Buscar...',
+                hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
+                leading: const Icon(Icons.search, color: Color(0xFF526F75)),
+                backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
+                elevation: const WidgetStatePropertyAll(0),
               ),
-              child: InkWell(
-                onTap: () async {
-                  try {
-                    await _gestionUsuario.cerrarSesion();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sesión cerrada con éxito')),
-                      );
-                      Navigator.pushAndRemoveUntil(context,
-                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
-                        (route) => false,
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error al cerrar sesión: $e')),
-                      );
-                    }
-                  }
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                  child: Row(mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-                        style: const TextStyle(fontSize: 20, color: Colors.black),
+            )
+          : const Text('EcoStay Moderación', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: esDesktop ? 20.0 : 10.0),
+            child: InkWell(
+              onTap: () => _logout(context),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (esDesktop) ...[
+                      Text(
+                        widget.administrador.nombre, 
+                        overflow: TextOverflow.ellipsis, 
+                        maxLines: 1, 
+                        style: const TextStyle(fontSize: 16, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      CircleAvatar(
-                        backgroundColor: const Color(0xFF216A44),
-                        backgroundImage: widget.administrador.imagenUrl != null && widget.administrador.imagenUrl!.isNotEmpty
-                            ? NetworkImage(widget.administrador.imagenUrl!)
-                            : null,
-                        child: widget.administrador.imagenUrl == null || widget.administrador.imagenUrl!.isEmpty
-                            ? const Icon(Icons.person, color: Colors.white)
-                            : null,
-                      ),
                     ],
-                  ),
+                    CircleAvatar(
+                      backgroundColor: const Color(0xFF216A44),
+                      backgroundImage: widget.administrador.imagenUrl != null && widget.administrador.imagenUrl!.isNotEmpty
+                          ? NetworkImage(widget.administrador.imagenUrl!)
+                          : null,
+                      child: widget.administrador.imagenUrl == null || widget.administrador.imagenUrl!.isEmpty
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ],
       ),
-      body: Column(crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(padding: const EdgeInsets.only(top: 15, bottom: 25),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      // Menú colapsable lateral para móviles y tablets
+      drawer: !esDesktop 
+        ? Drawer(
+            child: ListView(
+              padding: EdgeInsets.zero,
               children: [
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomeAdmin(administrador: widget.administrador)),
-                    );
-                  },
-                  icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Dashboard', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => AdminExplorar(administrador: widget.administrador)),
-                    );
-                  },
-                  icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
-                      fontWeight: FontWeight.w900,
-                    ),
+                UserAccountsDrawerHeader(
+                  decoration: const BoxDecoration(color: Color(0xFF216A44)),
+                  accountName: Text(widget.administrador.nombre),
+                  accountEmail: const Text("Administrador - Moderación"),
+                  currentAccountPicture: CircleAvatar(
+                    backgroundImage: widget.administrador.imagenUrl != null && widget.administrador.imagenUrl!.isNotEmpty
+                        ? NetworkImage(widget.administrador.imagenUrl!)
+                        : null,
+                    child: widget.administrador.imagenUrl == null || widget.administrador.imagenUrl!.isEmpty
+                        ? const Icon(Icons.person, size: 40)
+                        : null,
                   ),
                 ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: widget.administrador)),
-                    );
-                  },
-                  icon: const Icon(Icons.person_add_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Usuarios', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
-                ),
-                TextButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                TextButton.icon(onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => PerfilAdministrador(administrador: widget.administrador)),
-                    );
-                  },
-                  icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
-                  fontWeight: FontWeight.w900)),
-                ),
+                ..._buildNavItems(context, isVertical: true),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
+                  onTap: () => _logout(context),
+                )
               ],
             ),
-          ),
+          )
+        : null,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Mostrar barra de pestañas horizontal solo en resoluciones Desktop
+          if (esDesktop)
+            Padding(
+              padding: const EdgeInsets.only(top: 15, bottom: 25),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: _buildNavItems(context),
+              ),
+            ),
 
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -362,13 +417,27 @@ class _AdminModeracionState extends State<AdminModeracion> {
                   );
                 }
 
-                return ListView.builder(padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 10),
+                // Ajuste dinámico del padding según tamaño del dispositivo
+                return ListView.builder(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: esDesktop ? 60.0 : 20.0, 
+                    vertical: 10
+                  ),
                   itemCount: listaReportes.length + 1,
                   itemBuilder: (context, index) {
                     if (index == 0) {
-                      return const Padding(padding: EdgeInsets.only(bottom: 25),
-                        child: Text('Reportes', style: TextStyle(color: Colors.black, fontSize: 36,
-                            fontWeight: FontWeight.bold, fontFamily: 'Idiqlat',
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          top: esDesktop ? 0.0 : 15.0, 
+                          bottom: 25
+                        ),
+                        child: Text(
+                          'Reportes', 
+                          style: TextStyle(
+                            color: Colors.black, 
+                            fontSize: esDesktop ? 36 : 28,
+                            fontWeight: FontWeight.bold, 
+                            fontFamily: 'Idiqlat',
                           ),
                         ),
                       );
@@ -380,6 +449,7 @@ class _AdminModeracionState extends State<AdminModeracion> {
                       padding: const EdgeInsets.only(bottom: 25),
                       child: _buildCardReporte(
                         context: context,
+                        anchoPantalla: anchoPantalla,
                         reporte: reporte,
                         onIgnorar: () => _mostrarConfirmacion(accion: 'Ignorar', alConfirmar: () => _ignorarReporte(reporte)),
                         onEliminar: () => _mostrarConfirmacion(accion: 'Eliminar', alConfirmar: () => _eliminarContenidoReportado(reporte)),
@@ -397,6 +467,7 @@ class _AdminModeracionState extends State<AdminModeracion> {
 
   Widget _buildCardReporte({
     required BuildContext context,
+    required double anchoPantalla,
     required Map<String, dynamic> reporte,
     required VoidCallback onIgnorar,
     required VoidCallback onEliminar,
@@ -405,18 +476,28 @@ class _AdminModeracionState extends State<AdminModeracion> {
     final String textoBotonDinamico = esDePublicacion ? 'Ver Publicación' : 'Ver Perfil';
     final IconData iconoBotonDinamico = esDePublicacion ? Icons.article_outlined : Icons.account_circle_outlined;
 
-    return Container(padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(25),
+    return Container(
+      padding: EdgeInsets.all(anchoPantalla > 600 ? 25.0 : 16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
         boxShadow: const [
           BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
         ],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Cabecera responsiva: se apila verticalmente si el ancho es menor a 550px
+          Flex(
+            direction: anchoPantalla > 550 ? Axis.horizontal : Axis.vertical,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: anchoPantalla > 550 ? CrossAxisAlignment.center : CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                flex: anchoPantalla > 550 ? 1 : 0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     FutureBuilder<String>(
                       future: _obtenerTituloContenido(reporte),
@@ -427,30 +508,38 @@ class _AdminModeracionState extends State<AdminModeracion> {
                             children: [
                               TextSpan(
                                 text: 'Reporte de: $titulo', 
-                                style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold, 
-                                fontFamily: 'Idiqlat'),
+                                style: TextStyle(
+                                  color: Colors.black, 
+                                  fontSize: anchoPantalla > 600 ? 20 : 18, 
+                                  fontWeight: FontWeight.bold, 
+                                  fontFamily: 'Idiqlat'
+                                ),
                               ),
                             ],
                           ),
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
                         );
                       },
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _formatearTiempo(reporte['fechaReporte']),
-                      style: const TextStyle(color: Colors.grey, fontSize: 14),
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                decoration: BoxDecoration(color: const Color(0xFFB72E2E), borderRadius: BorderRadius.circular(15),
+              if (anchoPantalla <= 550) const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFB72E2E), 
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('Pendiente', style: TextStyle(color: Colors.white, fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: const Text(
+                  'Pendiente', 
+                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -458,39 +547,55 @@ class _AdminModeracionState extends State<AdminModeracion> {
           
           const SizedBox(height: 20),
 
-          Container(width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            decoration: BoxDecoration(color: const Color(0xFFF5F7F2), borderRadius: BorderRadius.circular(15),
+          Container(
+            width: double.infinity, 
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F7F2), 
+              borderRadius: BorderRadius.circular(15),
             ),
-            child: Text('Motivo: ${reporte['motivo'] ?? 'Sin motivo especificado'}',
-              style: const TextStyle(color: Colors.black, fontSize: 18),
+            child: Text(
+              'Motivo: ${reporte['motivo'] ?? 'Sin motivo especificado'}',
+              style: TextStyle(color: Colors.black, fontSize: anchoPantalla > 600 ? 17 : 15),
             ),
           ),
 
           if (reporte['tipo'] == 'CALIFICACION') ...[
             const SizedBox(height: 15),
-            Container(width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-              decoration: BoxDecoration(color: const Color(0xFFFFF5F5), borderRadius: BorderRadius.circular(15), 
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF5F5), 
+                borderRadius: BorderRadius.circular(15), 
                 border: Border.all(color: const Color(0xFFF5C6C6), width: 1),
               ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Contenido del Comentario:',
-                    style: TextStyle(color: Color(0xFFB72E2E), fontSize: 14, fontWeight: FontWeight.bold),
+                  const Text(
+                    'Contenido del Comentario:',
+                    style: TextStyle(color: Color(0xFFB72E2E), fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 6),
                   FutureBuilder<String>(
                     future: _obtenerComentarioReportado(reporte),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const SizedBox(height: 20, width: 20,
+                        return const SizedBox(
+                          height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFB72E2E)),
                         );
                       }
                       
                       final comentarioReal = snapshot.data ?? 'Contenido no disponible';
-                      return Text('"$comentarioReal"',
-                        style: const TextStyle(color: Colors.black87, fontSize: 18, fontStyle: FontStyle.italic),
+                      return Text(
+                        '"$comentarioReal"',
+                        style: TextStyle(
+                          color: Colors.black87, 
+                          fontSize: anchoPantalla > 600 ? 17 : 15, 
+                          fontStyle: FontStyle.italic
+                        ),
                       );
                     },
                   ),
@@ -501,34 +606,34 @@ class _AdminModeracionState extends State<AdminModeracion> {
 
           const SizedBox(height: 20),
 
-          // Fila de Botones de Acción
-          Row(
+          // Wrap Adaptativo para evitar overflows en los botones de acción corporativa
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
               ElevatedButton.icon(
                 onPressed: onIgnorar,
-                icon: const Icon(Icons.check, color: Colors.white),
-                label: const Text('Ignorar', style: TextStyle(fontSize: 18, color: Colors.white)),
+                icon: const Icon(Icons.check, color: Colors.white, size: 20),
+                label: const Text('Ignorar', style: TextStyle(fontSize: 16, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF216A44),
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                   elevation: 0,
                 ),
               ),
-              const SizedBox(width: 15),
 
               ElevatedButton.icon(
                 onPressed: onEliminar,
-                icon: const Icon(Icons.close, color: Colors.white),
-                label: const Text('Eliminar', style: TextStyle(fontSize: 18, color: Colors.white)),
+                icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                label: const Text('Eliminar', style: TextStyle(fontSize: 16, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFB72E2E),
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                   elevation: 0,
                 ),
               ),
-              const SizedBox(width: 15),
 
               OutlinedButton.icon(
                 onPressed: () async {
@@ -599,10 +704,10 @@ class _AdminModeracionState extends State<AdminModeracion> {
                     }
                   }
                 },
-                icon: Icon(iconoBotonDinamico, color: Colors.black),
-                label: Text(textoBotonDinamico, style: const TextStyle(fontSize: 18, color: Colors.black)),
+                icon: Icon(iconoBotonDinamico, color: Colors.black, size: 20),
+                label: Text(textoBotonDinamico, style: const TextStyle(fontSize: 16, color: Colors.black)),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   side: const BorderSide(color: Colors.black, width: 1),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                 ),

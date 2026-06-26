@@ -1,17 +1,15 @@
 import 'package:ecostay/pantallas/iniciar_sesion.dart';
 import 'package:ecostay/pantallas/registro.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
 
 class PantallaInicio extends StatelessWidget {
   const PantallaInicio({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final titleFontSize = min(size.width * 0.12, size.height * 0.14).clamp(32.0, 128.0) as double;
-    final buttonFontSize = min(size.width * 0.07, size.height * 0.08).clamp(18.0, 48.0) as double;
-    final imageWidth = min(size.width * 0.5, 300.0);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 700;
+    final isWide = screenWidth >= 900;
 
     return Scaffold(
       body: Container(
@@ -19,54 +17,222 @@ class PantallaInicio extends StatelessWidget {
           image: DecorationImage(
             image: AssetImage('assets/images/fondo.jpg'),
             fit: BoxFit.cover,
-          ),),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 5),
-          child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(backgroundImage: AssetImage('assets/images/logo.jpg'), radius: 40,),
-                      SizedBox(width: 10,),
-                      Text('Ecostay', style: TextStyle(fontFamily: 'Idiqlat', color: Color(0xFFFFFFFF), 
-                      fontSize: 30),)
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      TextButton(onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const PantallaIniSesion()));
-                      }, child: Text('Iniciar Sesión', 
-                        style: TextStyle(fontFamily: 'Idiqlat', color: Color(0xFFFFFFFF)),)),
-                      TextButton(onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const PantallaRegistro()));
-                      },
-                       child: Container(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
-                        decoration: BoxDecoration(
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height,
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompact ? 24 : 60,
+                  vertical: 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    isCompact
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundImage: const AssetImage('assets/images/logo.jpg'),
+                                    radius: 28,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Flexible(
+                                    child: Text(
+                                      'Ecostay',
+                                      style: TextStyle(
+                                        fontFamily: 'Idiqlat',
+                                        color: Color(0xFFFFFFFF),
+                                        fontSize: 24,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const PantallaIniSesion(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Iniciar Sesión',
+                                      style: TextStyle(
+                                        fontFamily: 'Idiqlat',
+                                        color: Color(0xFFFFFFFF),
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const PantallaRegistro(),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0,
+                                        vertical: 5.0,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFC1DB70),
+                                        borderRadius: BorderRadius.circular(30.0),
+                                      ),
+                                      child: const Text(
+                                        'Registrarse',
+                                        style: TextStyle(
+                                          fontFamily: 'Idiqlat',
+                                          color: Color(0xFF19573A),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundImage: const AssetImage('assets/images/logo.jpg'),
+                                      radius: 40,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Flexible(
+                                      child: Text(
+                                        'Ecostay',
+                                        style: TextStyle(
+                                          fontFamily: 'Idiqlat',
+                                          color: Color(0xFFFFFFFF),
+                                          fontSize: 30,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const PantallaIniSesion(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Iniciar Sesión',
+                                      style: TextStyle(
+                                        fontFamily: 'Idiqlat',
+                                        color: Color(0xFFFFFFFF),
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const PantallaRegistro(),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0,
+                                        vertical: 5.0,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFC1DB70),
+                                        borderRadius: BorderRadius.circular(30.0),
+                                      ),
+                                      child: const Text(
+                                        'Registrarse',
+                                        style: TextStyle(
+                                          fontFamily: 'Idiqlat',
+                                          color: Color(0xFF19573A),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                    SizedBox(height: isCompact ? 24 : 40),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
+                      decoration: BoxDecoration(
                         color: const Color(0xFFC1DB70),
-                        borderRadius: BorderRadius.circular(30.0),),
-                        child: Text('Registrarse', style: TextStyle(fontFamily: 'Idiqlat',
-                        color: Color(0xFF19573A)),),
-                    ))
-                    ],
-                  )
-                ],
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                      child: const Text(
+                        'Turismo Sostenible',
+                        style: TextStyle(
+                          fontFamily: 'Idiqlat',
+                          color: Color(0xFF19573A),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: isWide ? 700 : 500),
+                      child: Text(
+                        'Descubre Venezuela \nlow cost, \nsin intermediarios.',
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontFamily: 'Idiqlat',
+                          color: const Color(0xFFFFFFFF),
+                          fontSize: isCompact ? 34 : isWide ? 56 : 44,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 620),
+                      child: const Text(
+                        'Posadas, campings y rutas auténticas a precios reales. Reserva directo con prestadores locales y viaja con tranquilidad.',
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          color: Color(0xFFFFFFFF),
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 40,),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
-                decoration: BoxDecoration(
-                color: const Color(0xFFC1DB70),
-                borderRadius: BorderRadius.circular(30.0),),
-                child: Text('Turismo Sostenible', style: TextStyle(fontFamily: 'Idiqlat',
-                color: Color(0xFF19573A)),),
-              ),
-              Text('Descubre Venezuela \nlow cost, \nsin intermediarios.', textAlign: TextAlign.left,
-              style: TextStyle(fontFamily: 'Idiqlat', color: Color(0xFFFFFFFF), fontSize: 50),),
-              Text('Posadas, campings y rutas auténticas a precios reales. Reserva directo \ncon prestadores locales y viaja con tranquilidad.', 
-              textAlign: TextAlign.left, style: TextStyle(color: Color(0xFFFFFFFF), fontSize: 15),)
-            ],
+            ),
           ),
         ),
       ),

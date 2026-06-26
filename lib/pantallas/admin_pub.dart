@@ -1,7 +1,9 @@
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/administrador.dart';
+import 'package:ecostay/pantallas/admin_explorar.dart';
 import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
+import 'package:ecostay/pantallas/admin_perfil.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
 import 'package:flutter/material.dart';
@@ -54,236 +56,386 @@ class PantallaPubAdminState extends State<PantallaPubAdmin> {
     }
   }
 
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await _gestionUsuario.cerrarSesion();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sesión cerrada con éxito')),
+        );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const PantallaInicio()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cerrar sesión: $e')),
+        );
+      }
+    }
+  }
+
+  List<Widget> _buildNavItems(BuildContext context, {bool isVertical = false}) {
+    final double fontSize = isVertical ? 18 : 22;
+    return [
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeAdmin(administrador: widget.administrador)));
+        },
+        icon: Icon(Icons.dns, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Dashboard', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminExplorar(administrador: widget.administrador)));
+        },
+        icon: Icon(Icons.search, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Explorar', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: widget.administrador)));
+        }, 
+        icon: Icon(Icons.person_add_outlined, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Usuarios', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminModeracion(administrador: widget.administrador)));
+        }, 
+        icon: Icon(Icons.shield_outlined, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Moderación', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+      TextButton.icon(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => PerfilAdministrador(administrador: widget.administrador)));
+        },
+        icon: Icon(Icons.person_outline, color: const Color(0xFF216A44), size: isVertical ? 24 : 28),
+        label: Text('Perfil', style: TextStyle(color: const Color(0xFF216A44), fontSize: fontSize)),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
+    double anchoPantalla = MediaQuery.of(context).size.width;
+    bool esDesktop = anchoPantalla > 950;
+
     return Scaffold(
       backgroundColor: ColorPalette.bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, centerTitle: true,
-        leading: Padding(padding: const EdgeInsets.only(left: 40.0),
-          child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain,),
-        ),
-        title: SearchBar(
-          hintText: 'Buscar...', 
-          hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
-          leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
-          backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
-          elevation: const WidgetStatePropertyAll(0),
-        ),
-        actions: [
-          Padding(padding: const EdgeInsets.only(right: 20.0),
-            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
-              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
-              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
-                borderRadius: BorderRadius.circular(8),
+        backgroundColor: const Color(0xFFFFFFFF), 
+        toolbarHeight: esDesktop ? 90 : 70, 
+        centerTitle: esDesktop ? true : false,
+        leading: esDesktop 
+          ? Padding(
+              padding: const EdgeInsets.only(left: 40.0),
+              child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
+            )
+          : null,
+        title: esDesktop 
+          ? SizedBox(
+              width: 400,
+              child: SearchBar(
+                hintText: 'Buscar...', 
+                hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
+                leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
+                backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
+                elevation: const WidgetStatePropertyAll(0),
               ),
-              child: InkWell(
-                onTap: () async {
-                  try {
-                    await _gestionUsuario.cerrarSesion();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sesión cerrada con éxito')),
-                      );
-                      Navigator.pushAndRemoveUntil(context,
-                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
-                        (route) => false,
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error al cerrar sesión: $e')),
-                      );
-                    }
-                  }
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                  child: Row(mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-                        style: const TextStyle(fontSize: 20, color: Colors.black),
+            )
+          : const Text('Detalle de Publicación', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: esDesktop ? 20.0 : 10.0),
+            child: InkWell(
+              onTap: () => _logout(context),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (esDesktop) ...[
+                      Text(
+                        widget.administrador.nombre, 
+                        overflow: TextOverflow.ellipsis, 
+                        maxLines: 1, 
+                        style: const TextStyle(fontSize: 16, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      const CircleAvatar(
-                        backgroundColor: Color(0xFF216A44),
-                        child: Icon(Icons.person, color: Colors.white),
-                      ),
                     ],
-                  ),
+                    CircleAvatar(
+                      backgroundColor: const Color(0xFF216A44),
+                      backgroundImage: widget.administrador.imagenUrl != null && widget.administrador.imagenUrl!.isNotEmpty
+                          ? NetworkImage(widget.administrador.imagenUrl!)
+                          : null,
+                      child: widget.administrador.imagenUrl == null || widget.administrador.imagenUrl!.isEmpty
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ],
       ),
-      body: Center(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
-          children: [
-            // MENÚ EXCLUSIVO DE ADMINISTRADOR
-            Padding(padding: const EdgeInsets.only(top: 15),
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeAdmin(administrador: widget.administrador)));
-                    },
-                    icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
-                    label: const Text('Dashboard', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
+      drawer: !esDesktop 
+        ? Drawer(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                UserAccountsDrawerHeader(
+                  decoration: const BoxDecoration(color: Color(0xFF216A44)),
+                  accountName: Text(widget.administrador.nombre),
+                  accountEmail: const Text("Administrador - Gestión"),
+                  currentAccountPicture: CircleAvatar(
+                    backgroundImage: widget.administrador.imagenUrl != null && widget.administrador.imagenUrl!.isNotEmpty
+                        ? NetworkImage(widget.administrador.imagenUrl!)
+                        : null,
+                    child: widget.administrador.imagenUrl == null || widget.administrador.imagenUrl!.isEmpty
+                        ? const Icon(Icons.person, size: 40)
+                        : null,
                   ),
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: widget.administrador)));
-                    }, 
-                    icon: const Icon(Icons.person_add_outlined, color: Color(0xFF216A44), size: 28),
-                    label: const Text('Usuarios', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
-                  ),
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminModeracion(administrador: widget.administrador)));
-                    }, 
-                    icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
-                    label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
-                  ),
-                ],
+                ),
+                ..._buildNavItems(context, isVertical: true),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
+                  onTap: () => _logout(context),
+                )
+              ],
+            ),
+          )
+        : null,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, 
+        children: [
+          if (esDesktop)
+            Padding(
+              padding: const EdgeInsets.only(top: 15, bottom: 15),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
+                children: _buildNavItems(context),
               ),
             ),
 
-            // TARJETA DE DETALLE DE LA PUBLICACIÓN REPORTADA
-            Center(child: Padding(padding: const EdgeInsets.only(top: 50),
-                child: Container(width: 1240, height: 500, 
-                  decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(25)), 
-                  child: Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: esDesktop ? 40.0 : 16.0, 
+                vertical: 20.0
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1240),
+                  child: Container(
+                    padding: EdgeInsets.all(anchoPantalla > 600 ? 30.0 : 16.0),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFFFF), 
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        )
+                      ],
+                    ), 
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Row(mainAxisAlignment: MainAxisAlignment.start, 
-                            children: [
-                              Padding(padding: const EdgeInsets.only(left: 20), 
-                                child: Container(width: 300, height: 250, 
-                                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), 
-                                    image: DecorationImage(
-                                      image: (widget.publicacion.imagenUrl != null && widget.publicacion.imagenUrl!.startsWith('http'))
-                                          ? NetworkImage(widget.publicacion.imagenUrl!) as ImageProvider
-                                          : const AssetImage('assets/images/fondo.jpg'),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+                        // SECCIÓN DE DETALLE DE LA PUBLICACIÓN (FLEX RESPONSIVO)
+                        Flex(
+                          direction: anchoPantalla > 800 ? Axis.horizontal : Axis.vertical,
+                          crossAxisAlignment: anchoPantalla > 800 ? CrossAxisAlignment.start : CrossAxisAlignment.stretch,
+                          children: [
+                            Container(
+                              width: anchoPantalla > 800 ? 300 : double.infinity, 
+                              height: anchoPantalla > 800 ? 250 : 220, 
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20), 
+                                image: DecorationImage(
+                                  image: (widget.publicacion.imagenUrl != null && widget.publicacion.imagenUrl!.startsWith('http'))
+                                      ? NetworkImage(widget.publicacion.imagenUrl!) as ImageProvider
+                                      : const AssetImage('assets/images/fondo.jpg'),
+                                  fit: BoxFit.cover,
                                 ),
                               ),
-                              
-                              // INFO DE LA PUBLICACIÓN
-                              Expanded(
-                                child: Padding(padding: const EdgeInsets.all(20),
-                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
+                            ),
+                            SizedBox(width: anchoPantalla > 800 ? 25 : 0, height: anchoPantalla > 800 ? 0 : 20),
+                            
+                            // INFO DE LA PUBLICACIÓN
+                            Expanded(
+                              flex: anchoPantalla > 800 ? 1 : 0,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start, 
+                                children: [
+                                  Text(
+                                    widget.publicacion.titulo, 
+                                    style: TextStyle(
+                                      fontFamily: 'Idiqlat', 
+                                      fontSize: anchoPantalla > 600 ? 38 : 28, 
+                                      fontWeight: FontWeight.w800
+                                    ), 
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 2,
+                                  ),
+                                  const SizedBox(height: 15),
+                                  Flex(
+                                    direction: anchoPantalla > 600 ? Axis.horizontal : Axis.vertical,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: anchoPantalla > 600 ? CrossAxisAlignment.start : CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        widget.publicacion.titulo, 
-                                        style: const TextStyle(fontFamily: 'Idiqlat', fontSize: 40, 
-                                        fontWeight: FontWeight.w800), overflow: TextOverflow.ellipsis,
+                                      Expanded(
+                                        flex: anchoPantalla > 600 ? 1 : 0,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start, 
+                                          children: [
+                                            Text(
+                                              'Lugar: ${widget.publicacion.ubicacion}', 
+                                              style: TextStyle(fontSize: anchoPantalla > 600 ? 22 : 18), 
+                                              overflow: TextOverflow.ellipsis, 
+                                              maxLines: 2,
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text('Rating: ', style: TextStyle(fontSize: anchoPantalla > 600 ? 22 : 18)),
+                                                const Icon(Icons.star, color: Colors.amber, size: 26),
+                                                Text(
+                                                  ' ${widget.publicacion.calificacionPromedio.toStringAsFixed(1)}', 
+                                                  style: TextStyle(fontSize: anchoPantalla > 600 ? 22 : 18, fontWeight: FontWeight.bold),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      const SizedBox(height: 10),
-                                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, 
-                                        children: [
-                                          Column(crossAxisAlignment: CrossAxisAlignment.start, 
+                                      if (anchoPantalla <= 600) const SizedBox(height: 12),
+                                      Expanded(
+                                        flex: anchoPantalla > 600 ? 1 : 0,
+                                        child: Padding(
+                                          padding: EdgeInsets.only(left: anchoPantalla > 600 ? 16.0 : 0.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start, 
                                             children: [
-                                              Text('Lugar: ${widget.publicacion.ubicacion}', 
-                                                style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
-                                                maxLines: 1),
+                                              Text(
+                                                'Anfitrión: ${widget.publicacion.nombreAnfitrion}', 
+                                                style: TextStyle(fontSize: anchoPantalla > 600 ? 22 : 18), 
+                                                overflow: TextOverflow.ellipsis, 
+                                                maxLines: 2,
+                                              ),
                                               const SizedBox(height: 10),
-                                              Row(mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  const Text('Rating: ', style: TextStyle(fontSize: 30)),
-                                                  const Icon(Icons.star, color: Colors.amber, size: 32),
-                                                  Text(' ${widget.publicacion.calificacionPromedio.toStringAsFixed(1)}', 
-                                                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-                                                ],
+                                              Text(
+                                                'Precio: \$${widget.publicacion.precio.toStringAsFixed(0)}', 
+                                                style: TextStyle(fontSize: anchoPantalla > 600 ? 22 : 18, fontWeight: FontWeight.w600), 
+                                                overflow: TextOverflow.ellipsis, 
+                                                maxLines: 1,
                                               ),
                                             ],
                                           ),
-                                          Padding(padding: const EdgeInsets.only(left: 10),
-                                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, 
-                                              children: [
-                                                Text('Anfitrión: ${widget.publicacion.nombreAnfitrion}', 
-                                                  style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
-                                                  maxLines: 1),
-                                                const SizedBox(height: 10),
-                                                Text('Precio: \$${widget.publicacion.precio.toStringAsFixed(0)}', 
-                                                  style: const TextStyle(fontSize: 30), overflow: TextOverflow.ellipsis, 
-                                                  maxLines: 1),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      )
+                                        ),
+                                      ),
                                     ],
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
+                                  )
+                                ],
+                              ),
+                            )
+                          ],
                         ),
                         
+                        const SizedBox(height: 35),
+                        const Divider(color: Color(0xFFF0F2EE), thickness: 1.5),
+                        const SizedBox(height: 15),
+
                         // TÍTULO DE RESEÑAS
-                        const Padding(padding: EdgeInsets.only(left: 60, right: 40),
-                          child: Text('Reseñas de viajeros', style: TextStyle(fontSize: 30, fontFamily: 'Idiqlat', 
-                            color: Colors.black, fontWeight: FontWeight.w800),
+                        Text(
+                          'Reseñas de viajeros', 
+                          style: TextStyle(
+                            fontSize: anchoPantalla > 600 ? 26 : 22, 
+                            fontFamily: 'Idiqlat', 
+                            color: Colors.black, 
+                            fontWeight: FontWeight.w800
                           ),
                         ),
+                        const SizedBox(height: 15),
                         
-                        // LISTA DE RESEÑAS
-                        Expanded(
-                          child: Padding(padding: const EdgeInsets.only(left: 60, top: 10, bottom: 10),
-                            child: _cargandoCalificaciones
-                                ? const Center(child: CircularProgressIndicator(color: Color(0xFF216A44)))
-                                : widget.publicacion.calificaciones.isEmpty
-                                    ? const Text('No hay reseñas disponibles para esta posada todavía.', 
-                                    style: TextStyle(fontSize: 20, color: Colors.grey))
-                                    : Scrollbar(thumbVisibility: true,
-                                        child: ListView.builder(itemCount: widget.publicacion.calificaciones.length,
-                                          itemBuilder: (context, index) {
-                                            final calificacion = widget.publicacion.calificaciones[index];
-                                            return Padding(padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
-                                              child: Row(
+                        // LISTA DE RESEÑAS CON CONTROLES ANTI-OVERFLOW
+                        _cargandoCalificaciones
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 40.0),
+                                child: Center(child: CircularProgressIndicator(color: Color(0xFF216A44))),
+                              )
+                            : widget.publicacion.calificaciones.isEmpty
+                                ? const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                                    child: Text(
+                                      'No hay reseñas disponibles para esta posada todavía.', 
+                                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: widget.publicacion.calificaciones.length,
+                                    itemBuilder: (context, index) {
+                                      final calificacion = widget.publicacion.calificaciones[index];
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Padding(
+                                              padding: EdgeInsets.only(top: 2.0),
+                                              child: Icon(Icons.circle, color: Color(0xFF216A44), size: 14),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  const Icon(Icons.circle, color: Color(0xFF216A44), size: 24),
-                                                  const SizedBox(width: 15),
-                                                  
-                                                  Text('${calificacion.nombreUsuario}: ', style: const TextStyle(
-                                                    fontSize: 25, fontWeight: FontWeight.bold, color: Colors.black)),
-                                                  
-                                                  Expanded(
-                                                    child: Text(calificacion.comentario, style: const TextStyle(
-                                                      fontSize: 25, color: Colors.black), overflow: TextOverflow.ellipsis,
-                                                      maxLines: 2),
+                                                  Text(
+                                                    '${calificacion.nombreUsuario}:', 
+                                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
                                                   ),
-                                                  
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    calificacion.comentario, 
+                                                    style: const TextStyle(fontSize: 16, color: Colors.black87),
+                                                  ),
+                                                  const SizedBox(height: 6),
                                                   Row(
                                                     children: List.generate(5, (starIndex) {
                                                       return Icon(
                                                         starIndex < calificacion.puntaje ? Icons.star : Icons.star_border,
-                                                        color: Colors.amber, size: 22,
+                                                        color: Colors.amber, 
+                                                        size: 18,
                                                       );
                                                     }),
                                                   ),
-                                                  const SizedBox(width: 20),
                                                 ],
                                               ),
-                                            );
-                                          },
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                          ),
-                        )
+                                      );
+                                    },
+                                  ),
                       ],
                     ),
                   ),
                 ),
               ),
-            )
-          ],
-        ),
+            ),
+          )
+        ],
       ),
     );
   }
