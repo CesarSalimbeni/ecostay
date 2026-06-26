@@ -99,160 +99,161 @@ class _HomeViajeroState extends State<HomeViajero> {
   }
 
   void _mostrarPopUpFiltros(BuildContext context) {
-    final TextEditingController pMinController = TextEditingController(
-      text: _precioMin?.toString() ?? '',
-    );
-    final TextEditingController pMaxController = TextEditingController(
-      text: _precioMax?.toString() ?? '',
-    );
-    String? tempUbicacion = _ubicacionSeleccionada;
-    double tempCalificacion = _calificacionMin ?? 0.0;
+  final TextEditingController pMinController = TextEditingController(
+    text: _precioMin?.toString() ?? '',
+  );
+  final TextEditingController pMaxController = TextEditingController(
+    text: _precioMax?.toString() ?? '',
+  );
+  String? tempUbicacion = _ubicacionSeleccionada;
+  double tempCalificacion = _calificacionMin ?? 0.0;
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            final bool tieneUbicaciones = _ubicacionesDisponibles.isNotEmpty;
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          final bool tieneUbicaciones = _ubicacionesDisponibles.isNotEmpty;
+          final bool isMobile = MediaQuery.of(context).size.width < 768;
 
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), 
-              backgroundColor: ColorPalette.bg,
-              title: const Row(
-                children: [
-                  Icon(Icons.tune, color: Color(0xFF216A44)),
-                  SizedBox(width: 10),
-                  Text('Filtros Inteligentes', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Idiqlat')),
-                ],
-              ),
-              content: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.85, // Ajuste fluido en móviles
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Ubicación disponible:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 8),
-                      
-                      if (!tieneUbicaciones)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 10.0),
-                          child: Text('Cargando ubicaciones de la base de datos...', style: TextStyle(color: Colors.grey)),
-                        )
-                      else
-                        DropdownButtonFormField<String>(
-                          value: _ubicacionesDisponibles.contains(tempUbicacion) ? tempUbicacion : null,
-                          hint: const Text('Todas las regiones disponibles'),
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          items: _ubicacionesDisponibles.map((String ubicacion) {
-                            return DropdownMenuItem<String>(
-                              value: ubicacion,
-                              child: Text(ubicacion),
-                            );
-                          }).toList(),
-                          onChanged: (value) => setDialogState(() => tempUbicacion = value),
-                        ),
-                      const SizedBox(height: 20),
-
-                      const Text('Rango de Precio (\$):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Text(
-                          'Sugerido por el sistema: \$${_precioMinSugerido.toStringAsFixed(0)} a \$${_precioMaxSugerido.toStringAsFixed(0)}',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: pMinController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: 'Min: \$${_precioMinSugerido.toStringAsFixed(0)}',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: TextField(
-                              controller: pMaxController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: 'Max: \$${_precioMaxSugerido.toStringAsFixed(0)}',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      Text(
-                        'Calificación Mínima: ${tempCalificacion == 0.0 ? "Cualquiera" : "${tempCalificacion.toStringAsFixed(1)} ★"}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Slider(
-                        value: tempCalificacion,
-                        min: 0.0,
-                        max: 5.0,
-                        divisions: 5,
-                        activeColor: const Color(0xFF216A44),
-                        inactiveColor: Colors.grey.shade300,
-                        onChanged: (value) => setDialogState(() => tempCalificacion = value),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _ubicacionSeleccionada = null;
-                      _precioMin = null;
-                      _precioMax = null;
-                      _calificacionMin = null;
-                      _presupuestoController.clear(); 
-                    });
-                    _ejecutarBusqueda();
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Limpiar Filtros', style: TextStyle(color: Colors.red)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF216A44)),
-                  onPressed: () {
-                    setState(() {
-                      _ubicacionSeleccionada = tempUbicacion;
-                      _calificacionMin = tempCalificacion == 0.0 ? null : tempCalificacion;
-                      _precioMin = double.tryParse(pMinController.text);
-                      _precioMax = double.tryParse(pMaxController.text);
-                      
-                      if (_precioMax != null) {
-                        _presupuestoController.text = _precioMax!.toStringAsFixed(0);
-                      } else {
-                        _presupuestoController.clear();
-                      }
-                    });
-                    _ejecutarBusqueda(); 
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Aplicar', style: TextStyle(color: Colors.white)),
-                ),
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), 
+            backgroundColor: ColorPalette.bg,
+            title: const Row(
+              children: [
+                Icon(Icons.tune, color: Color(0xFF216A44)),
+                SizedBox(width: 10),
+                Text('Filtros Inteligentes', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Idiqlat')),
               ],
-            );
-          },
-        );
-      },
-    );
-  }
+            ),
+            content: SizedBox(
+              width: isMobile ? MediaQuery.of(context).size.width * 0.85 : 400, 
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Ubicación disponible:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 8),
+                    
+                    if (!tieneUbicaciones)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10.0),
+                        child: Text('Cargando ubicaciones de la base de datos...', style: TextStyle(color: Colors.grey)),
+                      )
+                    else
+                      DropdownButtonFormField<String>(
+                        value: _ubicacionesDisponibles.contains(tempUbicacion) ? tempUbicacion : null,
+                        hint: const Text('Todas las regiones disponibles'),
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        items: _ubicacionesDisponibles.map((String ubicacion) {
+                          return DropdownMenuItem<String>(
+                            value: ubicacion,
+                            child: Text(ubicacion),
+                          );
+                        }).toList(),
+                        onChanged: (value) => setDialogState(() => tempUbicacion = value),
+                      ),
+                    const SizedBox(height: 20),
+
+                    const Text('Rango de Precio (\$):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Text(
+                        'Sugerido por el sistema: \$${_precioMinSugerido.toStringAsFixed(0)} a \$${_precioMaxSugerido.toStringAsFixed(0)}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: pMinController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              hintText: 'Min: \$${_precioMinSugerido.toStringAsFixed(0)}',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: TextField(
+                            controller: pMaxController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              hintText: 'Max: \$${_precioMaxSugerido.toStringAsFixed(0)}',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    Text(
+                      'Calificación Mínima: ${tempCalificacion == 0.0 ? "Cualquiera" : "${tempCalificacion.toStringAsFixed(1)} ★"}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Slider(
+                      value: tempCalificacion,
+                      min: 0.0,
+                      max: 5.0,
+                      divisions: 5,
+                      activeColor: const Color(0xFF216A44),
+                      inactiveColor: Colors.grey.shade300,
+                      onChanged: (value) => setDialogState(() => tempCalificacion = value),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _ubicacionSeleccionada = null;
+                    _precioMin = null;
+                    _precioMax = null;
+                    _calificacionMin = null;
+                    _presupuestoController.clear(); 
+                  });
+                  _ejecutarBusqueda();
+                  Navigator.pop(context);
+                },
+                child: const Text('Limpiar Filtros', style: TextStyle(color: Colors.red)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF216A44)),
+                onPressed: () {
+                  setState(() {
+                    _ubicacionSeleccionada = tempUbicacion;
+                    _calificacionMin = tempCalificacion == 0.0 ? null : tempCalificacion;
+                    _precioMin = double.tryParse(pMinController.text);
+                    _precioMax = double.tryParse(pMaxController.text);
+                    
+                    if (_precioMax != null) {
+                      _presupuestoController.text = _precioMax!.toStringAsFixed(0);
+                    } else {
+                      _presupuestoController.clear();
+                    }
+                  });
+                  _ejecutarBusqueda(); 
+                  Navigator.pop(context);
+                },
+                child: const Text('Aplicar', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -285,49 +286,59 @@ class _HomeViajeroState extends State<HomeViajero> {
         actions: [
           Padding(
             padding: EdgeInsets.only(right: isMobile ? 10.0 : 20.0),
-            child: InkWell(
-              onTap: () async {
-                try {
-                  await _gestionUsuario.cerrarSesion();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Sesión cerrada con éxito')),
-                    );
-                    Navigator.pushAndRemoveUntil(context,
-                      MaterialPageRoute(builder: (context) => const PantallaInicio()),
-                      (route) => false,
-                    );
+            child: Tooltip(
+              message: 'Cerrar sesión', 
+              preferBelow: true, 
+              verticalOffset: 25,
+              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: BoxDecoration(
+                color: const Color(0xFF216A44).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () async {
+                  try {
+                    await _gestionUsuario.cerrarSesion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada con éxito')),
+                      );
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                        (route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al cerrar sesión: $e')),
+                      );
+                    }
                   }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error al cerrar sesión: $e')),
-                    );
-                  }
-                }
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!isMobile) ...[
-                      Text(widget.viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-                        style: const TextStyle(fontSize: 18, color: Colors.black),
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!isMobile) ...[
+                        Text(widget.viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                          style: const TextStyle(fontSize: 18, color: Colors.black),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF216A44),
+                        backgroundImage: widget.viajero.imagenUrl != null && widget.viajero.imagenUrl!.isNotEmpty
+                            ? NetworkImage(widget.viajero.imagenUrl!)
+                            : null,
+                        child: widget.viajero.imagenUrl == null || widget.viajero.imagenUrl!.isEmpty
+                            ? const Icon(Icons.person, color: Colors.white)
+                            : null,
                       ),
-                      const SizedBox(width: 10),
                     ],
-                    CircleAvatar(
-                      backgroundColor: const Color(0xFF216A44),
-                      backgroundImage: widget.viajero.imagenUrl != null && widget.viajero.imagenUrl!.isNotEmpty
-                          ? NetworkImage(widget.viajero.imagenUrl!)
-                          : null,
-                      child: widget.viajero.imagenUrl == null || widget.viajero.imagenUrl!.isEmpty
-                          ? const Icon(Icons.person, color: Colors.white)
-                          : null,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -409,8 +420,8 @@ class _HomeViajeroState extends State<HomeViajero> {
                           }
 
                           final listado = snapshot.data!;
-                          
-                          // Calculamos las columnas del Grid dinámicamente según el ancho
+
+                          // Mantenemos estrictamente tu distribución de columnas original
                           int crossAxisCount = 3;
                           if (constraints.maxWidth < 600) {
                             crossAxisCount = 1; // Teléfonos
@@ -418,36 +429,41 @@ class _HomeViajeroState extends State<HomeViajero> {
                             crossAxisCount = 2; // Tablets
                           }
 
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: listado.length,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              mainAxisExtent: 360, // Altura fija controlada para las tarjetas
-                            ),
-                            itemBuilder: (context, index) {
-                              final publicacion = listado[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(context,
-                                    MaterialPageRoute(builder: (context) => PantallaReserva(
-                                      publicacion: publicacion, viajero: widget.viajero,
-                                      ),
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 1050),
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: listado.length,
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  crossAxisSpacing: 20, // Espaciado elegante original
+                                  mainAxisSpacing: 20,
+                                  mainAxisExtent: constraints.maxWidth < 600 ? 310 : 320,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final publicacion = listado[index];
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(context,
+                                        MaterialPageRoute(builder: (context) => PantallaReserva(
+                                          publicacion: publicacion, viajero: widget.viajero,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: _buildDestinationCard(
+                                      publicacion.titulo, 
+                                      publicacion.ubicacion, 
+                                      '\$${publicacion.precio}', 
+                                      publicacion.imagenUrl ?? 'assets/images/los_roques.jpg',
+                                      publicacion.calificacionPromedio.toStringAsFixed(1),
                                     ),
                                   );
                                 },
-                                child: _buildDestinationCard(
-                                  publicacion.titulo, 
-                                  publicacion.ubicacion, 
-                                  '\$${publicacion.precio}', 
-                                  publicacion.imagenUrl ?? 'assets/images/los_roques.jpg',
-                                  publicacion.calificacionPromedio.toStringAsFixed(1),
-                                ),
-                              );
-                            },
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -579,61 +595,59 @@ class _HomeViajeroState extends State<HomeViajero> {
 
   Widget _buildDestinationCard(String title, String location, String price, String imagePath, String rating) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white, 
-        borderRadius: BorderRadius.circular(24),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Stack(
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                    child: imagePath.startsWith('http')
-                        ? Image.network(
-                            imagePath, fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300], child: const Icon(Icons.image, size: 40)),
-                          )
-                        : Image.asset(
-                            imagePath, fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300], child: const Icon(Icons.image, size: 40)),
-                          ),
-                  ),
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                child: imagePath.startsWith('http')
+                    ? Image.network(
+                        imagePath, height: 185, width: double.infinity, fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(height: 185, color: Colors.grey[300], 
+                        child: const Icon(Icons.image, size: 40)),
+                      )
+                    : Image.asset(
+                        imagePath, height: 185, width: double.infinity, fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(height: 185, color: Colors.grey[300], 
+                        child: const Icon(Icons.image, size: 40)),
+                      ),
+              ),
+              Positioned(top: 12, right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(color: const Color(0xFFC2DC77), borderRadius: BorderRadius.circular(12)),
+                  child: Text(rating, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
                 ),
-                Positioned(
-                  top: 12, right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(color: const Color(0xFFC2DC77), borderRadius: BorderRadius.circular(12)),
-                    child: Text(rating, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, 
-                  style: const TextStyle(fontSize: 18, fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 2),
-                Text(location, maxLines: 1, overflow: TextOverflow.ellipsis, 
-                  style: const TextStyle(color: Color(0xFF6E867A), fontSize: 13)),
-                const SizedBox(height: 8),
-                const Divider(color: Color(0xFFEBEBEB), thickness: 1.5),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Text(price, style: const TextStyle(color: Color(0xFF216A44), fontSize: 20, fontWeight: FontWeight.w800)),
-                ),
-              ],
+          Expanded(
+            child: Padding(padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, 
+                        style: const TextStyle(fontSize: 18, fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 2),
+                      Text(location, maxLines: 1, overflow: TextOverflow.ellipsis, 
+                        style: const TextStyle(color: Color(0xFF6E867A), fontSize: 13)),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      const Divider(color: Color(0xFFEBEBEB), thickness: 1.5, height: 8),
+                      Align(alignment: Alignment.bottomRight,
+                        child: Text(price, style: const TextStyle(color: Color(0xFF216A44), fontSize: 20, fontWeight: FontWeight.w800)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
