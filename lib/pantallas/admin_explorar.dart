@@ -183,8 +183,7 @@ class _AdminExplorarState extends State<AdminExplorar> {
                           const SizedBox(width: 15),
                           Expanded(
                             child: TextField(
-                              controller: pMaxController,
-                              keyboardType: TextInputType.number,
+                              controller: pMaxController, keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 hintText: 'Max: \$${_precioMaxSugerido.toStringAsFixed(0)}',
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -417,41 +416,29 @@ class _AdminExplorarState extends State<AdminExplorar> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start, 
         children: [
-          // Fila de botones de menú superior (solo se muestra en Escritorio)
           if (esDesktop)
-            Padding(
-              padding: const EdgeInsets.only(top: 15, bottom: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
+            Padding(padding: const EdgeInsets.only(top: 15, bottom: 10),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
                 children: _buildNavItems(context),
               ),
             ),
 
           Expanded(
             child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
                 child: Center(
-                  // En lugar de un ancho fijo de 992, limitamos el ancho máximo conservando la estética centralizada en PC
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         
                         // BARRA DE FILTROS RESPONSIVA
-                        Container(
-                          padding: const EdgeInsets.all(12),
+                        Container(padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                          child: Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            alignment: WrapAlignment.start,
-                            crossAxisAlignment: WrapCrossAlignment.center,
+                          child: Wrap(spacing: 12, runSpacing: 12,
+                            alignment: WrapAlignment.start, crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               // Input Buscar
-                              SizedBox(
-                                width: esDesktop ? 350 : double.infinity,
+                              SizedBox(width: esDesktop ? 350 : double.infinity,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12),
                                   decoration: BoxDecoration(color: const Color(0xFFF5F7F2), borderRadius: BorderRadius.circular(12)),
@@ -469,14 +456,12 @@ class _AdminExplorarState extends State<AdminExplorar> {
                               ),
                               
                               // Input Presupuesto
-                              SizedBox(
-                                width: esDesktop ? 200 : double.infinity,
+                              SizedBox(width: esDesktop ? 200 : double.infinity,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12),
                                   decoration: BoxDecoration(color: const Color(0xFFF5F7F2), borderRadius: BorderRadius.circular(12)),
                                   child: TextField(
-                                    controller: _presupuestoController,
-                                    keyboardType: TextInputType.number, 
+                                    controller: _presupuestoController, keyboardType: TextInputType.number, 
                                     style: const TextStyle(color: Color(0xFF526F75)),
                                     onChanged: (value) {
                                       setState(() {
@@ -486,18 +471,15 @@ class _AdminExplorarState extends State<AdminExplorar> {
                                     },
                                     decoration: const InputDecoration(
                                       icon: Icon(Icons.attach_money, color: Color(0xFF526F75), size: 20),
-                                      hintText: 'Presupuesto Máx',
-                                      hintStyle: TextStyle(color: Color(0xFF526F75)),
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(vertical: 14),
+                                      hintText: 'Presupuesto Máx', hintStyle: TextStyle(color: Color(0xFF526F75)), 
+                                      border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 14),
                                     ),
                                   ),
                                 ),
                               ),
                               
                               // Botón de más filtros
-                              SizedBox(
-                                width: esDesktop ? null : double.infinity,
+                              SizedBox(width: esDesktop ? null : double.infinity,
                                 child: OutlinedButton(
                                   onPressed: () => _mostrarPopUpFiltros(context),
                                   style: OutlinedButton.styleFrom(
@@ -515,15 +497,12 @@ class _AdminExplorarState extends State<AdminExplorar> {
                               ),
                               
                               // Botón buscar definitivo
-                              SizedBox(
-                                width: esDesktop ? null : double.infinity,
+                              SizedBox(width: esDesktop ? null : double.infinity,
                                 child: ElevatedButton(
                                   onPressed: () => _ejecutarBusqueda(),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF216A44), 
-                                    foregroundColor: Colors.white, 
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    backgroundColor: const Color(0xFF216A44), foregroundColor: Colors.white, 
+                                    elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                                   ),
                                   child: const Text('Buscar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -541,8 +520,7 @@ class _AdminExplorarState extends State<AdminExplorar> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState == ConnectionState.waiting) {
                               return const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(20.0),
+                                child: Padding(padding: EdgeInsets.all(20.0),
                                   child: CircularProgressIndicator(color: Color(0xFF216A44)),
                                 ),
                               );
@@ -552,8 +530,7 @@ class _AdminExplorarState extends State<AdminExplorar> {
                             }
                             if (!snapshot.hasData || snapshot.data!.isEmpty) {
                               return const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(20.0),
+                                child: Padding(padding: EdgeInsets.all(20.0),
                                   child: Text('No se encontraron hospedajes con los criterios seleccionados.', 
                                     style: TextStyle(fontSize: 18, color: Colors.grey)),
                                 ),
@@ -564,7 +541,6 @@ class _AdminExplorarState extends State<AdminExplorar> {
 
                             return LayoutBuilder(
                               builder: (context, constraints) {
-                                // Determinamos cuántas columnas usar según el ancho disponible en el contenedor
                                 int columnas = 1;
                                 if (constraints.maxWidth > 900) {
                                   columnas = 3;
@@ -572,22 +548,17 @@ class _AdminExplorarState extends State<AdminExplorar> {
                                   columnas = 2;
                                 }
 
-                                // Calculamos el ancho de cada tarjeta restando los espacios (spacing = 16)
                                 double anchoTarjeta = (constraints.maxWidth - (16 * (columnas - 1))) / columnas;
 
-                                return Wrap(
-                                  spacing: 16, 
-                                  runSpacing: 16,
+                                return Wrap(spacing: 16, runSpacing: 16,
                                   children: listado.map((publicacion) {
-                                    return SizedBox(
-                                      width: anchoTarjeta, 
+                                    return SizedBox(width: anchoTarjeta, 
                                       child: GestureDetector(
                                         onTap: () {
                                           Navigator.push(context,
                                             MaterialPageRoute(
                                               builder: (context) => PantallaPubAdmin(
-                                                publicacion: publicacion,
-                                                administrador: widget.administrador,
+                                                publicacion: publicacion, administrador: widget.administrador,
                                               ),
                                             ),
                                           );
@@ -622,19 +593,15 @@ class _AdminExplorarState extends State<AdminExplorar> {
   Widget _buildDestinationCard(String title, String location, String price, String imagePath, String rating) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, 
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
+        color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
         ]
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Stack(
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 child: imagePath.startsWith('http')
                     ? Image.network(
                         imagePath, height: 200, width: double.infinity, fit: BoxFit.cover,
@@ -645,8 +612,7 @@ class _AdminExplorarState extends State<AdminExplorar> {
                         errorBuilder: (context, error, stackTrace) => Container(height: 200, color: Colors.grey[300], child: const Icon(Icons.image, size: 50)),
                       ),
               ),
-              Positioned(
-                top: 12, right: 12,
+              Positioned(top: 12, right: 12,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(color: const Color(0xFFC2DC77), borderRadius: BorderRadius.circular(12)),
@@ -655,18 +621,16 @@ class _AdminExplorarState extends State<AdminExplorar> {
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(padding: const EdgeInsets.all(16),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 22, fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800)),
+                Text(title, style: const TextStyle(fontSize: 22, fontFamily: 'Idiqlat', color: Colors.black, 
+                  fontWeight: FontWeight.w800)),
                 const SizedBox(height: 2),
                 Text(location, style: const TextStyle(color: Color(0xFF6E867A), fontSize: 14)),
                 const SizedBox(height: 10),
                 const Divider(color: Color(0xFFEBEBEB), thickness: 1.5),
-                Align(
-                  alignment: Alignment.bottomRight,
+                Align(alignment: Alignment.bottomRight,
                   child: Text(price, style: const TextStyle(color: Color(0xFF216A44), fontSize: 24, fontWeight: FontWeight.w800)),
                 ),
               ],

@@ -312,13 +312,11 @@ class _AdminModeracionState extends State<AdminModeracion> {
             )
           : const Text('EcoStay Moderación', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         actions: [
-          Padding(
-            padding: EdgeInsets.only(right: esDesktop ? 20.0 : 10.0),
+          Padding(padding: EdgeInsets.only(right: esDesktop ? 20.0 : 10.0),
             child: InkWell(
               onTap: () => _logout(context),
               borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -472,7 +470,7 @@ class _AdminModeracionState extends State<AdminModeracion> {
     required VoidCallback onIgnorar,
     required VoidCallback onEliminar,
   }) {
-    final bool esDePublicacion = reporte['tipo'] == 'PUBLICACION' || reporte['tipo'] == 'CALIFICACION';
+    final bool esDePublicacion = reporte['tipo'] == 'PUBLICACION';
     final String textoBotonDinamico = esDePublicacion ? 'Ver Publicación' : 'Ver Perfil';
     final IconData iconoBotonDinamico = esDePublicacion ? Icons.article_outlined : Icons.account_circle_outlined;
 
@@ -502,7 +500,7 @@ class _AdminModeracionState extends State<AdminModeracion> {
                     FutureBuilder<String>(
                       future: _obtenerTituloContenido(reporte),
                       builder: (context, snapshot) {
-                        String titulo = snapshot.data ?? (esDePublicacion ? 'Comentario / Reseña' : 'Usuario');
+                        String titulo = snapshot.data ?? (esDePublicacion ? 'Publicación' : 'Comentario / Reseña');
                         return Text.rich(
                           TextSpan(
                             children: [
@@ -645,9 +643,7 @@ class _AdminModeracionState extends State<AdminModeracion> {
                     final String objetoId = reporte['objetoId'] ?? '';
                     
                     if (esDePublicacion) {
-                      final String idABuscar = reporte['tipo'] == 'CALIFICACION' 
-                          ? (reporte['publicacionId'] ?? '') 
-                          : objetoId;
+                      final String idABuscar = objetoId;
 
                       Publicacion? pub = await _gestionPublicacion.obtenerPublicacionPorId(idABuscar);
                       if (pub != null && context.mounted) {
@@ -664,36 +660,46 @@ class _AdminModeracionState extends State<AdminModeracion> {
                         throw Exception('La publicación no existe o fue dada de baja.');
                       }
                     } else {
-                      final docUser = await FirebaseFirestore.instance.collection('users').doc(objetoId).get();
-
-                      if (docUser.exists && context.mounted) {
-                        final datos = docUser.data()!;
+                      String idUsuarioBuscar = '';
+                      
+                      if (reporte['tipo'] == 'CALIFICACION') {
+                        final String publicacionId = reporte['publicacionId'] ?? '';
+                        var ratingDoc = await FirebaseFirestore.instance
+                            .collection('publications')
+                            .doc(publicacionId)
+                            .collection('ratings')
+                            .doc(objetoId)
+                            .get();
                         
-                        final viajero = Viajero(
-                          id: docUser.id,
-                          nombre: datos['nombre'] ?? '',
-                          email: datos['email'] ?? '',
-                          suspendido: datos['suspendido'] ?? false, 
-                          fechaRegistro: datos['fechaRegistro'],
-                          telefono: datos['telefono'] ?? '', 
-                          cedula: datos['cedula'] ?? '', 
-                          ciudad: datos['ciudad'] ?? '', 
-                          historialReservas: datos['historialReservas'] != null 
-                              ? List<String>.from(datos['historialReservas']) 
-                              : [],
-                        );
+                        if (ratingDoc.exists) {
+                          final dataComentario = ratingDoc.data();
+                          
+                          idUsuarioBuscar = dataComentario?['viajeroId'] ?? 
+                                            dataComentario?['usuarioId'] ?? 
+                                            reporte['autorObjetoId'] ?? '';
+                        } else {
+                          throw Exception('El comentario asociado al reporte no fue encontrado.');
+                        }
+                      } else {
+                        idUsuarioBuscar = objetoId;
+                      }
 
+                      if (idUsuarioBuscar.isEmpty) {
+                        throw Exception('No se pudo determinar el ID del usuario.');
+                      }
+
+                      final usuarioEncontrado = await _gestionUsuario.obtenerInformacion(idUsuarioBuscar);
+
+                      if (context.mounted) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => PerfilUsuario(
-                              usuarioSeleccionado: viajero,
+                              usuarioSeleccionado: usuarioEncontrado, 
                               administrador: widget.administrador,
                             ),
                           ),
                         );
-                      } else {
-                        throw Exception('El usuario no existe o fue eliminado.');
                       }
                     }
                   } catch (e) {

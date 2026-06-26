@@ -122,7 +122,7 @@ class _HomeAdminState extends State<HomeAdmin> {
               padding: const EdgeInsets.only(left: 20.0),
               child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
             )
-          : null, // Muestra automáticamente el icono hamburguesa en móviles si hay un Drawer
+          : null,
         title: esDesktop 
           ? SizedBox(
               width: 400,
@@ -171,7 +171,6 @@ class _HomeAdminState extends State<HomeAdmin> {
           ),
         ],
       ),
-      // Panel lateral colapsable (Drawer) para móviles
       drawer: !esDesktop 
         ? Drawer(
             child: ListView(
