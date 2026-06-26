@@ -1,21 +1,66 @@
+import 'package:ecostay/models/buscador_exploracion.dart';
+import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
+import 'package:ecostay/pantallas/anf_pub.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/reservas_anf.dart';
+import 'package:ecostay/pantallas/anf_reservas.dart';
 import 'package:ecostay/models/gestion_publicacion.dart';
-import 'package:ecostay/screens/home_anfitrion.dart';
-import 'package:ecostay/screens/perfil_anfitrion_screen.dart'; 
+import 'package:ecostay/pantallas/anf_home.dart';
+import 'package:ecostay/pantallas/anf_perfil.dart';
+import 'package:ecostay/pantallas/pag_inicio.dart'; 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
-class PantallaPublicaciones extends StatelessWidget {
+class PantallaPublicaciones extends StatefulWidget {
   final PrestadorServicio prestador;
+  
   const PantallaPublicaciones({super.key, required this.prestador});
 
+  @override
+  State<PantallaPublicaciones> createState() => _PantallaPublicacionesState();
+}
+
+class _PantallaPublicacionesState extends State<PantallaPublicaciones> {
+  final GestionUsuario _gestionUsuario = GestionUsuario();
+  final TextEditingController _searchController = TextEditingController();
+  
+  String _textoBusqueda = '';
+  late Future<void> _cargarDatosFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatosFuture = widget.prestador.cargarMisDatos();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool _verificarSuspensionYAlertar() {
+    if (widget.prestador.suspendido) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Acción bloqueada: Tu cuenta se encuentra suspendida por la administración.'),
+          backgroundColor: Color(0xFF903030),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return true;
+    }
+    return false;
+  }
+
   void _mostrarDialogoPublicacion(BuildContext context, {Publicacion? publicacionAEditar}) {
+    if (_verificarSuspensionYAlertar()) return;
 
     final bool esEdicion = publicacionAEditar != null;
 
@@ -29,12 +74,18 @@ class PantallaPublicaciones extends StatelessWidget {
       text: esEdicion ? publicacionAEditar.descripcion : '');
     final TextEditingController policancelacionController = TextEditingController(
       text: esEdicion ? publicacionAEditar.politicaCancelacion : '');
+    
+    final TextEditingController cuposController = TextEditingController(
+      text: esEdicion ? (publicacionAEditar.cuposMax?.toString() ?? '1') : '1');
+    final TextEditingController estiloController = TextEditingController(
+      text: esEdicion ? (publicacionAEditar.estilo ?? '') : '');
+
     bool transporteDisponible = esEdicion ? publicacionAEditar.disponibilidadtransporte : false;
     XFile? imagenSeleccionada;
     final ImagePicker picker = ImagePicker();
 
     showDialog(
-      context: context,barrierDismissible: false, 
+      context: context, barrierDismissible: false, 
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, setState) {
           Future<void> seleccionarImagen() async {
@@ -46,11 +97,11 @@ class PantallaPublicaciones extends StatelessWidget {
             }
           }
           return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), backgroundColor: ColorPalette.bg,
           title: Text(esEdicion ? 'Editar Publicación' : 'Crear Nueva Publicación',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF216A44)),
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF216A44), fontFamily: 'Idiqlat'),
           ),
-          content: SizedBox(width: 400,
+          content: SizedBox(width: 450,
             child: SingleChildScrollView(
               child: Column(mainAxisSize: MainAxisSize.min,
                 children: [
@@ -85,11 +136,23 @@ class PantallaPublicaciones extends StatelessWidget {
                         borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
                   ),
                   const SizedBox(height: 15),
-                  TextField(controller: descripcionController,maxLines: 3,
+                  TextField(controller: descripcionController, maxLines: 3,
                     decoration: InputDecoration(labelText: 'Descripción',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       focusedBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(controller: estiloController,
+                    decoration: InputDecoration(
+                      labelText: 'Estilo de hospedaje',
+                      hintText: 'Ej. montaña, playa, bosque',
+                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 15),
                   TextField(controller: ubicacionController,
@@ -106,22 +169,72 @@ class PantallaPublicaciones extends StatelessWidget {
                         borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
                   ),
                   const SizedBox(height: 15),
-                  SwitchListTile(title: const Text('¿Ofrece transporte?'), activeThumbColor: const Color(0xFF216A44),
-                    value: transporteDisponible,onChanged: (bool value) {
-                      setState(() {transporteDisponible = value;});
-                    },
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: Colors.grey.shade300)
-                    ),
+                  
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: cuposController, keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Cupos Max',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            focusedBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      
+                      Expanded(
+                        child: TextField(
+                          controller: precioController, keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Precio (\$)',
+                            prefixIcon: const Icon(Icons.attach_money, color: Color(0xFF216A44), size: 18),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            focusedBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFF216A44), width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              transporteDisponible = !transporteDisponible;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade400),
+                              color: transporteDisponible ? const Color(0xFFE2ECE7) : Colors.transparent,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.directions_bus,
+                                  color: transporteDisponible ? const Color(0xFF216A44) : Colors.grey.shade400,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 4),
+                                const Text('¿Transporte?', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 15),
-                  TextField(controller: precioController,keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Precio por noche (\$)',
-                      prefixIcon: const Icon(Icons.attach_money, color: Color(0xFF216A44)),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF216A44), width: 2),),),
-                  ),
+                  const SizedBox(height: 10),
                 ],
               ),
             ),
@@ -134,8 +247,13 @@ class PantallaPublicaciones extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () async {
+                if (_verificarSuspensionYAlertar()) {
+                  Navigator.pop(context);
+                  return;
+                }
+
                 if (tituloController.text.isEmpty || ubicacionController.text.isEmpty || 
-                    precioController.text.isEmpty ||descripcionController.text.isEmpty) { 
+                    precioController.text.isEmpty || descripcionController.text.isEmpty || cuposController.text.isEmpty) { 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Por favor, llena todos los campos.')),
                   );
@@ -146,31 +264,42 @@ class PantallaPublicaciones extends StatelessWidget {
                   GestionPublicacion gestionPub = GestionPublicacion();
                   GestionImagenPublicacion gestionImg = GestionImagenPublicacion();
                   
+                  int cuposMax = int.tryParse(cuposController.text) ?? 1;
+                  String estiloFinal = estiloController.text.trim().isEmpty ? 'Otros' : estiloController.text.trim();
+
                   if (esEdicion) {
                     await gestionPub.editarPublicacion(
                       publicacionAEditar.id, 
-                      {'titulo': tituloController.text,
+                      {
+                        'titulo': tituloController.text,
                         'descripcion': descripcionController.text,
                         'precio': double.parse(precioController.text),
                         'ubicacion': ubicacionController.text,
                         'politicaCancelacion': policancelacionController.text,
                         'transporte': transporteDisponible,
+                        'estilo': estiloFinal,
+                        'cuposMax': cuposMax,
                       }
                     );
                     if (imagenSeleccionada != null) {
                       await gestionImg.subirImagen(publicacionAEditar.id, imagenSeleccionada!);
                     }
                   } else {
-                    String nuevoId = await gestionPub.crearPublicacion(
-                      titulo: tituloController.text,
-                      descripcion: descripcionController.text,
-                      precio: double.parse(precioController.text),
-                      ubicacion: ubicacionController.text,
-                      autoruid: prestador.id, 
-                      disponibilidadtransporte: transporteDisponible,
-                      politicaCancelacion: policancelacionController.text,
-                      nombreAnfitrion: prestador.nombre, 
-                    );
+                    String nuevoId = await gestionPub.crearPublicacion({
+                      'titulo': tituloController.text,
+                      'descripcion': descripcionController.text,
+                      'precio': double.parse(precioController.text),
+                      'ubicacion': ubicacionController.text,
+                      'providerId': widget.prestador.id,
+                      'autoruid': widget.prestador.id, 
+                      'disponibilidadtransporte': transporteDisponible,
+                      'politicaCancelacion': policancelacionController.text,
+                      'nombreAnfitrion': widget.prestador.nombre,
+                      'estilo': estiloFinal,
+                      'cuposMax': cuposMax,
+                      'cuposActual': 0,
+                      'calificacionPromedio': 0.0,
+                    });
                     if (imagenSeleccionada != null) {
                       await gestionImg.subirImagen(nuevoId, imagenSeleccionada!);
                     }
@@ -182,12 +311,12 @@ class PantallaPublicaciones extends StatelessWidget {
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(esEdicion ? '¡Publicación actualizada exitosamente!' 
-                      : '¡Publicación creada exitosamente!'),backgroundColor: const Color(0xFF216A44),
+                      : '¡Publicación creada exitosamente!'), backgroundColor: const Color(0xFF216A44),
                     ),
                   );
 
                   Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: prestador)),
+                    MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: widget.prestador)),
                   );
                 } catch (e) {
                   if (!context.mounted) return;
@@ -208,6 +337,9 @@ class PantallaPublicaciones extends StatelessWidget {
   }
 
   void _eliminarPublicacion(BuildContext context, String publicacionId) {
+    // Si está suspendido, se bloquea por completo el acceso a borrar
+    if (_verificarSuspensionYAlertar()) return;
+
     showDialog(context: context,
       builder: (BuildContext context) {
         return AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -235,7 +367,7 @@ class PantallaPublicaciones extends StatelessWidget {
                   );
 
                   Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: prestador)),
+                    MaterialPageRoute(builder: (context) => PantallaPublicaciones(prestador: widget.prestador)),
                   );
                 } catch (e) {
                   if (!context.mounted) return;
@@ -264,29 +396,74 @@ class PantallaPublicaciones extends StatelessWidget {
           child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
         ),
         title: SearchBar(
-          hintText: 'Buscar...', 
+          controller: _searchController,
+          hintText: 'Buscar por título...', 
           hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
           leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
           backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
           elevation: const WidgetStatePropertyAll(0),
+          onChanged: (value) {
+            setState(() {
+              _textoBusqueda = value;
+            });
+          }, 
         ),
         actions: [
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: Text(prestador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-            style: const TextStyle(fontSize: 20),
+          Padding(padding: const EdgeInsets.only(right: 20.0),
+            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
+              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () async {
+                  try {
+                    await _gestionUsuario.cerrarSesion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada con éxito')),
+                      );
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                        (route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al cerrar sesión: $e')),
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text( widget.prestador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                        style: const TextStyle(fontSize: 20, color: Colors.black),
+                      ),
+                      const SizedBox(width: 10),
+                      CircleAvatar(
+                      backgroundColor: const Color(0xFF216A44),
+                      backgroundImage: (widget.prestador.imagenUrl != null && widget.prestador.imagenUrl!.isNotEmpty)
+                          ? NetworkImage(widget.prestador.imagenUrl!)
+                          : null,
+                      child: (widget.prestador.imagenUrl == null || widget.prestador.imagenUrl!.isEmpty)
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
+                    ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: const CircleAvatar(
-              backgroundColor: Color(0xFF216A44),
-              child: Icon(Icons.person, color: Colors.white),
-            ),
-          )
         ],
       ),
       
       body: FutureBuilder<void>(
-        future: prestador.cargarMisDatos(),
+        future: _cargarDatosFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -300,6 +477,10 @@ class PantallaPublicaciones extends StatelessWidget {
             );
           }
 
+          final publicacionesFiltradas = widget.prestador.publicaciones.where((pub) {
+            return pub.titulo.toLowerCase().contains(_textoBusqueda.toLowerCase());
+          }).toList();
+
           return Column(crossAxisAlignment: CrossAxisAlignment.start, 
             children: [
               Padding(padding: const EdgeInsets.only(top: 15),
@@ -307,7 +488,7 @@ class PantallaPublicaciones extends StatelessWidget {
                   children: [
                     TextButton.icon(
                       onPressed: () {Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => HomeAnfitrion(prestador: prestador)),
+                      MaterialPageRoute(builder: (context) => HomeAnfitrion(prestador: widget.prestador)),
                       );
                     },  
                       icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
@@ -322,7 +503,7 @@ class PantallaPublicaciones extends StatelessWidget {
                     TextButton.icon(
                       onPressed: () {
                         Navigator.pushReplacement(context,
-                          MaterialPageRoute(builder: (context) => PantallaReservasH(prestador: prestador),
+                          MaterialPageRoute(builder: (context) => PantallaReservasH(prestador: widget.prestador),
                           ),
                         );
                       }, 
@@ -331,7 +512,7 @@ class PantallaPublicaciones extends StatelessWidget {
                     ),
                     TextButton.icon(
                       onPressed: () {Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => PerfilAnfitrion(prestador: prestador)),
+                      MaterialPageRoute(builder: (context) => PerfilAnfitrion(prestador: widget.prestador)),
                       );
                     }, 
                       icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
@@ -345,18 +526,22 @@ class PantallaPublicaciones extends StatelessWidget {
                 child: Stack(
                   children: [
                     SizedBox(width: double.infinity,
-                      child: prestador.publicaciones.isEmpty
-                          ? const Center(
+                      child: publicacionesFiltradas.isEmpty
+                          ? Center(
                               child: Text(
-                                'Aún no tienes publicaciones creadas.',
-                                style: TextStyle(fontSize: 18, color: Colors.grey),
+                                _textoBusqueda.isEmpty 
+                                    ? 'Aún no tienes publicaciones creadas.'
+                                    : 'No se encontraron resultados para "$_textoBusqueda"',
+                                style: const TextStyle(fontSize: 18, color: Colors.grey),
                               ),
                             )
                           : SingleChildScrollView(
                               padding: const EdgeInsets.only(left: 40.0, top: 40.0, bottom: 40.0, right: 120.0),
                               child: Wrap(alignment: WrapAlignment.center, spacing: 30.0, runSpacing: 30.0,
-                                children: prestador.publicaciones.map((pub) {
+                                children: publicacionesFiltradas.map((pub) {
                                   return _buildPublicacionCard(
+                                    context: context,
+                                    pub: pub,
                                     titulo: pub.titulo,
                                     subtitulo: pub.ubicacion,
                                     precio: pub.precio,
@@ -393,8 +578,9 @@ class PantallaPublicaciones extends StatelessWidget {
     );
   }
 
-
   Widget _buildPublicacionCard({
+    required BuildContext context,
+    required Publicacion pub,
     required String titulo,
     required String subtitulo,
     required double precio,
@@ -463,9 +649,13 @@ class PantallaPublicaciones extends StatelessWidget {
           Padding(padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildActionBtn(Icons.visibility_outlined, const Color(0xFF216A44), () { /* Read view action */ }),
-                _buildActionBtn(Icons.edit_outlined, const Color(0xFF216A44), onEdit), // <-- Botón de modificar enlazado
-                _buildActionBtn(Icons.delete_outline, const Color(0xFF903030), onDelete), // <-- Botón de eliminar enlazado
+                _buildActionBtn(Icons.visibility_outlined, const Color(0xFF216A44), () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => PantallaPubReserv(
+                        publicacion: pub, prestador: widget.prestador,),),
+                  );
+                }),
+                _buildActionBtn(Icons.edit_outlined, const Color(0xFF216A44), onEdit), 
+                _buildActionBtn(Icons.delete_outline, const Color(0xFF903030), onDelete), 
               ],
             ),
           ),

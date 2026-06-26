@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'gestion_reportes.dart'; 
+import 'gestion_reportes.dart';
 
 class Reporte {
   final String id;

@@ -1,10 +1,14 @@
 import 'dart:math';
+import 'dart:io'; 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart'; 
+import 'package:image_picker/image_picker.dart'; 
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
-import 'package:ecostay/pantallas/publicaciones_anf.dart';
-import 'package:ecostay/pantallas/reservas_anf.dart';
-import 'package:ecostay/screens/home_anfitrion.dart';
+import 'package:ecostay/pantallas/anf_publicaciones.dart';
+import 'package:ecostay/pantallas/anf_reservas.dart';
+import 'package:ecostay/pantallas/anf_home.dart';
 import 'package:flutter/material.dart';
 import 'package:ecostay/models/prestador_servicio.dart';
 
@@ -26,13 +30,15 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
   late TextEditingController _paypalController;
 
   final GestionUsuario _gestionUsuario = GestionUsuario();
-  
   late PrestadorServicio _prestadorActual;
+
+  XFile? _imagenSeleccionada;
+  final ImagePicker _picker = ImagePicker();
+  bool _cargandoDatos = true;
 
   @override
   void initState() {
     super.initState();
-
     _prestadorActual = widget.prestador;
 
     _nombreController = TextEditingController(text: _prestadorActual.nombre);
@@ -41,6 +47,32 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
     _rifController = TextEditingController(text: _prestadorActual.rif);
     _direccionController = TextEditingController(text: _prestadorActual.direccion);
     _paypalController = TextEditingController(text: _prestadorActual.cuentaPayPal);
+
+    _initPerfil();
+  }
+
+  Future<void> _initPerfil() async {
+    try {
+      final usuarioFresco = await _gestionUsuario.obtenerInformacion(widget.prestador.id);
+      
+      if (mounted && usuarioFresco is PrestadorServicio) {
+        setState(() {
+          _prestadorActual = usuarioFresco;
+          
+          _nombreController.text = _prestadorActual.nombre;
+          _emailController.text = _prestadorActual.email;
+          _telefonoController.text = _prestadorActual.telefono;
+          _rifController.text = _prestadorActual.rif;
+          _direccionController.text = _prestadorActual.direccion;
+          _paypalController.text = _prestadorActual.cuentaPayPal;
+          _cargandoDatos = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cargandoDatos = false);
+      }
+    }
   }
 
   @override
@@ -54,17 +86,26 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
     super.dispose();
   }
 
+  Future<void> _seleccionarImagen() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _imagenSeleccionada = image;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final fontSize = min(size.width * 0.11, size.height * 0.11).clamp(28.0, 96.0) as double;
-
-    return Scaffold(
-      backgroundColor: ColorPalette.bg,
+    if (_cargandoDatos) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF38664D))),
+      );
+    }
+    return Scaffold(backgroundColor: ColorPalette.bg,
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 40.0),
+        leading: Padding(padding: const EdgeInsets.only(left: 40.0),
           child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
         ),
         title: SearchBar(
@@ -75,30 +116,69 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
           elevation: const WidgetStatePropertyAll(0),
         ),
         actions: [
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            // Usamos _prestadorActual para reflejar cambios en la UI
-            child: Text(_prestadorActual.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-            style: const TextStyle(fontSize: 20),
+          Padding(padding: const EdgeInsets.only(right: 20.0),
+            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
+              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () async {
+                  try {
+                    await _gestionUsuario.cerrarSesion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada con éxito')),
+                      );
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                        (route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al cerrar sesión: $e')),
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text( _prestadorActual.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                        style: const TextStyle(fontSize: 20, color: Colors.black),
+                      ),
+                      const SizedBox(width: 10),
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF216A44),
+                        backgroundImage: _imagenSeleccionada != null
+                            ? (kIsWeb
+                                ? NetworkImage(_imagenSeleccionada!.path)
+                                : FileImage(File(_imagenSeleccionada!.path)) as ImageProvider)
+                            : (_prestadorActual.imagenUrl != null && _prestadorActual.imagenUrl!.isNotEmpty)
+                                ? NetworkImage(_prestadorActual.imagenUrl!)
+                                : null,
+                        child: (_imagenSeleccionada == null && (_prestadorActual.imagenUrl == null || _prestadorActual.imagenUrl!.isEmpty))
+                            ? const Icon(Icons.person, color: Colors.white)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 10.0),
-            child: const CircleAvatar(
-              backgroundColor: Color(0xFF216A44),
-              child: Icon(Icons.person, color: Colors.white),
-            ),
-          )
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, 
+      body: Column(crossAxisAlignment: CrossAxisAlignment.start, 
         children: [
           Padding(padding: const EdgeInsets.only(top: 15),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
               children: [
                 TextButton.icon(
                   onPressed: () {Navigator.pushReplacement(context,
-                      // Pasamos el prestador actualizado al navegar
                       MaterialPageRoute(builder: (context) => HomeAnfitrion(prestador: _prestadorActual)),
                     );
                   }, 
@@ -145,22 +225,26 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                         ),
                         const SizedBox(height: 30),
                         
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // COLUMNA IZQUIERDA: Tarjeta del Avatar
                             Expanded(flex: 4,
                               child: Container(padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                                decoration: BoxDecoration(color: Colors.white, 
-                                borderRadius: BorderRadius.circular(25),
+                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25),
                                 ),
                                 child: Column(
                                   children: [
                                     Container(width: 130, height: 130,
-                                      decoration: const BoxDecoration(color: Color(0xFF38664D), 
-                                      shape: BoxShape.circle,
+                                      decoration: const BoxDecoration(color: Color(0xFF38664D), shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.person, color: Colors.white, size: 70),
+                                      child: ClipOval(
+                                        child: _imagenSeleccionada != null
+                                            ? (kIsWeb
+                                                ? Image.network(_imagenSeleccionada!.path, fit: BoxFit.cover)
+                                                : Image.file(File(_imagenSeleccionada!.path), fit: BoxFit.cover))
+                                            : (_prestadorActual.imagenUrl != null && _prestadorActual.imagenUrl!.isNotEmpty)
+                                                ? Image.network(_prestadorActual.imagenUrl!, fit: BoxFit.cover)
+                                                : const Icon(Icons.person, color: Colors.white, size: 70),
+                                      ),
                                     ),
                                     const SizedBox(height: 20),
                                     Text(
@@ -171,7 +255,7 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                                     const Text('Anfitrión', style: TextStyle(color: Color(0xFF6E867A), fontSize: 18)),
                                     const SizedBox(height: 25),
                                     OutlinedButton(
-                                      onPressed: () {},
+                                      onPressed: _seleccionarImagen, 
                                       style: OutlinedButton.styleFrom(
                                         side: const BorderSide(color: Color(0xFFCCCCCC)),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -185,15 +269,11 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                                     TextButton(
                                       onPressed: () async {
                                         try {
-                                          // 1. Cerramos la sesión en Firebase
                                           await _gestionUsuario.cerrarSesion();
-                                          
                                           if (context.mounted) {
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               const SnackBar(content: Text('Sesión cerrada con éxito')),
                                             );
-
-                                            // 2. Navegamos a la pantalla de login limpiando el historial de navegación
                                             Navigator.pushAndRemoveUntil(context,
                                               MaterialPageRoute(builder: (context) => const PantallaInicio(), 
                                               ),
@@ -218,10 +298,8 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                             
                             const SizedBox(width: 40),
                             
-                            // COLUMNA DERECHA: Detalles del perfil
                             Expanded(flex: 6,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                              child: Container(padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
                                 decoration: BoxDecoration(color: Colors.white,
                                   borderRadius: BorderRadius.circular(25),
                                 ),
@@ -229,23 +307,42 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                                   children: [
                                     _buildEditableProfileItem('Responsable', _nombreController, 'No especificado'),
                                     _buildDivider(),
+                                    // MODIFICADO: Correo deshabilitado
                                     _buildEditableProfileItem('Correo', _emailController, 'No especificado', 
-                                    keyboardType: TextInputType.emailAddress),
+                                        keyboardType: TextInputType.emailAddress),
                                     _buildDivider(),
                                     _buildEditableProfileItem('Teléfono', _telefonoController, 'No especificado', 
-                                    keyboardType: TextInputType.phone),
+                                        keyboardType: TextInputType.phone),
                                     _buildDivider(),
-                                    _buildEditableProfileItem('Rif', _rifController, 'No especificado'),
+                                    // MODIFICADO: RIF deshabilitado
+                                    _buildEditableProfileItem('Rif', _rifController, 'No especificado', enabled: false),
                                     _buildDivider(),
                                     _buildEditableProfileItem('Dirección Fiscal', _direccionController, 
-                                    'No especificado'),
+                                        'No especificado'),
                                     _buildDivider(),
                                     _buildEditableProfileItem('Cuenta PayPal', _paypalController, 'No especificado', 
-                                    keyboardType: TextInputType.emailAddress),
+                                        keyboardType: TextInputType.emailAddress),
                                     const SizedBox(height: 20),
                                     ElevatedButton(
                                       onPressed: () async {
                                         try {
+                                          String? nuevaUrl = _prestadorActual.imagenUrl; 
+                                            if (_imagenSeleccionada != null) {
+                                              GestionImagenPerfil gestionImgPerfil = GestionImagenPerfil();
+                                              
+                                              final urlSubida = await gestionImgPerfil.subirImagen(_prestadorActual.id, _imagenSeleccionada!);
+                                              
+                                              if (urlSubida != null && urlSubida.isNotEmpty) {
+                                                nuevaUrl = urlSubida;
+                                                
+                                                final usuarioAuth = FirebaseAuth.instance.currentUser;
+                                                if (usuarioAuth != null) {
+                                                  await usuarioAuth.updatePhotoURL(nuevaUrl);
+                                                  await usuarioAuth.updateDisplayName(_nombreController.text);
+                                                }
+                                              }
+                                            }
+                                          
                                           Map<String, dynamic> datosActualizados = {
                                             'nombre': _nombreController.text,
                                             'email': _emailController.text,
@@ -253,26 +350,27 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
                                             'rif': _rifController.text,
                                             'direccion': _direccionController.text,
                                             'cuentaPayPal': _paypalController.text,
+                                            'imagenUrl': nuevaUrl ?? _prestadorActual.imagenUrl,
                                           };
 
-                                          // Enviamos la edición a Firebase
                                           await _gestionUsuario.editarInformacion(_prestadorActual.id, datosActualizados);
 
                                           if (context.mounted) {
-                                            // Actualizamos el estado local para redibujar la UI con los nuevos cambios
                                             setState(() {
                                               _prestadorActual = PrestadorServicio(
                                                 id: _prestadorActual.id,
                                                 nombre: _nombreController.text,
                                                 email: _emailController.text,
-                                                password: _prestadorActual.password,
                                                 fechaRegistro: _prestadorActual.fechaRegistro,
                                                 rif: _rifController.text,
                                                 telefono: _telefonoController.text,
                                                 direccion: _direccionController.text,
                                                 cuentaPayPal: _paypalController.text,
                                                 estadisticas: _prestadorActual.estadisticas,
+                                                suspendido: _prestadorActual.suspendido,
+                                                imagenUrl: nuevaUrl,
                                               );
+                                              _imagenSeleccionada = null;
                                             });
 
                                             ScaffoldMessenger.of(context).showSnackBar(
@@ -314,8 +412,9 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
     );
   }
 
+  // MODIFICADO: Agregado el parámetro opcional `enabled` (por defecto true)
   Widget _buildEditableProfileItem(String label, TextEditingController controller, String hint, 
-  {TextInputType keyboardType = TextInputType.text}) {
+  {TextInputType keyboardType = TextInputType.text, bool enabled = true}) {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 1),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -323,9 +422,8 @@ class _PerfilAnfitrionState extends State<PerfilAnfitrion> {
             fontSize: 18, fontWeight: FontWeight.w500)),
           ),
           Expanded(flex: 6, child: TextFormField(
-              controller: controller,
-              keyboardType: keyboardType,
-              style: const TextStyle(color: Colors.black, fontSize: 18),
+              controller: controller, keyboardType: keyboardType, enabled: enabled,
+              style: TextStyle(color: enabled ? Colors.black : Colors.grey.shade500, fontSize: 18),
               decoration: InputDecoration(isDense: true, hintText: hint,
                 hintStyle: const TextStyle(color: Colors.grey, fontSize: 18),
                 border: InputBorder.none, focusedBorder: InputBorder.none,

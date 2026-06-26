@@ -1,27 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ecostay/models/viajero.dart';
+import 'package:ecostay/models/administrador.dart';
+import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/publicacion.dart';
+import 'package:ecostay/pantallas/admin_home.dart';
+import 'package:ecostay/pantallas/admin_moderacion.dart';
+import 'package:ecostay/pantallas/admin_perfil.dart';
+import 'package:ecostay/pantallas/admin_pub.dart';
+import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
-import 'package:ecostay/pantallas/reserva_viaj.dart';
+import 'package:ecostay/pantallas/pag_inicio.dart';
+import 'package:ecostay/pantallas/reserva_viaj_main.dart';
+import 'package:ecostay/pantallas/viaj_mis_reservas.dart';
 import 'package:ecostay/models/buscador_exploracion.dart'; 
 import 'package:flutter/material.dart';
-import 'perfil_viajero_screen.dart';
+import 'viaj_perfil.dart';
 
-class HomeViajero extends StatefulWidget {
-  final Viajero viajero; 
+class AdminExplorar extends StatefulWidget {
+  final Administrador administrador; 
 
-  const HomeViajero({super.key, required this.viajero});
+  const AdminExplorar({super.key, required this.administrador});
 
   @override
-  State<HomeViajero> createState() => _HomeViajeroState();
+  State<AdminExplorar> createState() => _AdminExplorarState();
 }
 
-class _HomeViajeroState extends State<HomeViajero> {
+class _AdminExplorarState extends State<AdminExplorar> {
   final BuscadorExploracion _buscador = BuscadorExploracion();
+  final GestionUsuario _gestionUsuario = GestionUsuario();
   
   final TextEditingController _searchController = TextEditingController();
-  // Controlador para la barra de presupuesto superior
   final TextEditingController _presupuestoController = TextEditingController();
 
   String? _ubicacionSeleccionada;
@@ -114,16 +121,15 @@ class _HomeViajeroState extends State<HomeViajero> {
             final bool tieneUbicaciones = _ubicacionesDisponibles != null && _ubicacionesDisponibles.isNotEmpty;
 
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), backgroundColor: ColorPalette.bg,
               title: const Row(
                 children: [
                   Icon(Icons.tune, color: Color(0xFF216A44)),
                   SizedBox(width: 10),
-                  Text('Filtros Inteligentes', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Filtros Inteligentes', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Idiqlat')),
                 ],
               ),
-              content: SizedBox(
-                width: 400,
+              content: SizedBox(width: 400,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -216,7 +222,7 @@ class _HomeViajeroState extends State<HomeViajero> {
                       _precioMin = null;
                       _precioMax = null;
                       _calificacionMin = null;
-                      _presupuestoController.clear(); // Limpia la barra superior también
+                      _presupuestoController.clear(); 
                     });
                     _ejecutarBusqueda();
                     Navigator.pop(context);
@@ -232,7 +238,6 @@ class _HomeViajeroState extends State<HomeViajero> {
                       _precioMin = double.tryParse(pMinController.text);
                       _precioMax = double.tryParse(pMaxController.text);
                       
-                      // Refleja el precio máximo del pop-up en la barra superior
                       if (_precioMax != null) {
                         _presupuestoController.text = _precioMax!.toStringAsFixed(0);
                       } else {
@@ -259,8 +264,7 @@ class _HomeViajeroState extends State<HomeViajero> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, 
         centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 40.0),
+        leading: Padding(padding: const EdgeInsets.only(left: 40.0),
           child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain,),
         ),
         title: SearchBar(
@@ -273,16 +277,56 @@ class _HomeViajeroState extends State<HomeViajero> {
           onChanged: (value) => _ejecutarBusqueda(), 
         ),
         actions: [
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: Text(widget.viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-            style: const TextStyle(fontSize: 20)),
-          ),
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: const CircleAvatar(
-              backgroundColor: Color(0xFF216A44),
-              child: Icon(Icons.person, color: Colors.white),
+          Padding(padding: const EdgeInsets.only(right: 20.0),
+            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
+              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () async {
+                  try {
+                    await _gestionUsuario.cerrarSesion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada con éxito')),
+                      );
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                        (route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al cerrar sesión: $e')),
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                        style: const TextStyle(fontSize: 20, color: Colors.black),
+                      ),
+                      const SizedBox(width: 10),
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF216A44),
+                        backgroundImage: widget.administrador.imagenUrl != null && widget.administrador.imagenUrl!.isNotEmpty
+                            ? NetworkImage(widget.administrador.imagenUrl!)
+                            : null,
+                        child: widget.administrador.imagenUrl == null || widget.administrador.imagenUrl!.isEmpty
+                            ? const Icon(Icons.person, color: Colors.white)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          )
+          ),
         ],
       ),
       body: Column(crossAxisAlignment: CrossAxisAlignment.start, 
@@ -290,28 +334,50 @@ class _HomeViajeroState extends State<HomeViajero> {
           Padding(padding: const EdgeInsets.only(top: 15),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
               children: [
-                TextButton.icon(onPressed: null, 
-                  icon: const Icon(Icons.search, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
-                  fontWeight: FontWeight.w900)),
-                ),
-                TextButton.icon(onPressed: () {
-                  Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => PantallaMisReservas(viajero: widget.viajero),
-                      ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomeAdmin(administrador: widget.administrador)),
                     );
                   },
-                  icon: const Icon(Icons.send_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Reservas', style: TextStyle(color: Color(0xFF216A44), fontSize: 25, )),
+                  icon: const Icon(Icons.dns, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Dashboard', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
+                ),
+                TextButton.icon(
+                  onPressed: null,
+                  icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => AdminUsuarios(administrador: widget.administrador)),
+                    );
+                  },
+                  icon: const Icon(Icons.person_add_outlined, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Usuarios', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
+                ),
+                TextButton.icon(
+                  onPressed:() {
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminModeracion(administrador: widget.administrador)));
+                  },
+                  icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                 ),
                 TextButton.icon(onPressed: () {
-                  Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => PerfilViajero(viajero: widget.viajero),
-                      ),
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => PerfilAdministrador(administrador: widget.administrador)),
                     );
-                  }, 
+                  },
                   icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
+                  label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
+                  fontWeight: FontWeight.w900)),
                 ),
               ],
             ),
@@ -349,21 +415,17 @@ class _HomeViajeroState extends State<HomeViajero> {
                               ),
                               const SizedBox(width: 12),
                               
-                              // CAJA DE PRESUPUESTO ACTIVA: Transformada a TextField editable
                               Expanded(flex: 2,
                                 child: Container(padding: const EdgeInsets.symmetric(horizontal: 12),
                                   decoration: BoxDecoration(color: const Color(0xFFF5F7F2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: TextField(
-                                    controller: _presupuestoController,
-                                    keyboardType: TextInputType.number,
-                                    style: const TextStyle(color: Color(0xFF526F75)),
+                                    borderRadius: BorderRadius.circular(12),),
+                                  child: TextField(controller: _presupuestoController,
+                                    keyboardType: TextInputType.number, style: const TextStyle(color: Color(0xFF526F75)),
                                     onChanged: (value) {
                                       setState(() {
                                         _precioMax = double.tryParse(value);
                                       });
-                                      _ejecutarBusqueda(); // Filtra instantáneamente al escribir
+                                      _ejecutarBusqueda(); 
                                     },
                                     decoration: const InputDecoration(
                                       icon: Icon(Icons.attach_money, color: Color(0xFF526F75), size: 20),
@@ -394,10 +456,8 @@ class _HomeViajeroState extends State<HomeViajero> {
                               const SizedBox(width: 12),
                               ElevatedButton(
                                 onPressed: () => _ejecutarBusqueda(),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF216A44),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF216A44), 
+                                  foregroundColor: Colors.white, elevation: 0,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                                 ),
@@ -409,8 +469,7 @@ class _HomeViajeroState extends State<HomeViajero> {
                         
                         const SizedBox(height: 35),
 
-                        FutureBuilder<List<Publicacion>>(
-                          future: _publicacionesFuture,
+                        FutureBuilder<List<Publicacion>>(future: _publicacionesFuture,
                           builder: (context, snapshot) {
                             if (snapshot.connectionState == ConnectionState.waiting) {
                               return const Center(
@@ -435,13 +494,13 @@ class _HomeViajeroState extends State<HomeViajero> {
 
                             return Wrap(spacing: 16, runSpacing: 16,
                               children: listado.map((publicacion) {
-                                return SizedBox(
-                                  width: (992 - 32) / 3, 
+                                return SizedBox(width: (992 - 32) / 3, 
                                   child: GestureDetector(
                                     onTap: () {
                                       Navigator.push(context,
-                                        MaterialPageRoute(builder: (context) => PantallaReserva(
-                                          publicacion: publicacion, viajero: widget.viajero,
+                                        MaterialPageRoute(
+                                          builder: (context) => PantallaPubAdmin(publicacion: publicacion,
+                                            administrador: widget.administrador,
                                           ),
                                         ),
                                       );
@@ -486,11 +545,13 @@ class _HomeViajeroState extends State<HomeViajero> {
                 child: imagePath.startsWith('http')
                     ? Image.network(
                         imagePath, height: 200, width: double.infinity, fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(height: 200, color: Colors.grey[300], child: const Icon(Icons.image, size: 50)),
+                        errorBuilder: (context, error, stackTrace) => Container(height: 200, color: Colors.grey[300], 
+                        child: const Icon(Icons.image, size: 50)),
                       )
                     : Image.asset(
                         imagePath, height: 200, width: double.infinity, fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(height: 200, color: Colors.grey[300], child: const Icon(Icons.image, size: 50)),
+                        errorBuilder: (context, error, stackTrace) => Container(height: 200, color: Colors.grey[300], 
+                        child: const Icon(Icons.image, size: 50)),
                       ),
               ),
               Positioned(top: 12, right: 12,
@@ -505,7 +566,8 @@ class _HomeViajeroState extends State<HomeViajero> {
             padding: const EdgeInsets.all(16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 22, fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800)),
+                Text(title, style: const TextStyle(fontSize: 22, fontFamily: 'Idiqlat', color: Colors.black, 
+                fontWeight: FontWeight.w800)),
                 const SizedBox(height: 2),
                 Text(location, style: const TextStyle(color: Color(0xFF6E867A), fontSize: 14)),
                 const SizedBox(height: 10),

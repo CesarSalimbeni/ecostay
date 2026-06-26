@@ -1,12 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'estadoreserva.dart';
-import 'gestion_reservacion.dart';
 
 class Reserva {
   final String id;
   final DateTime fechaInicio;
   final DateTime fechaFin;
   final EstadoReserva estado;
-  final double total;
+  final double total; //dinero
+  final int cupos;
 
   Reserva({
     required this.id,
@@ -14,13 +16,16 @@ class Reserva {
     required this.fechaFin,
     required this.estado,
     required this.total,
+    required this.cupos
   });
 
-  void confirmar() {
-    GestionReservacion().confirmarReserva(id);
-  }
-
-  void cancelar() {
-    GestionReservacion().cancelarReserva(id);
+  Map<String, dynamic> toMap() {
+    return {
+      'fechaInicio': Timestamp.fromDate(fechaInicio),
+      'fechaFin': Timestamp.fromDate(fechaFin),
+      'estado': estado.name,
+      'total': total,
+      'cupos': cupos,
+    };
   }
 }

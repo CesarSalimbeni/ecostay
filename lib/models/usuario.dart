@@ -3,15 +3,17 @@ abstract class Usuario {
   String id;
   String nombre;
   String email;
-  String password;
   DateTime fechaRegistro; // Equivalente a Date
+  bool suspendido;
+  String? imagenUrl;
 
   Usuario({
     required this.rol,
     required this.id,
     required this.nombre,
     required this.email,
-    required this.password, //El password se maneja solo para autenticación, no se guarda en Firestore
     required this.fechaRegistro,
+    required this.suspendido, //Poner false para cuando se registre.
+    this.imagenUrl,
   });
 }

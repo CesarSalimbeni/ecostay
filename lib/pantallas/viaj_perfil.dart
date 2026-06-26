@@ -1,10 +1,11 @@
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/viajero.dart';
 import 'package:ecostay/pantallas/estilo.dart';
-import 'package:ecostay/pantallas/mis_reservas_viaj.dart';
+import 'package:ecostay/pantallas/viaj_mis_reservas.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
-import 'package:ecostay/screens/home_viajero.dart';
+import 'package:ecostay/pantallas/viaj_home.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class PerfilViajero extends StatefulWidget {
   final Viajero viajero; 
@@ -23,14 +24,14 @@ class _PerfilViajeroState extends State<PerfilViajero> {
   late TextEditingController _ciudadController;
 
   final GestionUsuario _gestionUsuario = GestionUsuario();
+  final GestionImagenPerfil _gestionImagen = GestionImagenPerfil();
   
-  // Variable local para mantener el estado del usuario actualizado en tiempo real
   late Viajero _viajeroActual;
+  bool _subiendoImagen = false;
 
   @override
   void initState() {
     super.initState();
-    // Inicializamos nuestra variable local con el viajero inicial
     _viajeroActual = widget.viajero;
 
     _nombreController = TextEditingController(text: _viajeroActual.nombre);
@@ -69,17 +70,56 @@ class _PerfilViajeroState extends State<PerfilViajero> {
           elevation: const WidgetStatePropertyAll(0),
         ),
         actions: [
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            // Usamos _viajeroActual para reflejar cambios en la UI
-            child: Text(_viajeroActual.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-            style: const TextStyle(fontSize: 20)),
-          ),
-          Padding(padding: const EdgeInsets.only(right: 10.0),
-            child: const CircleAvatar(
-              backgroundColor: Color(0xFF216A44),
-              child: Icon(Icons.person, color: Colors.white),
+          Padding(padding: const EdgeInsets.only(right: 20.0),
+            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
+              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () async {
+                  try {
+                    await _gestionUsuario.cerrarSesion();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Sesión cerrada con éxito')),
+                      );
+                      Navigator.pushAndRemoveUntil(context,
+                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                        (route) => false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al cerrar sesión: $e')),
+                      );
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Row(mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text( _viajeroActual.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                        style: const TextStyle(fontSize: 20, color: Colors.black),
+                      ),
+                      const SizedBox(width: 10),
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF216A44),
+                        backgroundImage: _viajeroActual.imagenUrl != null && _viajeroActual.imagenUrl!.isNotEmpty
+                            ? NetworkImage(_viajeroActual.imagenUrl!)
+                            : null,
+                        child: _viajeroActual.imagenUrl == null || _viajeroActual.imagenUrl!.isEmpty
+                            ? const Icon(Icons.person, color: Colors.white)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          )
+          ),
         ],
       ),
       body: Column(crossAxisAlignment: CrossAxisAlignment.start, 
@@ -89,7 +129,6 @@ class _PerfilViajeroState extends State<PerfilViajero> {
               children: [
                 TextButton.icon(onPressed: () {
                   Navigator.pushReplacement(context,
-                    // Pasamos el viajero actualizado al navegar
                     MaterialPageRoute(builder: (context) => HomeViajero(viajero: _viajeroActual),
                       ),
                     );
@@ -99,7 +138,6 @@ class _PerfilViajeroState extends State<PerfilViajero> {
                 ),
                 TextButton.icon(onPressed: () {
                   Navigator.pushReplacement(context,
-                    // Pasamos el viajero actualizado al navegar
                     MaterialPageRoute(builder: (context) => PantallaMisReservas(viajero: _viajeroActual),
                       ),
                     );
@@ -115,7 +153,6 @@ class _PerfilViajeroState extends State<PerfilViajero> {
               ],
             ),
           ),
-
           Expanded(
             child: SingleChildScrollView(
               child: Center(
@@ -129,7 +166,6 @@ class _PerfilViajeroState extends State<PerfilViajero> {
                         const SizedBox(height: 24),
                         Row(crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // TARJETA DE AVATAR IZQUIERDA
                             Expanded(flex: 4,
                               child: Container(padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                                 decoration: BoxDecoration(color: Colors.white,
@@ -137,29 +173,89 @@ class _PerfilViajeroState extends State<PerfilViajero> {
                                 ),
                                 child: Column(
                                   children: [
-                                    Container(width: 130, height: 130, decoration: const BoxDecoration(
-                                      color: Color(0xFF38664D), shape: BoxShape.circle,
+                                    Container(width: 130, height: 130, 
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF38664D), 
+                                        shape: BoxShape.circle,
+                                        image: _viajeroActual.imagenUrl != null && _viajeroActual.imagenUrl!.isNotEmpty
+                                            ? DecorationImage(
+                                                image: NetworkImage(_viajeroActual.imagenUrl!),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : null,
                                       ),
+                                      child: _viajeroActual.imagenUrl == null || _viajeroActual.imagenUrl!.isEmpty
+                                          ? const Icon(Icons.person, size: 65, color: Colors.white)
+                                          : null,
                                     ),
                                     const SizedBox(height: 20),
                                     Text(
-                                      // Usamos _viajeroActual aquí también
                                       _viajeroActual.nombre,
                                       textAlign: TextAlign.center, style: const TextStyle(fontSize: 32, 
                                       fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800),
                                     ),
                                     const Text('Viajero', style: TextStyle(color: Color(0xFF6E867A), fontSize: 18)),
                                     const SizedBox(height: 25),
+                                    // BOTÓN CAMBIAR FOTO INTEGRADO
                                     OutlinedButton(
-                                      onPressed: () {},
+                                      onPressed: _subiendoImagen ? null : () async {
+                                        final ImagePicker picker = ImagePicker();
+                                        final XFile? imagenSeleccionada = await picker.pickImage(
+                                          source: ImageSource.gallery,
+                                          imageQuality: 80,
+                                        );
+
+                                        if (imagenSeleccionada != null) {
+                                          setState(() => _subiendoImagen = true);
+                                          try {
+                                            String? urlDescarga = await _gestionImagen.subirImagen(
+                                              _viajeroActual.id, 
+                                              imagenSeleccionada
+                                            );
+
+                                            if (urlDescarga != null && context.mounted) {
+                                              setState(() {
+                                                _viajeroActual = Viajero(
+                                                  id: _viajeroActual.id,
+                                                  nombre: _viajeroActual.nombre,
+                                                  email: _viajeroActual.email,
+                                                  fechaRegistro: _viajeroActual.fechaRegistro,
+                                                  telefono: _viajeroActual.telefono,
+                                                  cedula: _viajeroActual.cedula,
+                                                  ciudad: _viajeroActual.ciudad,
+                                                  historialReservas: _viajeroActual.historialReservas,
+                                                  suspendido: _viajeroActual.suspendido,
+                                                  imagenUrl: urlDescarga, // <-- Asignación de la nueva URL
+                                                );
+                                              });
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('¡Foto de perfil actualizada con éxito!')),
+                                              );
+                                            }
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Error al subir imagen: $e')),
+                                              );
+                                            }
+                                          } finally {
+                                            if (context.mounted) {
+                                              setState(() => _subiendoImagen = false);
+                                            }
+                                          }
+                                        }
+                                      },
                                       style: OutlinedButton.styleFrom(
                                         side: const BorderSide(color: Color(0xFFCCCCCC)),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                                         minimumSize: const Size(200, 50),
                                         backgroundColor: const Color(0xFFF5F7F2),
                                       ),
-                                      child: const Text('Cambiar Foto', style: TextStyle(color: Colors.black, 
-                                      fontSize: 16)),
+                                      child: _subiendoImagen 
+                                          ? const SizedBox(width: 20, height: 20, 
+                                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF38664D)),
+                                            )
+                                          : const Text('Cambiar Foto', style: TextStyle(color: Colors.black, fontSize: 16)),
                                     ),
                                     const SizedBox(height: 35),
                                     TextButton(
@@ -192,7 +288,6 @@ class _PerfilViajeroState extends State<PerfilViajero> {
                               ),
                             ),
                             const SizedBox(width: 32),
-                            // TARJETA DE DETALLES DERECHA
                             Expanded(flex: 6,
                               child: Container(padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
                                 decoration: BoxDecoration(color: Colors.white,
@@ -203,11 +298,11 @@ class _PerfilViajeroState extends State<PerfilViajero> {
                                   children: [
                                     _buildProfileInputField('Nombre', _nombreController),
                                     _buildDivider(),
-                                    _buildProfileInputField('Correo', _correoController),
+                                    _buildProfileInputField('Correo', _correoController, isEditable: false),
                                     _buildDivider(),
                                     _buildProfileInputField('Teléfono', _telefonoController),
                                     _buildDivider(),
-                                    _buildProfileInputField('Cédula', _cedulaController),
+                                    _buildProfileInputField('Cédula', _cedulaController, isEditable: false),
                                     _buildDivider(),
                                     _buildProfileInputField('Ciudad', _ciudadController),
                                     const SizedBox(height: 20),
@@ -222,7 +317,6 @@ class _PerfilViajeroState extends State<PerfilViajero> {
                                             'ciudad': _ciudadController.text,
                                           };
 
-                                          // Enviamos la edición a Firebase
                                           await _gestionUsuario.editarInformacion(_viajeroActual.id, datosActualizados);
 
                                           if (context.mounted) {
@@ -231,12 +325,13 @@ class _PerfilViajeroState extends State<PerfilViajero> {
                                                 id: _viajeroActual.id,
                                                 nombre: _nombreController.text,
                                                 email: _correoController.text,
-                                                password: _viajeroActual.password,
                                                 fechaRegistro: _viajeroActual.fechaRegistro,
                                                 telefono: _telefonoController.text,
                                                 cedula: _cedulaController.text,
                                                 ciudad: _ciudadController.text,
                                                 historialReservas: _viajeroActual.historialReservas,
+                                                suspendido: _viajeroActual.suspendido,
+                                                imagenUrl: _viajeroActual.imagenUrl
                                               );
                                             });
 
@@ -279,7 +374,7 @@ class _PerfilViajeroState extends State<PerfilViajero> {
     );
   }
 
-  Widget _buildProfileInputField(String label, TextEditingController controller) {
+  Widget _buildProfileInputField(String label, TextEditingController controller, {bool isEditable = true}) {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
@@ -288,8 +383,8 @@ class _PerfilViajeroState extends State<PerfilViajero> {
             fontWeight: FontWeight.w500)),
           ),
           Expanded(flex: 6, 
-            child: TextField(controller: controller,
-              style: const TextStyle(color: Colors.black, fontSize: 18),
+            child: TextField(controller: controller, readOnly: !isEditable,
+              style: TextStyle(color: isEditable ? Colors.black : Colors.grey, fontSize: 18),
               decoration: const InputDecoration(border: InputBorder.none, isDense: true,
                 contentPadding: EdgeInsets.symmetric(vertical: 6),
               ),
