@@ -113,10 +113,11 @@ class _HomeViajeroState extends State<HomeViajero> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            final bool tieneUbicaciones = _ubicacionesDisponibles != null && _ubicacionesDisponibles.isNotEmpty;
+            final bool tieneUbicaciones = _ubicacionesDisponibles.isNotEmpty;
 
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), backgroundColor: ColorPalette.bg,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), 
+              backgroundColor: ColorPalette.bg,
               title: const Row(
                 children: [
                   Icon(Icons.tune, color: Color(0xFF216A44)),
@@ -125,7 +126,7 @@ class _HomeViajeroState extends State<HomeViajero> {
                 ],
               ),
               content: SizedBox(
-                width: 400,
+                width: MediaQuery.of(context).size.width * 0.85, // Ajuste fluido en móviles
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -255,247 +256,205 @@ class _HomeViajeroState extends State<HomeViajero> {
 
   @override
   Widget build(BuildContext context) {
+    // Detectamos si es pantalla móvil
+    final isMobile = MediaQuery.of(context).size.width < 768;
+
     return Scaffold(
       backgroundColor: ColorPalette.bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF), toolbarHeight: 90, leadingWidth: 120, 
+        backgroundColor: const Color(0xFFFFFFFF), 
+        toolbarHeight: isMobile ? 70 : 90, 
+        leadingWidth: isMobile ? 80 : 120, 
         centerTitle: true,
-        leading: Padding(padding: const EdgeInsets.only(left: 40.0),
-          child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain,),
+        leading: Padding(
+          padding: EdgeInsets.only(left: isMobile ? 10.0 : 40.0),
+          child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
         ),
-        title: SearchBar(
-          controller: _searchController,
-          hintText: 'Buscar por título...', 
-          hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
-          leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
-          backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
-          elevation: const WidgetStatePropertyAll(0),
-          onChanged: (value) => _ejecutarBusqueda(), 
-        ),
+        // Si es móvil ocultamos la barra del appBar para que no se amontone, se maneja abajo
+        title: isMobile 
+          ? null 
+          : SearchBar(
+              controller: _searchController,
+              hintText: 'Buscar por título...', 
+              hintStyle: WidgetStateProperty.all(const TextStyle(color: Color(0xFF526F75))),
+              leading: const Icon(Icons.search, color: Color(0xFF526F75)), 
+              backgroundColor: WidgetStateProperty.all(ColorPalette.bg),
+              elevation: const WidgetStatePropertyAll(0),
+              onChanged: (value) => _ejecutarBusqueda(), 
+            ),
         actions: [
-          Padding(padding: const EdgeInsets.only(right: 20.0),
-            child: Tooltip(message: 'Cerrar sesión', preferBelow: true, verticalOffset: 25,
-              textStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
-              decoration: BoxDecoration(color: const Color(0xFF216A44).withOpacity(0.95),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: InkWell(
-                onTap: () async {
-                  try {
-                    await _gestionUsuario.cerrarSesion();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sesión cerrada con éxito')),
-                      );
-                      Navigator.pushAndRemoveUntil(context,
-                        MaterialPageRoute(builder: (context) => const PantallaInicio()),
-                        (route) => false,
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error al cerrar sesión: $e')),
-                      );
-                    }
+          Padding(
+            padding: EdgeInsets.only(right: isMobile ? 10.0 : 20.0),
+            child: InkWell(
+              onTap: () async {
+                try {
+                  await _gestionUsuario.cerrarSesion();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Sesión cerrada con éxito')),
+                    );
+                    Navigator.pushAndRemoveUntil(context,
+                      MaterialPageRoute(builder: (context) => const PantallaInicio()),
+                      (route) => false,
+                    );
                   }
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                  child: Row(mainAxisSize: MainAxisSize.min,
-                    children: [
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al cerrar sesión: $e')),
+                    );
+                  }
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!isMobile) ...[
                       Text(widget.viajero.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
-                        style: const TextStyle(fontSize: 20, color: Colors.black),
+                        style: const TextStyle(fontSize: 18, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      CircleAvatar(
-                        backgroundColor: const Color(0xFF216A44),
-                        backgroundImage: widget.viajero.imagenUrl != null && widget.viajero.imagenUrl!.isNotEmpty
-                            ? NetworkImage(widget.viajero.imagenUrl!)
-                            : null,
-                        child: widget.viajero.imagenUrl == null || widget.viajero.imagenUrl!.isEmpty
-                            ? const Icon(Icons.person, color: Colors.white)
-                            : null,
-                      ),
                     ],
-                  ),
+                    CircleAvatar(
+                      backgroundColor: const Color(0xFF216A44),
+                      backgroundImage: widget.viajero.imagenUrl != null && widget.viajero.imagenUrl!.isNotEmpty
+                          ? NetworkImage(widget.viajero.imagenUrl!)
+                          : null,
+                      child: widget.viajero.imagenUrl == null || widget.viajero.imagenUrl!.isEmpty
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ],
       ),
-      body: Column(crossAxisAlignment: CrossAxisAlignment.start, 
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, 
         children: [
-          Padding(padding: const EdgeInsets.only(top: 15),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
+          // Menú de Navegación adaptado
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
               children: [
-                TextButton.icon(onPressed: null, 
-                  icon: const Icon(Icons.search, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Explorar', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
-                  fontWeight: FontWeight.w900)),
+                _buildNavigationButton(
+                  icon: Icons.search, label: 'Explorar', isActive: true, isMobile: isMobile, onTap: () {}
                 ),
-                TextButton.icon(onPressed: () {
-                  Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => PantallaMisReservas(viajero: widget.viajero),
-                      ),
+                _buildNavigationButton(
+                  icon: Icons.send_outlined, label: 'Reservas', isActive: false, isMobile: isMobile,
+                  onTap: () {
+                    Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => PantallaMisReservas(viajero: widget.viajero)),
                     );
-                  },
-                  icon: const Icon(Icons.send_outlined, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Reservas', style: TextStyle(color: Color(0xFF216A44), fontSize: 25, )),
+                  }
                 ),
-                TextButton.icon(onPressed: () {
-                  Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => PerfilViajero(viajero: widget.viajero),
-                      ),
+                _buildNavigationButton(
+                  icon: Icons.person_outline, label: 'Perfil', isActive: false, isMobile: isMobile,
+                  onTap: () {
+                    Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => PerfilViajero(viajero: widget.viajero)),
                     );
-                  }, 
-                  icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
-                  label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
+                  }
                 ),
               ],
             ),
           ),
 
+          // Contenido Principal Fluido
           Expanded(
-            child: SingleChildScrollView(
-              child: Center(
-                child: Padding(padding: const EdgeInsets.only(top: 30, bottom: 40),
-                  child: SizedBox(width: 992,
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(flex: 4,
-                                child: Container(padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF5F7F2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: TextField(
-                                    controller: _searchController,
-                                    onChanged: (value) => _ejecutarBusqueda(),
-                                    decoration: const InputDecoration(
-                                      icon: Icon(Icons.search, color: Color(0xFF526F75)),
-                                      hintText: '¿A dónde vas? (Escribe un título...)',
-                                      hintStyle: TextStyle(color: Color(0xFF526F75)),
-                                      border: InputBorder.none,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              
-                              Expanded(flex: 2,
-                                child: Container(padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  decoration: BoxDecoration(color: const Color(0xFFF5F7F2),
-                                    borderRadius: BorderRadius.circular(12),),
-                                  child: TextField(controller: _presupuestoController,
-                                    keyboardType: TextInputType.number, style: const TextStyle(color: Color(0xFF526F75)),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _precioMax = double.tryParse(value);
-                                      });
-                                      _ejecutarBusqueda(); 
-                                    },
-                                    decoration: const InputDecoration(
-                                      icon: Icon(Icons.attach_money, color: Color(0xFF526F75), size: 20),
-                                      hintText: 'Presupuesto Máx',
-                                      hintStyle: TextStyle(color: Color(0xFF526F75)),
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(vertical: 14),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              
-                              OutlinedButton(
-                                onPressed: () => _mostrarPopUpFiltros(context),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.black, width: 1.2),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                ),
-                                child: Text(
-                                  _ubicacionSeleccionada != null || _calificacionMin != null || _precioMin != null || _precioMax != null
-                                      ? 'Filtros (*)' 
-                                      : 'Filtros', 
-                                  style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w500),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton(
-                                onPressed: () => _ejecutarBusqueda(),
-                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF216A44), 
-                                  foregroundColor: Colors.white, elevation: 0,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                ),
-                                child: const Text('Buscar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 35),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Definimos márgenes y anchos máximos en base al espacio disponible
+                double paddingHorizontal = constraints.maxWidth > 1200 ? 100 : (isMobile ? 16 : 40);
+                
+                return SingleChildScrollView(
+                  padding: EdgeInsets.only(left: paddingHorizontal, right: paddingHorizontal, top: 15, bottom: 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Barra de filtros unificada y dinámica
+                      _buildResponsiveFilterBar(isMobile),
+                      
+                      const SizedBox(height: 35),
 
-                        FutureBuilder<List<Publicacion>>(future: _publicacionesFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(
-                                child: Padding(padding: EdgeInsets.all(20.0),
-                                  child: CircularProgressIndicator(color: Color(0xFF216A44)),
-                                ),
-                              );
-                            }
-                            if (snapshot.hasError) {
-                              return Center(child: Text('Error al procesar búsqueda: ${snapshot.error}'));
-                            }
-                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const Center(
-                                child: Padding(padding: EdgeInsets.all(20.0),
-                                  child: Text('No se encontraron hospedajes con los criterios seleccionados.', 
-                                    style: TextStyle(fontSize: 18, color: Colors.grey)),
-                                ),
-                              );
-                            }
-
-                            final listado = snapshot.data!;
-
-                            return Wrap(spacing: 16, runSpacing: 16,
-                              children: listado.map((publicacion) {
-                                return SizedBox(width: (992 - 32) / 3, 
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(context,
-                                        MaterialPageRoute(builder: (context) => PantallaReserva(
-                                          publicacion: publicacion, viajero: widget.viajero,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: _buildDestinationCard(
-                                      publicacion.titulo, 
-                                      publicacion.ubicacion, 
-                                      '\$${publicacion.precio}', 
-                                      publicacion.imagenUrl ?? 'assets/images/los_roques.jpg',
-                                      publicacion.calificacionPromedio.toStringAsFixed(1),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                      // Listado adaptativo en Grid dinámico
+                      FutureBuilder<List<Publicacion>>(
+                        future: _publicacionesFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20.0),
+                                child: CircularProgressIndicator(color: Color(0xFF216A44)),
+                              ),
                             );
-                          },
-                        ),
-                      ],
-                    ),
+                          }
+                          if (snapshot.hasError) {
+                            return Center(child: Text('Error al procesar búsqueda: ${snapshot.error}'));
+                          }
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20.0),
+                                child: Text('No se encontraron hospedajes con los criterios seleccionados.', 
+                                  style: TextStyle(fontSize: 16, color: Colors.grey)),
+                              ),
+                            );
+                          }
+
+                          final listado = snapshot.data!;
+                          
+                          // Calculamos las columnas del Grid dinámicamente según el ancho
+                          int crossAxisCount = 3;
+                          if (constraints.maxWidth < 600) {
+                            crossAxisCount = 1; // Teléfonos
+                          } else if (constraints.maxWidth < 950) {
+                            crossAxisCount = 2; // Tablets
+                          }
+
+                          return GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: listado.length,
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              mainAxisExtent: 360, // Altura fija controlada para las tarjetas
+                            ),
+                            itemBuilder: (context, index) {
+                              final publicacion = listado[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) => PantallaReserva(
+                                      publicacion: publicacion, viajero: widget.viajero,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: _buildDestinationCard(
+                                  publicacion.titulo, 
+                                  publicacion.ubicacion, 
+                                  '\$${publicacion.precio}', 
+                                  publicacion.imagenUrl ?? 'assets/images/los_roques.jpg',
+                                  publicacion.calificacionPromedio.toStringAsFixed(1),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ),
-              ),
+                );
+              }
             ),
           ),
         ]
@@ -503,50 +462,176 @@ class _HomeViajeroState extends State<HomeViajero> {
     );
   }
 
-  Widget _buildDestinationCard(String title, String location, String price, String imagePath, String rating) {
-    return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
-        ]
+  // Widget auxiliar para los botones superiores que reducen el tamaño de letra en móviles
+  Widget _buildNavigationButton({
+    required IconData icon, required String label, required bool isActive, required bool isMobile, required VoidCallback onTap
+  }) {
+    return TextButton.icon(
+      onPressed: onTap, 
+      icon: Icon(icon, color: const Color(0xFF216A44), size: isMobile ? 22 : 28),
+      label: Text(label, style: TextStyle(
+        color: const Color(0xFF216A44), 
+        fontSize: isMobile ? 16 : 22,
+        fontWeight: isActive ? FontWeight.w900 : FontWeight.normal
+      )),
+    );
+  }
+
+  // Barra de filtros que cambia de Row a Column si es móvil
+  Widget _buildResponsiveFilterBar(bool isMobile) {
+    final searchInput = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(color: const Color(0xFFF5F7F2), borderRadius: BorderRadius.circular(12)),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) => _ejecutarBusqueda(),
+        decoration: const InputDecoration(
+          icon: Icon(Icons.search, color: Color(0xFF526F75)),
+          hintText: '¿A dónde vas?',
+          hintStyle: TextStyle(color: Color(0xFF526F75)),
+          border: InputBorder.none,
+        ),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
+    );
+
+    final budgetInput = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(color: const Color(0xFFF5F7F2), borderRadius: BorderRadius.circular(12)),
+      child: TextField(
+        controller: _presupuestoController,
+        keyboardType: TextInputType.number, 
+        style: const TextStyle(color: Color(0xFF526F75)),
+        onChanged: (value) {
+          setState(() {
+            _precioMax = double.tryParse(value);
+          });
+          _ejecutarBusqueda(); 
+        },
+        decoration: const InputDecoration(
+          icon: Icon(Icons.attach_money, color: Color(0xFF526F75), size: 20),
+          hintText: 'Presupuesto Máx',
+          hintStyle: TextStyle(color: Color(0xFF526F75)),
+          border: InputBorder.none,
+        ),
+      ),
+    );
+
+    final filterButton = OutlinedButton(
+      onPressed: () => _mostrarPopUpFiltros(context),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Colors.black, width: 1.2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+      child: Center(
+        child: Text(
+          _ubicacionSeleccionada != null || _calificacionMin != null || _precioMin != null || _precioMax != null
+              ? 'Filtros (*)' 
+              : 'Filtros', 
+          style: const TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.w500),
+        ),
+      ),
+    );
+
+    final searchButton = ElevatedButton(
+      onPressed: () => _ejecutarBusqueda(),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF216A44), 
+        foregroundColor: Colors.white, elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+      child: const Center(child: Text('Buscar', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: isMobile 
+        ? Column(
             children: [
-              ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                child: imagePath.startsWith('http')
-                    ? Image.network(
-                        imagePath, height: 200, width: double.infinity, fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(height: 200, color: Colors.grey[300], 
-                        child: const Icon(Icons.image, size: 50)),
-                      )
-                    : Image.asset(
-                        imagePath, height: 200, width: double.infinity, fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(height: 200, color: Colors.grey[300], 
-                        child: const Icon(Icons.image, size: 50)),
-                      ),
-              ),
-              Positioned(top: 12, right: 12,
-                child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0xFFC2DC77), borderRadius: BorderRadius.circular(12)),
-                  child: Text(rating, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14)),
-                ),
-              ),
+              searchInput,
+              const SizedBox(height: 10),
+              budgetInput,
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(child: filterButton),
+                  const SizedBox(width: 10),
+                  Expanded(child: searchButton),
+                ],
+              )
+            ],
+          )
+        : Row(
+            children: [
+              Expanded(flex: 4, child: searchInput),
+              const SizedBox(width: 12),
+              Expanded(flex: 2, child: budgetInput),
+              const SizedBox(width: 12),
+              Expanded(flex: 1, child: filterButton),
+              const SizedBox(width: 12),
+              Expanded(flex: 1, child: searchButton),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  Widget _buildDestinationCard(String title, String location, String price, String imagePath, String rating) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Stack(
               children: [
-                Text(title, style: const TextStyle(fontSize: 22, fontFamily: 'Idiqlat', color: Colors.black, 
-                fontWeight: FontWeight.w800)),
+                SizedBox(
+                  width: double.infinity,
+                  height: double.infinity,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    child: imagePath.startsWith('http')
+                        ? Image.network(
+                            imagePath, fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300], child: const Icon(Icons.image, size: 40)),
+                          )
+                        : Image.asset(
+                            imagePath, fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300], child: const Icon(Icons.image, size: 40)),
+                          ),
+                  ),
+                ),
+                Positioned(
+                  top: 12, right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(color: const Color(0xFFC2DC77), borderRadius: BorderRadius.circular(12)),
+                    child: Text(rating, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, 
+                  style: const TextStyle(fontSize: 18, fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 2),
-                Text(location, style: const TextStyle(color: Color(0xFF6E867A), fontSize: 14)),
-                const SizedBox(height: 10),
+                Text(location, maxLines: 1, overflow: TextOverflow.ellipsis, 
+                  style: const TextStyle(color: Color(0xFF6E867A), fontSize: 13)),
+                const SizedBox(height: 8),
                 const Divider(color: Color(0xFFEBEBEB), thickness: 1.5),
-                Align(alignment: Alignment.bottomRight,
-                  child: Text(price, style: const TextStyle(color: Color(0xFF216A44), fontSize: 24, fontWeight: FontWeight.w800)),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Text(price, style: const TextStyle(color: Color(0xFF216A44), fontSize: 20, fontWeight: FontWeight.w800)),
                 ),
               ],
             ),
