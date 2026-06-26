@@ -2,6 +2,7 @@ import 'package:ecostay/models/administrador.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/pantallas/admin_explorar.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
+import 'package:ecostay/pantallas/admin_perfil.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
@@ -84,13 +85,18 @@ class _HomeAdminState extends State<HomeAdmin> {
                 child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                   child: Row(mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text( widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                      Text(widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
                         style: const TextStyle(fontSize: 20, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      const CircleAvatar(
-                        backgroundColor: Color(0xFF216A44),
-                        child: Icon(Icons.person, color: Colors.white),
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF216A44),
+                        backgroundImage: widget.administrador.imagenUrl != null && widget.administrador.imagenUrl!.isNotEmpty
+                            ? NetworkImage(widget.administrador.imagenUrl!)
+                            : null,
+                        child: widget.administrador.imagenUrl == null || widget.administrador.imagenUrl!.isEmpty
+                            ? const Icon(Icons.person, color: Colors.white)
+                            : null,
                       ),
                     ],
                   ),
@@ -100,10 +106,8 @@ class _HomeAdminState extends State<HomeAdmin> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, 
+      body: Column(crossAxisAlignment: CrossAxisAlignment.start, 
         children: [
-          // Barra de navegación fija superior
           Padding(padding: const EdgeInsets.only(top: 15),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
               children: [
@@ -139,12 +143,21 @@ class _HomeAdminState extends State<HomeAdmin> {
                   icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
                   label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
                 ),
+                TextButton.icon(onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => PerfilAdministrador(administrador: widget.administrador)),
+                    );
+                  },
+                  icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
+                  fontWeight: FontWeight.w900)),
+                ),
               ],
             ),
           ),
           
-          Padding(
-            padding: const EdgeInsets.only(left: 60.0, top: 40.0, bottom: 20.0),
+          Padding(padding: const EdgeInsets.only(left: 60.0, top: 40.0, bottom: 20.0),
             child: const Text(
               'Resumen de la plataforma', 
               style: TextStyle(fontSize: 32, fontFamily: 'Idiqlat', color: Colors.black, fontWeight: FontWeight.w800),
@@ -170,11 +183,16 @@ class _HomeAdminState extends State<HomeAdmin> {
                 final volumenReservas = '\$${(metricasGenerales['volumenTransacciones'] as double).toStringAsFixed(1)}';
                 final destinosTotales = metricasGenerales['publicacionesActivas'].toString();
 
-                double maxValGrafico = 1400.0;
+                // CAMBIO AQUÍ: Escala 100% adaptativa según el valor más alto del arreglo
+                double maxValGrafico = 10.0; // Valor mínimo por defecto si no hay datos
                 if (destinosMasBuscados.isNotEmpty) {
-                  final primerContador = (destinosMasBuscados.first['contador'] as num).toDouble();
-                  if (primerContador > maxValGrafico) {
-                    maxValGrafico = (primerContador / 350).ceil() * 350.0; 
+                  // Obtenemos el valor más alto del destino más buscado
+                  final maxContadorReal = destinosMasBuscados
+                      .map((item) => (item['contador'] as num?)?.toDouble() ?? 0.0)
+                      .reduce(max);
+                  
+                  if (maxContadorReal > 0) {
+                    maxValGrafico = maxContadorReal * 1.1; 
                   }
                 }
 
@@ -202,7 +220,6 @@ class _HomeAdminState extends State<HomeAdmin> {
                                     children: [
                                       Expanded(child: _buildStatCard(Icons.explore_outlined, destinosTotales, 'Destinos Totales')),
                                       const SizedBox(width: 20),
-                                      // Tarjeta mock/estática conservada por diseño
                                       Expanded(child: _buildStatCard(Icons.local_offer_outlined, '\$134', 'Reportes de Costos')),
                                     ],
                                   ),
@@ -213,11 +230,9 @@ class _HomeAdminState extends State<HomeAdmin> {
                           const SizedBox(width: 40),
 
                           Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(30.0),
+                            child: Container(padding: const EdgeInsets.all(30.0),
                               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(25)),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
                                     'Destinos más buscados',
@@ -260,10 +275,10 @@ class _HomeAdminState extends State<HomeAdmin> {
                                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                 children: [
                                                   '0', 
-                                                  (maxValGrafico * 0.25).toInt().toString(), 
-                                                  (maxValGrafico * 0.5).toInt().toString(), 
-                                                  (maxValGrafico * 0.75).toInt().toString(), 
-                                                  maxValGrafico.toInt().toString()
+                                                  (maxValGrafico * 0.25).round().toString(), 
+                                                  (maxValGrafico * 0.5).round().toString(), 
+                                                  (maxValGrafico * 0.75).round().toString(), 
+                                                  maxValGrafico.round().toString()
                                                 ].map((val) => Text(val, style: const TextStyle(fontSize: 12, 
                                                 color: Color(0xFF9CB0AA)))).toList(),
                                               ),

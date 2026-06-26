@@ -1,3 +1,4 @@
+import 'package:ecostay/models/pdf_generator.dart';
 import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
 import 'package:ecostay/pantallas/viaj_home.dart';
@@ -16,6 +17,7 @@ import 'package:ecostay/pantallas/viaj_mis_reservas.dart';
 import 'package:ecostay/widgets/reserva_viaj_completada.dart';
 import 'package:ecostay/widgets/reserva_viaj_pagar.dart';
 import 'package:ecostay/widgets/reserva_viaj_solicitar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PantallaReserva extends StatefulWidget {
   final Publicacion publicacion;
@@ -30,6 +32,7 @@ class PantallaReserva extends StatefulWidget {
 
 class _PantallaReservaState extends State<PantallaReserva> {
   bool _cargandoCalificaciones = true;
+  bool _generandoPdf = false;
   Reserva? _reservaActual; 
   final GestionReservacion _gestionReservacion = GestionReservacion();
   final GestionUsuario _gestionUsuario = GestionUsuario();
@@ -87,6 +90,49 @@ class _PantallaReservaState extends State<PantallaReserva> {
           _cargandoCalificaciones = false;
         });
       }
+    }
+  }
+
+  Future<void> _descargarComprobante() async {
+    if (_reservaActual == null) return;
+    setState(() => _generandoPdf = true);
+    
+    try {
+      final (_, viajeroId, publicacionId) = await _gestionReservacion.obtenerInformacion(_reservaActual!.id);
+
+      String nombreAnfitrion = widget.publicacion.nombreAnfitrion;
+      String tituloPublicacion = widget.publicacion.titulo;
+
+      // Buscar el nombre real del anfitrión por si requiere actualización desde Firebase
+      final docPub = await FirebaseFirestore.instance.collection('publications').doc(publicacionId).get();
+      if (docPub.exists && docPub.data() != null) {
+        final providerId = docPub.data()!['providerId'] ?? '';
+        if (providerId.isNotEmpty) {
+          final docAnf = await FirebaseFirestore.instance.collection('users').doc(providerId).get();
+          if (docAnf.exists && docAnf.data() != null) {
+            nombreAnfitrion = docAnf.data()!['nombre'] ?? nombreAnfitrion;
+          }
+        }
+      }
+
+      final pdfService = PdfService();
+      await pdfService.generarVoucher(
+        idReserva: _reservaActual!.id,
+        nombreAnfitrion: nombreAnfitrion,
+        idViajero: viajeroId.isNotEmpty ? viajeroId : widget.viajero.id,
+        monto: _reservaActual!.total,
+        tituloPublicacion: tituloPublicacion,
+      );
+
+    } catch (e) {
+      debugPrint('Error al generar el comprobante PDF: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al generar el comprobante: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generandoPdf = false);
     }
   }
 
@@ -270,6 +316,20 @@ class _PantallaReservaState extends State<PantallaReserva> {
                                               fontWeight: FontWeight.w800),overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
+                                          if (_reservaActual != null && _reservaActual!.estado == EstadoReserva.COMPLETADA)
+                                            _generandoPdf 
+                                                ? const Padding(padding: EdgeInsets.symmetric(horizontal: 12.0),
+                                                    child: SizedBox(
+                                                      width: 24, height: 24,
+                                                      child: CircularProgressIndicator(color: Color(0xFF216A44), strokeWidth: 2),
+                                                    ),
+                                                  )
+                                                : IconButton(
+                                                    icon: const Icon(Icons.description, color: Color(0xFF216A44), size: 32),
+                                                    tooltip: 'Comprobante de reserva',
+                                                    onPressed: _descargarComprobante,
+                                                  ),
+                                          
                                           if (_reservaActual != null)
                                             IconButton(
                                               icon: const Icon(Icons.flag_outlined, color: Colors.redAccent, size: 32),

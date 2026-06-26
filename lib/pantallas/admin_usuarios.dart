@@ -6,6 +6,7 @@ import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/pantallas/admin_explorar.dart';
 import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
+import 'package:ecostay/pantallas/admin_perfil.dart';
 import 'package:ecostay/pantallas/admin_perfil_usuario.dart';
 import 'package:ecostay/pantallas/estilo.dart';
 import 'package:ecostay/pantallas/pag_inicio.dart';
@@ -121,13 +122,18 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
                 child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                   child: Row(mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text( widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
+                      Text(widget.administrador.nombre, overflow: TextOverflow.ellipsis, maxLines: 1, 
                         style: const TextStyle(fontSize: 20, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
-                      const CircleAvatar(
-                        backgroundColor: Color(0xFF216A44),
-                        child: Icon(Icons.person, color: Colors.white),
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF216A44),
+                        backgroundImage: widget.administrador.imagenUrl != null && widget.administrador.imagenUrl!.isNotEmpty
+                            ? NetworkImage(widget.administrador.imagenUrl!)
+                            : null,
+                        child: widget.administrador.imagenUrl == null || widget.administrador.imagenUrl!.isEmpty
+                            ? const Icon(Icons.person, color: Colors.white)
+                            : null,
                       ),
                     ],
                   ),
@@ -178,6 +184,16 @@ class _AdminUsuariosState extends State<AdminUsuarios> {
                   },
                   icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
                   label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
+                ),
+                TextButton.icon(onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => PerfilAdministrador(administrador: widget.administrador)),
+                    );
+                  },
+                  icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
+                  fontWeight: FontWeight.w900)),
                 ),
               ],
             ),

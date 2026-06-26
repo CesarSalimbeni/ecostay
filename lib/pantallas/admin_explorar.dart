@@ -4,6 +4,7 @@ import 'package:ecostay/models/gestion_usuario.dart';
 import 'package:ecostay/models/publicacion.dart';
 import 'package:ecostay/pantallas/admin_home.dart';
 import 'package:ecostay/pantallas/admin_moderacion.dart';
+import 'package:ecostay/pantallas/admin_perfil.dart';
 import 'package:ecostay/pantallas/admin_pub.dart';
 import 'package:ecostay/pantallas/admin_usuarios.dart';
 import 'package:ecostay/pantallas/estilo.dart';
@@ -128,8 +129,7 @@ class _AdminExplorarState extends State<AdminExplorar> {
                   Text('Filtros Inteligentes', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Idiqlat')),
                 ],
               ),
-              content: SizedBox(
-                width: 400,
+              content: SizedBox(width: 400,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -368,6 +368,16 @@ class _AdminExplorarState extends State<AdminExplorar> {
                   },
                   icon: const Icon(Icons.shield_outlined, color: Color(0xFF216A44), size: 28),
                   label: const Text('Moderación', style: TextStyle(color: Color(0xFF216A44), fontSize: 25)),
+                ),
+                TextButton.icon(onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => PerfilAdministrador(administrador: widget.administrador)),
+                    );
+                  },
+                  icon: const Icon(Icons.person_outline, color: Color(0xFF216A44), size: 28),
+                  label: const Text('Perfil', style: TextStyle(color: Color(0xFF216A44), fontSize: 25,
+                  fontWeight: FontWeight.w900)),
                 ),
               ],
             ),
